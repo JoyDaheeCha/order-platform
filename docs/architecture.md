@@ -119,4 +119,5 @@ domain ──▶ (아무것도 의존하지 않음)
 - **ADR-0003** ✅ Accepted: [Order 데드라인 체커 · 재시도/DLQ](./adr/0003-order-deadline-checker.md) — 전체 사가 타임아웃 + DB 스위퍼(폴링) → `order.infrastructure`
 - **ADR-0004** ✅ Accepted: [스키마 분리 · Outbox/Inbox 테이블 · 주문 상태 read model](./adr/0004-schema-separation-outbox-readmodel.md) — 컨텍스트별 스키마(단일 인스턴스) + 컨텍스트별 DataSource(B-2)
 - **ADR-0005** ✅ Accepted: [헥사고날 레이어 — 별도 모듈 vs 패키지](./adr/0005-hexagonal-layer-as-package-vs-module.md) — 레이어는 패키지로(컨텍스트당 단일 모듈, 총 5모듈). §1·§2·§6 구조의 결정 근거
+- **ADR-0006** ✅ Accepted: [인바운드 주문 API — 응답 모델 & 멱등키 저장](./adr/0006-inbound-api-response-and-idempotency.md) — `202`+폴링(A-1, read model 재활용) + 전용 `idempotency_keys` 테이블(B-1, 주문과 같은 트랜잭션)
 - **ADR-0007** ✅ Accepted: [shared 통합 이벤트 계약](./adr/0007-integration-event-contract.md) — 이벤트 목록(+보상-개시 `OrderCancellationRequested`) · `EventEnvelope<T>` 봉투 · `<context>.events` 3토픽 · 파티션 키 `orderId` · 가산 버저닝. §4 shared 모듈의 계약 결정 근거
