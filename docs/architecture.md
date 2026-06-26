@@ -1,0 +1,116 @@
+# architecture — 모듈 / 패키지 구조 (v1.0)
+
+> **목적**: 멀티모듈 + 헥사고날 아키텍처의 물리 구조와 의존 규칙을 확정한다.
+> 상위 결정: [policy.md](./policy.md), [ADR-0001 코레오그래피](./adr/0001-saga-orchestration-vs-choreography.md).
+
+---
+
+## 1. 전체 구조 (Modular Monolith)
+
+3개 바운디드 컨텍스트(order · payment · inventory) + 공통(shared) + 실행 모듈(bootstrap). **단일 배포 단위**지만 모듈 경계로 마이크로서비스 수준의 격리를 강제한다.
+
+```
+order-platform/
+├── bootstrap/                  ← Spring Boot 실행 모듈 (main, 전 모듈 조립·설정)
+├── shared/                     ← 통합 이벤트 계약 (Kafka 메시지 스키마)
+├── order/
+│   ├── order-domain/           ← 순수 도메인 (프레임워크 의존 0)
+│   ├── order-application/      ← 유스케이스, 포트(interface)
+│   └── order-infrastructure/   ← 어댑터: JPA · Kafka · REST · Outbox/Inbox
+├── payment/
+│   ├── payment-domain/
+│   ├── payment-application/
+│   └── payment-infrastructure/
+└── inventory/
+    ├── inventory-domain/
+    ├── inventory-application/
+    └── inventory-infrastructure/
+```
+
+> **bootstrap 모듈을 추가한 이유**: 모듈러 모노리스는 단일 실행 파일로 뜬다. 각 컨텍스트의 infrastructure를 모두 조립하고 `@SpringBootApplication`을 두는 *실행 전용* 모듈이 필요하다. 도메인/애플리케이션 모듈은 실행 책임을 갖지 않는다(todo.md 초안에 없던 모듈).
+
+---
+
+## 2. 헥사고날 레이어 (컨텍스트당 3모듈)
+
+| 모듈 | 책임 | 의존 가능 대상 | 프레임워크 |
+|------|------|----------------|-----------|
+| `*-domain` | Aggregate · VO · 도메인 이벤트 · 불변식 · 도메인 서비스 | **없음** (순수 Java) | ❌ Spring/JPA 금지 |
+| `*-application` | 유스케이스(application service), **포트**(in/out interface), 트랜잭션 경계 | 같은 컨텍스트 domain, shared | ⚠️ 최소 (트랜잭션 추상만) |
+| `*-infrastructure` | 어댑터 — JPA 영속화, Kafka 컨슈머/프로듀서, REST 컨트롤러, Outbox/Inbox 구현 | 같은 컨텍스트 application·domain, shared | ✅ Spring Boot·JPA·Kafka |
+
+**의존 방향 (안쪽으로만)**:
+```
+infrastructure ──▶ application ──▶ domain
+        └──────────────────────────▶ domain (어댑터가 도메인 직접 참조 가능)
+domain ──▶ (아무것도 의존하지 않음)
+```
+
+포트 패턴:
+- **인바운드 포트** = 유스케이스 interface (application). REST 컨트롤러·Kafka 컨슈머(infra)가 호출.
+- **아웃바운드 포트** = repository·event publisher interface (application). JPA·Kafka 어댑터(infra)가 구현.
+
+---
+
+## 3. 모듈 간 통신 규칙 (핵심 불변식)
+
+| 규칙 | 내용 |
+|------|------|
+| **C-1** | 바운디드 컨텍스트 간 **컴파일 의존 금지**. `order`는 `payment`·`inventory` 패키지를 import MUST NOT. |
+| **C-2** | 컨텍스트 간 통신은 **Kafka 통합 이벤트 only** (직접 메서드 호출·공유 DB 테이블 금지). |
+| **C-3** | 통합 이벤트 계약은 **`shared`에만** 정의한다. 각 컨텍스트는 `shared`를 의존해 발행·구독. |
+| **C-4** | **도메인 이벤트 ≠ 통합 이벤트**. domain은 내부 도메인 이벤트만 안다. infrastructure가 도메인 이벤트 → `shared`의 통합 이벤트로 변환해 Outbox 발행한다. | 
+
+> C-4가 중요한 학습 포인트: 도메인을 Kafka 메시지 포맷(통합 이벤트)으로부터 격리한다. 도메인은 "주문이 확정됐다"는 사실만 알고, 그게 어떤 JSON으로 어떤 토픽에 나가는지는 모른다.
+
+---
+
+## 4. shared 모듈
+
+- **포함**: 통합 이벤트 계약(`OrderPlaced`, `PaymentCompleted`, `StockShortage` … record/DTO), 이벤트 공통 메타(`eventId`, `occurredAt`, `orderId` — 정책 PI-4), 토픽 이름 상수.
+- **불포함**: 비즈니스 로직, Aggregate, 컨텍스트별 정책. (shared가 비대해지면 "분산된 모놀리스"가 됨 — 계약만 둔다.)
+
+---
+
+## 5. 코레오그래피 구성요소의 위치 (ADR-0001 반영)
+
+| 구성요소 | 위치 | 정책 |
+|----------|------|------|
+| 이벤트 컨슈머 (+ Inbox 중복제거) | 각 컨텍스트 `*-infrastructure` | PI-5 |
+| 이벤트 프로듀서 (+ Outbox) | 각 컨텍스트 `*-infrastructure` | PI-6 |
+| **Order 데드라인 체커** (타임아웃 감지) | `order-infrastructure` | PT-1 → ADR-0003 |
+| **주문 진행도 추적 / 상태 read model** | `order-application` + `order-infrastructure` | PC-4 → ADR-0004 |
+| 보상 반응 핸들러 (실패 이벤트 구독) | 각 컨텍스트 `*-infrastructure` → application 호출 | PB-* |
+
+> 중앙 오케스트레이터가 없으므로 "주문이 어디까지 진행됐나"는 order 컨텍스트가 수신 이벤트로 자체 추적한다(§ADR-0001 §5 주의).
+
+---
+
+## 6. 경계 강제 — ArchUnit 규칙
+
+`bootstrap` 또는 별도 `architecture-test` 소스셋에서 검증:
+
+- **A-1** `*-domain`은 Spring·JPA·Kafka·jakarta.persistence를 의존 MUST NOT.
+- **A-2** `*-domain`은 같은 컨텍스트의 application·infrastructure를 의존 MUST NOT.
+- **A-3** `*-application`은 infrastructure를 의존 MUST NOT.
+- **A-4** 컨텍스트 간 패키지 의존 MUST NOT (`..order..` → `..payment..` 금지) (C-1).
+- **A-5** 컨텍스트 간 유일한 공유는 `..shared..` 통합 이벤트뿐.
+- **A-6** 레이어 의존 방향: infrastructure → application → domain (역방향 금지).
+
+패키지 루트: `com.flab.orderplatform.{context}.{layer}` (예: `com.flab.orderplatform.order.domain`).
+
+---
+
+## 7. 빌드 (Gradle 멀티모듈)
+
+- 루트 `settings.gradle(.kts)`에 전 모듈 등록, 루트 `build.gradle`에 공통 플러그인/BOM.
+- Spring Boot 플러그인(`bootJar`)은 **`bootstrap`에만** 적용. 나머지는 `java-library`(plain jar).
+- 버전 카탈로그(`gradle/libs.versions.toml`)로 의존성 버전 중앙 관리.
+
+---
+
+## 8. 후속 ADR 연결
+
+- **ADR-0002**: 재고 동시성 기법 → `inventory-infrastructure` 영속화 어댑터 구현 방식
+- **ADR-0003**: Order 데드라인 체커 메커니즘 → `order-infrastructure`
+- **ADR-0004**: 스키마 분리 · Outbox/Inbox 테이블 · 주문 상태 read model
