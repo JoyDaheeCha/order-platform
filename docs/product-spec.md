@@ -102,7 +102,9 @@
 - [x] Saga 방식: 오케스트레이션 vs 코레오그래피 → **코레오그래피 채택** ([ADR-0001](./adr/0001-saga-orchestration-vs-choreography.md), Accepted)
 - [x] `PAID`와 `CONFIRMED` 분리 여부 → **분리 확정** ([policy.md](./policy.md) §4 PS-1: `PENDING→PAID→CONFIRMED` 불변식). 결제 성공 후 재고 부족 시 환불 보상(E2)·`CONFIRMED` 전 사용자 취소(E6)를 구분하려면 PAID 상태가 load-bearing 하다.
 - [x] 가짜 PG의 실패 주입 방식 → **결정론적 주입 확정** ([policy.md](./policy.md) §5 PP-3: 결제 금액 끝자리가 `7`이면 `PaymentFailed`)
-- [ ] 재고 동시성: 비관적 락 vs 원자적 UPDATE vs Redis → **ADR-0002**에서 결정 (유일하게 남은 미결)
+- [x] 재고 동시성 → **확정** ([ADR-0002](./adr/0002-inventory-concurrency.md), Accepted): 비관적 락 / 낙관적 락 / 원자적 UPDATE / Redis 4종을 `StockDeducer` 포트 어댑터로 비교 구현, 운영 기본은 원자적 UPDATE(B)
+
+> §7의 모든 질문이 해소됐다. 후속 설계 결정(인바운드 응답 모델·멱등키 저장)은 ADR-0006에서 다룬다.
 
 ---
 
