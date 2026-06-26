@@ -7,20 +7,20 @@
 
 dependencies {
     // 컨텍스트 간 유일한 공유 = shared 통합 이벤트 계약(C-3).
-    implementation(project(":shared"))
+    implementation project(":shared")
 
     // BOM(platform): 아래 의존성 버전을 Spring Boot 가 일괄 관리.
-    implementation(platform(libs.spring.boot.dependencies))
+    implementation platform(libs.spring.boot.dependencies)
 
     // application 계층: 트랜잭션 추상(@Transactional)만.
-    implementation(libs.spring.tx)
+    implementation libs.spring.tx
 
     // infrastructure 계층: 인바운드(REST) · 아웃바운드(JPA·Kafka) 어댑터.
-    implementation(libs.spring.boot.starter.web)
-    implementation(libs.spring.boot.starter.data.jpa)
-    implementation(libs.spring.kafka)
-    runtimeOnly(libs.mysql.connector)
+    implementation libs.spring.boot.starter.web
+    implementation libs.spring.boot.starter.data.jpa
+    implementation libs.spring.kafka
+    runtimeOnly libs.mysql.connector
 
     // 재고 차감 동시성 제어(분산 락 등) 후보 — ADR-0002 에서 기법 확정 예정.
-    implementation(libs.spring.boot.starter.data.redis)
+    implementation libs.spring.boot.starter.data.redis
 }
