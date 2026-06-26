@@ -105,7 +105,7 @@ domain ──▶ (아무것도 의존하지 않음)
 
 ## 7. 빌드 (Gradle 멀티모듈)
 
-- 루트 `settings.gradle.kts`에 5개 모듈(`shared`·`order`·`payment`·`inventory`·`bootstrap`) 등록, 루트 `build.gradle.kts`에 공통 규약(toolchain·BOM·테스트).
+- 루트 `settings.gradle`에 5개 모듈(`shared`·`order`·`payment`·`inventory`·`bootstrap`) 등록, 루트 `build.gradle`에 공통 규약(toolchain·BOM·테스트). 빌드 스크립트는 **Groovy DSL**(`b6904b2`에서 Kotlin DSL → Groovy 전환).
 - Spring Boot 플러그인(`bootJar`)은 **`bootstrap`에만** 적용. 나머지는 `java-library`(plain jar).
 - 버전 카탈로그(`gradle/libs.versions.toml`)로 의존성 버전 중앙 관리.
 - 컴파일 toolchain은 **Java 21** 고정(foojay 자동 프로비저닝). Gradle 데몬은 JDK 25 비호환 이슈로 `gradle/gradle-daemon-jvm.properties`에서 **JDK 17**로 고정.
