@@ -102,7 +102,7 @@ void handle(orderId) {
     if (p.status != PENDING) return;        // ★ 멱등 가드 — 이미 종료/이전 스캔 처리분 no-op
     p.markTimedOut();                        // PENDING → CANCELLING
     repo.save(p);                            // 낙관적 락(version)으로 경합 시 한쪽만 성공
-    outbox.append(new OrderTimedOut(orderId)); // 통합 이벤트(C-4) → 보상 흐름 개시
+    outbox.append(new OrderCancellationRequested(orderId, TIMEOUT)); // 보상-개시 이벤트(ADR-0007)
 }
 ```
 
@@ -119,14 +119,14 @@ void handle(orderId) {
 | 전체 사가 데드라인 N | `order.saga.deadline` | 30s | 정상 mock 흐름 대비 충분히 김 |
 | 스위퍼 주기 | `order.saga.sweep-interval` | 5s | 검출 지연 = 최대 1주기(정밀도 = 주기) |
 
-- 값을 코드에 박지 않고 `@ConfigurationProperties`로 뺀다. **테스트는 짧은 값(`deadline=2s, interval=500ms`)으로 오버라이드**해, "결제 이벤트를 일부러 안 보내고 → 곧 `OrderTimedOut`·`CANCELLED` 확인" 경로를 수 초 안에 재현한다.
+- 값을 코드에 박지 않고 `@ConfigurationProperties`로 뺀다. **테스트는 짧은 값(`deadline=2s, interval=500ms`)으로 오버라이드**해, "결제 이벤트를 일부러 안 보내고 → 곧 `OrderCancellationRequested(TIMEOUT)`·`CANCELLED` 확인" 경로를 수 초 안에 재현한다.
 
 ### 타임아웃 → 보상 연결
 
-`OrderTimedOut` 발행 후 보상(PB)으로 흐른다. 진행분만 역순 보상(PB-1), 각 보상은 멱등(PB-2):
+`OrderCancellationRequested(reason=TIMEOUT)` 발행 후 보상(PB)으로 흐른다(보상-개시 이벤트, ADR-0007). 진행분만 역순 보상(PB-1), 각 보상은 멱등(PB-2):
 
 ```
-OrderTimedOut ─▶ [Payment] 결제됐으면 RefundPayment
+OrderCancellationRequested(TIMEOUT) ─▶ [Payment] 결제됐으면 RefundPayment
               ─▶ [Inventory] 차감됐으면 RestoreStock
               ─▶ [Order] status = CANCELLED
 ```

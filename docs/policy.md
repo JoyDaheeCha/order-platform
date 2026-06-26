@@ -21,7 +21,7 @@
 
 | Aggregate | 받는 커맨드 (Command) | 내는 이벤트 (Event) |
 |-----------|----------------------|---------------------|
-| **Order** | `PlaceOrder`, `CancelOrder` | `OrderPlaced`, `OrderConfirmed`, `OrderCancelled` |
+| **Order** | `PlaceOrder`, `CancelOrder` | `OrderPlaced`, `OrderConfirmed`, `OrderCancellationRequested`, `OrderCancelled` |
 | **Payment** | `ProcessPayment`, `RefundPayment` | `PaymentCompleted`, `PaymentFailed`, `PaymentRefunded` |
 | **Inventory** | `DeductStock`, `RestoreStock` | `StockDeducted`, `StockShortage`, `StockRestored` |
 
@@ -31,8 +31,10 @@ PlaceOrder → OrderPlaced ─▶ ProcessPayment → PaymentCompleted ─▶ Ded
 ```
 보상 흐름(역순):
 ```
-StockShortage ─▶ RefundPayment → PaymentRefunded ─▶ OrderCancelled
+[하류 실패]   StockShortage ─▶ RefundPayment → PaymentRefunded ─▶ OrderCancelled
+[Order 개시]  OrderCancellationRequested(reason) ─▶ 진행분 보상(RefundPayment/RestoreStock) ─▶ OrderCancelled
 ```
+> `OrderCancellationRequested`는 **Order가 먼저 취소를 선언**하는 경로(사용자 취소 PC-3 / 타임아웃 PT-1)의 보상-개시 이벤트다(`reason` = USER_CANCEL | TIMEOUT). 하류 실패(E1·E2)는 실패 이벤트가 직접 보상을 트리거하므로 이 이벤트를 쓰지 않는다. 계약 상세는 [ADR-0007](./adr/0007-integration-event-contract.md).
 
 > Saga는 **코레오그래피**로 구현한다([ADR-0001](./adr/0001-saga-orchestration-vs-choreography.md), Accepted). 중앙 오케스트레이터 없이 각 컨텍스트가 이벤트를 구독해 자율 반응한다. 단, 커맨드(`ProcessPayment` 등)는 *외부 메시지가 아니라* 해당 이벤트 수신 시 컨텍스트 내부에서 실행되는 동작으로 본다. (외부 커맨드는 구매자발 `PlaceOrder`·`CancelOrder`뿐) 이 정책서의 규칙은 구현 방식과 무관하게 지켜진다.
 
