@@ -101,7 +101,7 @@ StockShortage ─▶ RefundPayment → PaymentRefunded ─▶ OrderCancelled
 | **PV-1** | 가용재고 = **물리 재고 수량**. 별도 "예약(reservation)" 개념을 두지 않는다. | 단순화. 예약 모델은 향후 확장 학습 과제. |
 | **PV-2** | 재고 차감은 **`PaymentCompleted` 수신 후**(`PAID` 단계) 시도한다. | 결제 확정 후 차감 → 결제 후 재고부족(E2)이 *진짜 보상*을 만든다. |
 | **PV-3** | 차감은 주문 단위 **all-or-nothing**. 한 라인이라도 부족하면 전체 차감을 하지 않고 `StockShortage`. | 부분 주문 성립은 Out of scope. 전부 되거나 전부 보상. |
-| **PV-4** | 동시 차감 시 **오버셀 MUST NOT**(가용재고 미만으로 내려갈 수 없다). | 동시성 학습의 핵심 불변식. *구체 기법*(비관적 락 / 원자적 UPDATE / Redis)은 [ADR-0002 예정]. |
+| **PV-4** | 동시 차감 시 **오버셀 MUST NOT**(가용재고 미만으로 내려갈 수 없다). | 동시성 학습의 핵심 불변식. *구체 기법*(비관적 락 / 낙관적 락 / 원자적 UPDATE / Redis 4종을 포트 어댑터로 비교 구현, 기본 B)은 [ADR-0002](./adr/0002-inventory-concurrency.md) Accepted. |
 | **PV-5** | 보상 복구(`RestoreStock`)는 **차감했던 수량을 정확히 원복**한다. 차감 전 실패면 복구 불필요(no-op). | 보상의 정확성·멱등성(PI-5와 연계). |
 
 ---
@@ -144,7 +144,7 @@ StockShortage ─▶ RefundPayment → PaymentRefunded ─▶ OrderCancelled
 > 아래는 "규칙"이 아니라 "구현 방식"이라 정책서가 아닌 ADR에서 결정한다. 어느 쪽을 택하든 위 정책은 동일하게 지켜진다.
 
 - **ADR-0001** ✅ Accepted: Saga — **코레오그래피** 채택 (오케스트레이션은 후속 학습)
-- **ADR-0002**: 재고 동시성 기법 — 비관적 락 vs 원자적 UPDATE vs Redis (PV-4 충족 전제)
+- **ADR-0002** ✅ Accepted: 재고 동시성 기법 — 비관적 락 / 낙관적 락 / 원자적 UPDATE / Redis 4종을 `StockDeducer` 포트 어댑터로 비교 구현(기본 B), 공통 동시성 테스트로 검증 (PV-4 충족)
 - **ADR-0003**: Order 데드라인 체커 메커니즘(지연 메시지 vs 스케줄러), 재시도·DLQ 구성 (PT 충족 전제)
 - **ADR-0004** ✅ Accepted: 모듈별 스키마 분리(단일 인스턴스, 컨텍스트별 DataSource), Outbox/Inbox 테이블, 주문 상태 read model (PI-5·PI-6 충족)
 

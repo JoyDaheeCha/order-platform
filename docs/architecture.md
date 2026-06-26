@@ -114,7 +114,7 @@ domain ──▶ (아무것도 의존하지 않음)
 
 ## 8. 후속 ADR 연결
 
-- **ADR-0002**: 재고 동시성 기법 → `inventory.infrastructure` 영속화 어댑터 구현 방식
+- **ADR-0002** ✅ Accepted: [재고 동시성 기법](./adr/0002-inventory-concurrency.md) → `inventory.infrastructure`에 `StockDeducer` 포트 + 4개 어댑터(비관/낙관/원자/Redis), 기본 B
 - **ADR-0003**: Order 데드라인 체커 메커니즘 → `order.infrastructure`
 - **ADR-0004** ✅ Accepted: [스키마 분리 · Outbox/Inbox 테이블 · 주문 상태 read model](./adr/0004-schema-separation-outbox-readmodel.md) — 컨텍스트별 스키마(단일 인스턴스) + 컨텍스트별 DataSource(B-2)
 - **ADR-0005** ✅ Accepted: [헥사고날 레이어 — 별도 모듈 vs 패키지](./adr/0005-hexagonal-layer-as-package-vs-module.md) — 레이어는 패키지로(컨텍스트당 단일 모듈, 총 5모듈). §1·§2·§6 구조의 결정 근거
