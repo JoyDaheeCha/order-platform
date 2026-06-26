@@ -8,6 +8,12 @@ out/
 ### oh-my-claudecode ###
 .omc/
 
+### Gradle ###
+.gradle/
+**/build/
+# wrapper jar 는 커밋한다(팀원이 동일 Gradle 버전을 받게 하려면 필요)
+!gradle/wrapper/gradle-wrapper.jar
+
 ### Eclipse ###
 .apt_generated
 .classpath

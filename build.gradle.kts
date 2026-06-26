@@ -1,0 +1,50 @@
+// build.gradle.kts (루트) — 모든 모듈에 공통으로 적용할 규약(convention)을 한 곳에 모은다.
+// 모듈별 고유 의존성은 각 모듈의 build.gradle.kts 에서 선언한다.
+
+plugins {
+    // 루트에서는 bootstrap 외 모듈에 적용되면 안 되므로 apply false 로 "버전만 등록"한다.
+    alias(libs.plugins.spring.boot) apply false
+}
+
+// allprojects: 루트 포함 전체. group/version 같은 좌표는 모두 동일하게 둔다.
+allprojects {
+    group = "com.flab.orderplatform"
+    version = "0.0.1-SNAPSHOT"
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+// subprojects: 루트를 제외한 모든 모듈. 단, order/payment/inventory 같은 "빈 컨테이너" 프로젝트는
+// 소스가 없으므로 java 플러그인을 적용해도 무해하다. 모든 실제 모듈은 java-library 로 통일한다.
+subprojects {
+    // 컨테이너 프로젝트(:order 등)에는 build.gradle.kts 가 없어 src 도 없다 → 컴파일 대상 0개로 무해.
+    apply(plugin = "java-library")
+
+    // 버전 카탈로그는 plugins{}/dependencies{} DSL 밖에서는 직접 못 쓰므로 핸들을 꺼내 쓴다.
+    val libs = rootProject.libs
+
+    extensions.configure<JavaPluginExtension> {
+        // ★ 핵심: 로컬 JDK 버전(17/19/25)과 무관하게 "Java 21"로 컴파일/실행하도록 toolchain 고정.
+        //   설치돼 있지 않으면 settings 의 foojay 플러그인이 자동 다운로드한다.
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
+    }
+
+    dependencies {
+        // 모든 모듈에 JUnit 5 테스트 환경 공통 제공.
+        "testImplementation"(platform(libs.spring.boot.dependencies))
+        "testImplementation"("org.junit.jupiter:junit-jupiter")
+        "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
+    }
+
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
+    }
+}
+
+// 버전 카탈로그(libs)를 subprojects 블록 안에서 타입 안전하게 참조하기 위한 확장 프로퍼티.
+val org.gradle.api.Project.libs: org.gradle.accessors.dm.LibrariesForLibs
+    get() = extensions.getByType()
