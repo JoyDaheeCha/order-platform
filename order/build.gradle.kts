@@ -1,0 +1,25 @@
+// order — Order 바운디드 컨텍스트(단일 모듈). 헥사고날 3계층을 *패키지*로 둔다.
+//   · com.flab.orderplatform.order.domain         — 순수 도메인 (프레임워크 의존 0)
+//   · com.flab.orderplatform.order.application     — 유스케이스 + 포트(in/out)
+//   · com.flab.orderplatform.order.infrastructure  — 어댑터(JPA·Kafka·REST·Outbox/Inbox)
+//
+// 레이어를 모듈로 쪼개지 않으므로, 도메인 순수성(A-1)·레이어 방향(A-3·A-6)은
+// 컴파일이 아니라 ArchUnit(ModuleBoundaryTest, 패키지 기준)이 강제한다.
+// 단, 컨텍스트 간 격리(C-1)는 모듈 경계로 계속 컴파일 강제된다: order 는 payment/inventory 를 의존하지 않는다.
+
+dependencies {
+    // 컨텍스트 간 유일한 공유 = shared 통합 이벤트 계약(C-3). application 포트가 이를 발행 인자로 받는다.
+    implementation(project(":shared"))
+
+    // BOM(platform): 아래 의존성 버전을 Spring Boot 가 일괄 관리(개별 버전 명시 X).
+    implementation(platform(libs.spring.boot.dependencies))
+
+    // application 계층: 트랜잭션 추상(@Transactional)만.
+    implementation(libs.spring.tx)
+
+    // infrastructure 계층: 인바운드(REST) · 아웃바운드(JPA·Kafka) 어댑터.
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.spring.kafka)
+    runtimeOnly(libs.mysql.connector)
+}

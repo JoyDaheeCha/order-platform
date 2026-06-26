@@ -9,24 +9,15 @@ plugins {
 
 rootProject.name = "order-platform"
 
-// --- 바운디드 컨텍스트별 3모듈(헥사고날) + 공통 + 실행 모듈 ---
-// 주의: order / payment / inventory 디렉토리 자체는 "모듈"이 아니라 하위 모듈을 담는 컨테이너다.
-//       (:order:order-domain 처럼 leaf만 include 하면 :order 는 빈 컨테이너 프로젝트로 자동 생성됨)
+// --- 바운디드 컨텍스트 3 + 공통(shared) + 실행(bootstrap) = 총 5개 모듈 ---
+// 헥사고날 3계층(domain·application·infrastructure)은 각 컨텍스트 모듈 *내부 패키지*로 둔다(별도 모듈 X).
+//   · 컨텍스트 간 격리(C-1): 모듈 경계가 컴파일타임에 강제 — order 는 payment/inventory 를 의존 못 함.
+//   · 레이어 규칙(A-1·A-3·A-6): ArchUnit(패키지 기준, bootstrap 테스트)이 강제.
 
 include(
     ":shared",
-
-    ":order:order-domain",
-    ":order:order-application",
-    ":order:order-infrastructure",
-
-    ":payment:payment-domain",
-    ":payment:payment-application",
-    ":payment:payment-infrastructure",
-
-    ":inventory:inventory-domain",
-    ":inventory:inventory-application",
-    ":inventory:inventory-infrastructure",
-
+    ":order",
+    ":payment",
+    ":inventory",
     ":bootstrap",
 )

@@ -16,10 +16,9 @@ allprojects {
     }
 }
 
-// subprojects: 루트를 제외한 모든 모듈. 단, order/payment/inventory 같은 "빈 컨테이너" 프로젝트는
-// 소스가 없으므로 java 플러그인을 적용해도 무해하다. 모든 실제 모듈은 java-library 로 통일한다.
+// subprojects: 루트를 제외한 모든 모듈(shared·order·payment·inventory·bootstrap). java-library 로 통일.
+//   (bootstrap 은 여기에 더해 자신의 build.gradle.kts 에서 spring-boot 플러그인을 추가 적용한다.)
 subprojects {
-    // 컨테이너 프로젝트(:order 등)에는 build.gradle.kts 가 없어 src 도 없다 → 컴파일 대상 0개로 무해.
     apply(plugin = "java-library")
 
     // 버전 카탈로그는 plugins{}/dependencies{} DSL 밖에서는 직접 못 쓰므로 핸들을 꺼내 쓴다.
