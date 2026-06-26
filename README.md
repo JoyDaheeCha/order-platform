@@ -125,6 +125,7 @@ order-platform/
 
 ## 문서 맵
 
+- [docs/onboarding.md](docs/onboarding.md) — **처음 읽기** · 설계를 비유로 쉽게 풀어쓴 온보딩 문서
 - [docs/product-spec.md](docs/product-spec.md) — 기획서 (페르소나 · 스코프 · 유저 플로우)
 - [docs/policy.md](docs/policy.md) — 도메인 규칙 · 불변식 (정책서)
 - [docs/architecture.md](docs/architecture.md) — 모듈/패키지 물리 구조 · 의존 규칙
