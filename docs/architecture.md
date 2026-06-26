@@ -113,4 +113,4 @@ domain ──▶ (아무것도 의존하지 않음)
 
 - **ADR-0002**: 재고 동시성 기법 → `inventory-infrastructure` 영속화 어댑터 구현 방식
 - **ADR-0003**: Order 데드라인 체커 메커니즘 → `order-infrastructure`
-- **ADR-0004**: 스키마 분리 · Outbox/Inbox 테이블 · 주문 상태 read model
+- **ADR-0004** ✅ Accepted: [스키마 분리 · Outbox/Inbox 테이블 · 주문 상태 read model](./adr/0004-schema-separation-outbox-readmodel.md) — 컨텍스트별 스키마(단일 인스턴스) + 컨텍스트별 DataSource(B-2)

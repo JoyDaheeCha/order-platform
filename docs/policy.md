@@ -146,7 +146,7 @@ StockShortage ─▶ RefundPayment → PaymentRefunded ─▶ OrderCancelled
 - **ADR-0001** ✅ Accepted: Saga — **코레오그래피** 채택 (오케스트레이션은 후속 학습)
 - **ADR-0002**: 재고 동시성 기법 — 비관적 락 vs 원자적 UPDATE vs Redis (PV-4 충족 전제)
 - **ADR-0003**: Order 데드라인 체커 메커니즘(지연 메시지 vs 스케줄러), 재시도·DLQ 구성 (PT 충족 전제)
-- **ADR-0004**: 모듈별 스키마 분리, Outbox/Inbox 테이블, 주문 상태 read model (PI-5·PI-6 충족 전제)
+- **ADR-0004** ✅ Accepted: 모듈별 스키마 분리(단일 인스턴스, 컨텍스트별 DataSource), Outbox/Inbox 테이블, 주문 상태 read model (PI-5·PI-6 충족)
 
 ---
 
