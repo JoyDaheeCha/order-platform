@@ -1,0 +1,29 @@
+# 단일 실행 모듈(bootstrap)의 설정. 모듈러 모노리스이므로 모든 컨텍스트가 이 설정을 공유한다.
+# (학습용 기본값 — 실제 DB/Kafka 기동 시 환경변수로 덮어쓸 것)
+spring:
+  application:
+    name: order-platform
+
+  # MySQL — 단일 인스턴스, 모듈별 스키마 분리는 ADR-0004 에서 확정. (todo.md 설계 원칙)
+  datasource:
+    url: jdbc:mysql://localhost:3306/order_platform?serverTimezone=UTC&characterEncoding=UTF-8
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # 운영 안전 기본값. 스키마는 마이그레이션 도구로 관리(학습 단계에선 수동).
+    open-in-view: false
+
+  # Kafka — 컨텍스트 간 통합 이벤트 채널(C-2). 직접 호출 대신 이 채널로만 통신.
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+server:
+  port: 8080
