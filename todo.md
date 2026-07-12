@@ -40,7 +40,12 @@
 
 ### Day 2 — 이벤트 계약 + 멀티 DataSource ⚠️ `Phase 0`
 **목표**: `shared` 계약이 컴파일되고, order 스키마에 저장이 된다.
-> 📚 **완료 후 자문**: ① 도메인 이벤트와 통합 이벤트를 왜 나누나(C-4)? 안 나누면 뭐가 문제인가? ② Envelope에서 payload가 메타(eventId 등)를 "모르게" 하면 뭐가 좋은가? ③ 스키마를 분리하면 컨텍스트 경계가 왜 *물리적으로* 강제되나(EntityManager에 안 보인다는 게 무슨 뜻)?
+> 📚 **완료 후 자문**: 
+> ① 도메인 이벤트와 통합 이벤트를 왜 나누나(C-4)? 안 나누면 뭐가 문제인가? 
+> ② Envelope에서 payload가 메타(eventId 등)를 "모르게" 하면 뭐가 좋은가? 
+> ③ 스키마를 분리하면 컨텍스트 경계가 왜 *물리적으로* 강제되나(EntityManager에 안 보인다는 게 무슨 뜻)?
+> > 📚 **멘토님 질문**:
+> ① 하나의 트랜잭션이 multi datasource를 거쳐야 한다면 어떻게 처리?
 - [ ] `EventEnvelope<T>` 봉투 record (ADR-0007 §4 옵션 c) — `eventId·occurredAt·orderId·eventType·payload`
 - [ ] payload record 10종 (ADR-0007 §3) + 토픽 상수 3개
 - [ ] `@Deprecated IntegrationEvent` **제거** (ADR-0007이 기각한 옵션 b)
@@ -81,7 +86,13 @@
 
 ### Day 6 — Outbox + read model → **첫 관통 완성** ⚠️ `Phase 1`
 **목표**: 주문이 요청부터 Kafka 발행·조회까지 관통한다. (Phase 1 完)
-> 📚 **완료 후 자문** ⭐: ① dual-write 문제가 정확히 무엇이고, 왜 "DB 저장 + Kafka 발행"을 트랜잭션 하나로 못 묶나? ② Outbox 패턴은 이걸 어떻게 푸나? 릴레이는 왜 별도로 도나? ③ 스키마 분리 때문에 왜 read model이 필요해지나?
+> 📚 **완료 후 자문** ⭐: 
+> ① dual-write 문제가 정확히 무엇이고, 왜 "DB 저장 + Kafka 발행"을 트랜잭션 하나로 못 묶나? 
+> ② Outbox 패턴은 이걸 어떻게 푸나? 릴레이는 왜 별도로 도나? 
+> ③ 스키마 분리 때문에 왜 read model이 필요해지나?
+> > 📚 **멘토님 질문** ⭐:
+> ① 실무에서 Kafka partition key 활용하는 방법
+> ② orderId를 partition key로 사용했을 때 이점
 - [ ] **Outbox 테이블 + 릴레이** — 상태변경과 이벤트 적재를 원자적으로(PI-6, dual-write 해결). 릴레이가 `EventEnvelope`로 포장해 `order.events` 발행
 - [ ] **read model** `order_saga_progress` + `GET /orders/{id}` 폴링 조회 (ADR-0004, PC-4)
 - **✅ 완료 기준**: `POST /orders` → `order.events` 토픽에 `OrderPlaced` 실제로 뜸 → `GET`으로 PENDING 조회 ✨ **첫 walking skeleton 관통**
@@ -160,7 +171,13 @@
 
 ### Day 15 — 재고 동시성 4어댑터 ⚠️ `Phase 5`
 **목표**: 포트 교체만으로 4가지 기법을 비교하고 오버셀 0을 증명한다.
-> 📚 **완료 후 자문** ⭐: ① race condition은 어떻게 오버셀을 만드나(read-modify-write)? ② 비관적 락·낙관적 락·원자적 UPDATE·Redis 각각의 트레이드오프는(블로킹/재시도폭주/데드락/이중소스)? ③ 도메인 무변경으로 어댑터만 갈아끼울 수 있다는 게 헥사고날의 무엇을 증명하나?
+> 📚 **완료 후 자문** ⭐: 
+> ① race condition은 어떻게 오버셀을 만드나(read-modify-write)? 
+> ② 비관적 락·낙관적 락·원자적 UPDATE·Redis 각각의 트레이드오프는(블로킹/재시도폭주/데드락/이중소스)? 
+> ③ 도메인 무변경으로 어댑터만 갈아끼울 수 있다는 게 헥사고날의 무엇을 증명하나?
+> > 📚 **멘토님께 받은 질문** ⭐:
+> ① DB의 isolation level 별로 어떤 이상 현상이 발생할 수 있는지?
+> ② isolation level 은 DB단에서 실제로 어떻게 구현이 되는지 ?
 - [ ] `StockDeducer` 포트 + 어댑터 — A 비관적 락 / **B 원자적 UPDATE(Day 8에 이미)** / C 낙관적 락(@Version+재시도) / D Redis
 - [ ] 프로파일/프로퍼티로 어댑터 교체 가능하게
 - [ ] **공통 동시성 테스트 하니스** — 마지막 재고 1개에 동시 주문 N건 → 정확히 1건 성공, 오버셀 0(PV-4)을 4어댑터 동일 테스트로
