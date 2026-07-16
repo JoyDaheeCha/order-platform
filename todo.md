@@ -32,10 +32,10 @@
 ### Day 1 — 로컬 인프라 + 빌드 그린 `Phase 0`
 **목표**: 앱이 뜨고, MySQL·Kafka·Redis에 붙는다.
 > 📚 **완료 후 자문**: ① Kafka의 토픽·파티션·컨슈머그룹은 각각 무엇을 결정하나? ② KRaft 모드는 주키퍼가 하던 어떤 역할을 대체했고, 왜 없애는 방향으로 갔나?
-- [ ] `docker-compose.yml` — MySQL 8 · Kafka(KRaft 단일 노드) · Redis (design.md §5: DB는 스키마로만 격리)
-- [ ] 5개 모듈 `build.gradle`에 필요한 starter 채우기 (libs.versions.toml 참조)
-- [ ] `application.yml` 기본 골격 + `local` 프로파일
-- [ ] `OrderPlatformApplication` 부팅 확인
+- [x] `docker-compose.yml` — MySQL 8 · Kafka(KRaft 단일 노드) · Redis (design.md §5: DB는 스키마로만 격리)
+- [x] 5개 모듈 `build.gradle`에 필요한 starter 채우기 (libs.versions.toml 참조)
+- [x] `application.yml` 기본 골격 + `local` 프로파일
+- [x] `OrderPlatformApplication` 부팅 확인
 - **✅ 완료 기준**: `docker compose up` + `./gradlew bootRun` 성공, 컨테이너 3개 연결 로그 확인
 
 ### Day 2 — 이벤트 계약 + 멀티 DataSource ⚠️ `Phase 0`
