@@ -26,6 +26,9 @@ mysql-connector = { module = "com.mysql:mysql-connector-j" }
 
 # --- bootstrap(실행 모듈) ---
 spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
+# /actuator/health 로 MySQL·Redis 연결을 실제로 확인한다. 부팅 성공만으로는 연결의 증거가 못 되기 때문.
+# (Redis 는 이걸 쓰는 코드가 생기기 전까진 커넥션을 열지 않는다 → 헬스 인디케이터가 대신 찔러본다)
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 
 # --- test ---
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
