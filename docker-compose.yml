@@ -11,10 +11,6 @@
 #   docker compose down -v    # 정지 + 볼륨 삭제 (스키마 init SQL을 다시 돌리고 싶을 때)
 
 services:
-  # ─────────────────────────────────────────────────────────────────────────
-  # MySQL — 주문·결제·재고 3개 스키마를 담는 단일 인스턴스.
-  # 스키마 생성은 ./docker/mysql/init/01-schemas.sql 이 담당한다.
-  # ─────────────────────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.0
     container_name: order-platform-mysql
@@ -24,33 +20,19 @@ services:
       MYSQL_ROOT_PASSWORD: root      # 학습용. 운영이라면 절대 이렇게 두지 않는다.
       TZ: UTC
     command:
-      # 애플리케이션은 UTC로 다루고 표시 시점에만 지역 시간대로 바꾸는 게 정석이라 서버도 UTC로 고정.
       - --default-time-zone=+00:00
-      # 이모지·다국어를 안전하게 담는 MySQL 8의 권장 조합.
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_0900_ai_ci
     volumes:
-      # /docker-entrypoint-initdb.d 안의 .sql 은 **데이터 디렉토리가 비어 있을 때만** 실행된다.
-      # 즉 한 번 뜬 뒤 이 파일을 고쳐도 반영되지 않는다 → `docker compose down -v` 로 볼륨을 지워야 한다.
       - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
       - mysql-data:/var/lib/mysql
     healthcheck:
-      # 포트가 열리는 것과 "쿼리를 받을 준비가 된 것"은 다르다. MySQL은 부팅에 수십 초가 걸릴 수 있어
-      # 포트만 보고 접속하면 실패한다 → 실제 핑으로 준비 완료를 판정한다.
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" -e 'SELECT 1' order_schema >/dev/null 2>&1"]
       interval: 5s
       timeout: 5s
       retries: 20
       start_period: 30s
 
-  # ─────────────────────────────────────────────────────────────────────────
-  # Kafka — 컨텍스트 간 유일한 통신 채널(C-2). KRaft 모드 단일 노드.
-  #
-  # 📚 Day 1 자문 ②: KRaft 는 주키퍼가 하던 **메타데이터 관리 + 컨트롤러 선출**을 Kafka 자신이 흡수한 것이다.
-  #    예전엔 "Kafka를 쓰려면 주키퍼 클러스터를 따로 운영"해야 했다 — 장애 지점도 둘, 운영 지식도 둘.
-  #    KRaft 는 그 메타데이터를 Kafka 내부 토픽(__cluster_metadata)에 Raft 합의로 저장한다.
-  #    그래서 아래 컨테이너 **하나가 broker 와 controller 를 겸직**한다(KAFKA_PROCESS_ROLES).
-  # ─────────────────────────────────────────────────────────────────────────
   kafka:
     image: apache/kafka:3.9.0
     container_name: order-platform-kafka
@@ -72,12 +54,9 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT   # 브로커끼리 쓰는 리스너(단일 노드라 실질 의미는 적다)
 
       # --- 단일 노드용 조정 ---
-      # 아래 셋은 기본값이 3이다(= 복제본 3개 요구). 브로커가 1대뿐인데 3을 요구하면
-      # 내부 토픽 생성 자체가 실패한다 → 1로 낮춘다. 운영에선 절대 1로 두지 않는다(내구성 상실).
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_NUM_PARTITIONS: 3   # 운영과 같은 파티션 수
 
       # 컨슈머 그룹이 뜰 때 "다른 멤버도 들어오나" 기다리는 시간. 개발 중엔 0이 편하다(리밸런스 즉시).
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
@@ -86,7 +65,6 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
-      # "브로커가 API 요청에 답하는가"를 직접 묻는다. 포트 열림만 보는 것보다 정확하다.
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
       interval: 5s
       timeout: 10s

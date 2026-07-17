@@ -3,7 +3,6 @@ spring:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/order_schema?characterEncoding=UTF-8&serverTimezone=UTC
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
-    driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     properties:
@@ -25,4 +24,6 @@ management:
 
 logging:
   level:
-    com.zaxxer.hikari: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+    com.zaxxer.hikari: DEBUG

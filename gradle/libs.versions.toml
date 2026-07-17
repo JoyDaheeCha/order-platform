@@ -27,6 +27,7 @@ spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-
 
 # --- test ---
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-kafka-test = { module = "org.springframework.kafka:spring-kafka-test" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
 [plugins]

@@ -94,6 +94,14 @@ order-platform/
 
 요구 사항: 로컬에 JDK 21이 없어도 Gradle toolchain(foojay)이 자동 프로비저닝한다.
 
+### 1. 인프라 기동 (앱 실행 전 **필수**)
+
+```bash
+docker compose up -d   # MySQL · Kafka · Redis 3종 기동
+docker compose ps      # 3개 모두 (healthy) 인지 확인
+```
+### 2. 빌드 & 실행
+
 ```bash
 # 전체 빌드 + 테스트 (ArchUnit 경계 검증 포함)
 ./gradlew build
@@ -104,8 +112,12 @@ order-platform/
 # 애플리케이션 실행 (실행 가능한 jar는 bootstrap 모듈에만)
 ./gradlew :bootstrap:bootRun
 ```
+### 인프라 정지
 
-> Kafka·MySQL·Redis 인프라는 별도 기동이 필요하다 (현재 골격 단계 — 구현 진행에 따라 docker-compose 등으로 보강 예정).
+```bash
+docker compose down      # 정지 (데이터 유지)
+docker compose down -v   # 정지 + 볼륨 삭제 (스키마 init SQL 을 다시 돌리고 싶을 때)
+```
 
 ---
 
