@@ -48,12 +48,16 @@
 > ① 하나의 트랜잭션이 multi datasource를 거쳐야 한다면 어떻게 처리?
 > > → 이 프로젝트의 답은 **"그 상황을 만들지 않는다"**(ADR-0004 B-2, 컨텍스트 간 단일 트랜잭션 금지). 다만 그 앞단까지 답할 수 있어야 한다 — XA/2PC는 왜 존재하고 왜 실무에서 기피되나(블로킹·코디네이터 SPOF), `ChainedTransactionManager`는 왜 원자성을 못 주는 반쪽인가(그래서 deprecated), 그래서 왜 Saga로 가나.
 - [x] `IntegrationEvent` **제거** (ADR-0007이 기각한 옵션 b) — 참조처 0, 순수 삭제
-- [ ] **DataSource 3세트**(ADR-0004 B-2) — 컨텍스트별 DataSource·EntityManagerFactory·TransactionManager + `@EnableJpaRepositories`
-- [ ] **자동설정 2개 제외** — `DataSource`·`HibernateJpa` AutoConfiguration. DataSource가 3개면 자동설정이 `@Primary` 하나만 배선하고 나머지를 방치해 "반쯤 동작하는" 상태를 만든다 → 전부 수동 배선해 미스터리를 0으로
-- [ ] **Hibernate 속성 직접 주입** — `hbm2ddl.auto=validate` · `SpringPhysicalNamingStrategy` · `SpringImplicitNamingStrategy` · `dialect`. 수동 EMF는 Boot가 넣어주던 이것들을 **하나도** 못 받는다(**`spring.jpa.*`는 수동 EMF에 적용되지 않음**)
-- [ ] **`application.yml`의 `spring.jpa.hibernate.ddl-auto` 정리** — 자동설정을 끄면 이 줄은 **죽은 설정**이 된다(살아 있는 척하며 아무 일도 안 함). `validate`라는 *정책*은 그대로지만 *선언 위치*가 수동 EMF 속성으로 옮겨간다
-- [ ] 더미 `PingEntity` + `docker/mysql/init/02-ping.sql` — **`validate` 정책은 D1~D16 내내 유지**. Day 4에서 `OrderEntity`·Flyway로 대체하며 삭제
-- [ ] **Testcontainers MySQL** — `docker/mysql/init` 디렉토리를 컨테이너 `/docker-entrypoint-initdb.d/`에 마운트해 **docker-compose와 스키마 초기화 출처를 하나로**. `@DynamicPropertySource`로 컨테이너 URL을 `datasource.*` 3개에 매핑
+- [x] **DataSource 3세트**(ADR-0004 B-2) — 컨텍스트별 DataSource·EntityManagerFactory·TransactionManager + `@EnableJpaRepositories`
+- [x] **자동설정 2개 제외** — `DataSource`·`HibernateJpa` AutoConfiguration. DataSource가 3개면 자동설정이 `@Primary` 하나만 배선하고 나머지를 방치해 "반쯤 동작하는" 상태를 만든다 → 전부 수동 배선해 미스터리를 0으로
+- [x] **Hibernate 속성 직접 주입** — 수동 EMF는 Boot가 넣어주던 걸 **하나도** 못 받는다(**`spring.jpa.*`는 수동 EMF에 적용되지 않음**). `HibernateProperties$Naming` 바이트코드로 확인한 Boot 3.4.1 실제 기본값:
+  - `hibernate.hbm2ddl.auto` = `validate`
+  - `hibernate.physical_naming_strategy` = `org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy` ⚠️ **Boot 3에서 `SpringPhysicalNamingStrategy`는 사라졌다** — Hibernate 자체 클래스로 대체됨(Boot 2 기억으로 쓰면 컴파일 실패)
+  - `hibernate.implicit_naming_strategy` = `org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy` (이쪽은 Spring 것이 유지)
+  - `hibernate.dialect` = **설정하지 않음**. Boot 도 `spring.jpa.database-platform` 이 없으면 안 넣고 Hibernate 의 JDBC 메타데이터 자동 감지에 맡긴다(위 바이트코드가 적용하는 건 네이밍 전략 2개뿐). 서버 실제 버전을 읽어 버전별 SQL 을 쓰므로 그편이 낫다
+- [x] **`application.yml`의 `spring.jpa.hibernate.ddl-auto` 정리** — 자동설정을 끄면 이 줄은 **죽은 설정**이 된다(살아 있는 척하며 아무 일도 안 함). `validate`라는 *정책*은 그대로지만 *선언 위치*가 수동 EMF 속성으로 옮겨간다
+- [x] 더미 `PingEntity` + `docker/mysql/init/02-ping.sql` — **`validate` 정책은 D1~D16 내내 유지**. Day 4에서 `OrderEntity`·Flyway로 대체하며 삭제
+- [x] **Testcontainers MySQL** — `docker/mysql/init` 디렉토리를 컨테이너 `/docker-entrypoint-initdb.d/`에 마운트해 **docker-compose와 스키마 초기화 출처를 하나로**. `@DynamicPropertySource`로 컨테이너 URL을 `datasource.*` 3개에 매핑
 - **✅ 완료 기준**: ① 더미 엔티티가 `order` 스키마에 저장됨 ② **`payment`의 EntityManager Metamodel에 order 엔티티가 없음**을 테스트로 단언 ← ADR-0004가 B-2를 고른 근거 그 자체
 > ⚠️ 하루 리스크의 대부분은 수동 EMF 배선. **대표 함정**: 자동설정을 끄면 Boot가 넣어주던 네이밍 전략이 사라져, SQL이 만든 `some_field`와 Hibernate가 기대하는 `someField`가 어긋나 `validate`가 부팅을 깬다(로그가 원인을 안 알려줌).
 > 📌 **`ddl-auto: create`를 쓰지 않는 이유** — `create`는 자기가 만든 테이블을 자기가 읽으니 네이밍이 틀려도 자기들끼리 정합해 **조용히 통과**하고, 함정을 Day 4(Flyway가 snake_case SQL을 들고 오는 날)로 미룬다. `validate` + 외부가 쓴 SQL이면 **오늘, 더미 테이블 하나 놓고 즉시** 터진다. 가장 싼 순간에 앞당겨 터뜨리는 쪽이 낫다. 설정도 안 흔들린다.
@@ -61,6 +65,11 @@
 > 📌 **결정 기록(ADR 없음)**: 검증은 Testcontainers, DDL은 Flyway — 단, **Flyway는 Day 4부터**. 오늘 넣으면 첫 작품이 "Day 4에 지울 더미 테이블의 생성 기록"이라 의식(ceremony)일 뿐이고, 가장 위험한 날에 움직이는 부품만 늘린다. 운영 DB도 다른 개발자도 배포도 없는 지금 Flyway가 푸는 문제는 **인스턴스가 0개**다. 미루는 비용도 0 — Day 4 시점 스키마는 새로 만드는 테이블 하나뿐이라 뜰 `baseline`이 없다. 그동안 더미 테이블 DDL은 이미 `01-schemas.sql`이 사는 `docker/mysql/init`에 얹는다(프로젝트의 진짜 DDL은 D4부터 전부 Flyway 소유).
 > 📌 자문 ③의 답이 **1번(의존성)에서 이미 나온다**: `@ServiceConnection`(Testcontainers 표준 편의)을 못 쓴다. 그건 `spring.datasource.*`에 값을 꽂아주는데 그걸 읽는 주체가 자동설정이고, 우리가 그걸 껐기 때문이다. **자동설정만 꺼지는 게 아니라 그 위에 얹혀 있던 생태계의 편의까지 같이 꺼진다.**
 > 📌 **이벤트 계약은 Day 6으로 이동.** 첫 사용처(Outbox 릴레이가 `EventEnvelope`로 포장해 발행)가 거기다. 한 사람이 직렬로 진행하는 프로젝트라 계약을 미리 못 박아 풀리는 병렬 작업이 없고, 발행자 없이 쓴 payload는 첫 소비자가 생길 때 어차피 고쳐 쓰게 된다.
+>
+> **— 실제로 겪은 것 (완료 후 기록) —**
+> 🔥 **Testcontainers 1.20.4 → 1.21.4 로 BOM 을 덮어썼다.** 증상은 `Could not find a valid Docker environment` 였지만 소켓은 멀쩡했다(curl 로 `/info` 200). 진짜 원인: Boot 3.4.1 이 핀한 1.20.4 의 docker-java 3.4.0 이 **API 1.40 미만**을 요청하는데 로컬 Docker Engine 29 는 `MinAPIVersion=1.40` 이라 **400(빈 스텁)** 으로 거절 → Testcontainers 가 "Docker 없음"으로 오인. `curl /v1.39/info` 가 같은 400 본문을 뱉어 확정했다. **에러 메시지가 원인을 가리키지 않은 사례** — BOM 의 "검증된 조합"도 런타임 환경이 라이브러리보다 새로우면 깨진다.
+> 🔥 **네이밍 전략이 진짜 load-bearing 인지 변이 테스트로 확인했다.** `physical_naming_strategy` 만 빼니 `SchemaManagementException`(AbstractSchemaValidator)으로 부팅 실패 → 원복하니 통과. 예측대로 **오늘** 터졌다(`create` 였다면 조용히 통과하고 Day 4 로 미뤄졌을 것).
+> 🔥 **스모크 테스트가 `missing table [ping]` 으로 깨졌다** — MySQL init 스크립트는 최초 부팅에만 돌아서, 이미 떠 있던 compose 컨테이너엔 `02-ping.sql` 이 반영되지 않았다. 외부 컨테이너 의존이 원인이라 그 테스트도 Testcontainers 로 자립시켰다. **이제 전체 테스트가 `docker compose up` 없이 돈다.**
 
 ### Day 3 — Order 도메인 (순수 자바) `Phase 1`
 **목표**: 프레임워크 0 의존의 Order Aggregate가 불변식을 지킨다.

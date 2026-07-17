@@ -19,4 +19,20 @@ dependencies {
     // --- 경계 강제 테스트(A-1~A-6)는 전 모듈을 한 클래스패스에서 보는 bootstrap 에서 수행 ---
     testImplementation libs.spring.boot.starter.test
     testImplementation libs.archunit.junit5
+
+    // 컨텍스트 경계 검증(ADR-0004 B-2)도 3개 컨텍스트를 한 클래스패스에서 봐야 하므로 여기.
+    //   "payment 의 EntityManager 에 order 엔티티가 없다"는 비교 대상이 있어야 단언된다.
+    testImplementation libs.testcontainers.mysql
+    testImplementation libs.testcontainers.junit.jupiter
+
+    // 경계 테스트가 EntityManagerFactory·JpaRepository 타입을 직접 다룬다.
+    //   각 컨텍스트는 JPA 를 implementation 으로 감춰 소비자에게 노출하지 않으므로(캡슐화 유지)
+    //   bootstrap 테스트 클래스패스에만 따로 얹는다. 프로덕션 코드는 여전히 JPA 를 모른다.
+    testImplementation libs.spring.boot.starter.data.jpa
+}
+
+tasks.named("test") {
+    // Testcontainers 가 docker-compose 와 "같은" 초기화 스크립트를 쓰게 경로를 넘긴다.
+    //   상대 경로(../docker/...)는 실행 위치(Gradle/IDE)에 따라 깨지므로 절대 경로로 고정한다.
+    systemProperty "mysql.init.dir", rootProject.file("docker/mysql/init").absolutePath
 }

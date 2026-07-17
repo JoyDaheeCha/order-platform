@@ -5,13 +5,17 @@ spring:
   profiles:
     default: local
 
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    open-in-view: false
+# --- 여기에 `spring.datasource.*` / `spring.jpa.*` 가 없는 이유 (ADR-0004 B-2) ---
+# 둘 다 자동설정 전용 키인데, 우리는 그 자동설정을 껐다(OrderPlatformApplication 의 exclude).
+#   · `spring.datasource.*`  → DataSourceAutoConfiguration 이 읽는다. DataSource 가 3개면
+#                              @Primary 하나만 배선하고 나머지는 방치되므로 끄고 직접 배선한다.
+#                              대신 컨텍스트별 `datasource.{context}.*` 를 프로파일에서 정의한다.
+#   · `spring.jpa.*`         → HibernateJpaAutoConfiguration(JpaBaseConfiguration)이 읽는다.
+#                              수동 EntityManagerFactory 에는 적용되지 않으므로 여기 두면
+#                              "살아 있는 척하며 아무 일도 안 하는" 죽은 설정이 된다.
+#                              ddl-auto=validate·네이밍 전략·dialect 는 각 컨텍스트의
+#                              PersistenceConfig 가 EMF 에 직접 주입한다.
+# open-in-view 도 마찬가지 — 자동설정을 끄면 OSIV 인터셉터 자체가 등록되지 않아 기본이 "미적용"이다.
 
 management:
   endpoints:
