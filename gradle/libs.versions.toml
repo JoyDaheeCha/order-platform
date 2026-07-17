@@ -1,6 +1,5 @@
 # 버전 카탈로그 — 모든 모듈이 공유하는 의존성 버전의 단일 출처(Single Source of Truth).
-# 각 모듈 build.gradle.kts 에서는 버전 없이 `libs.xxx` 로만 참조한다. (architecture.md §7)
-
+# 각 모듈 build.gradle.kts 에서는 버전 없이 `libs.xxx` 로만 참조한다.
 [versions]
 # Spring Boot 3.x — BOM(spring-boot-dependencies)으로 하위 의존성 버전을 일괄 관리한다.
 springBoot = "3.4.1"
@@ -8,9 +7,6 @@ springBoot = "3.4.1"
 archunit = "1.3.0"
 
 [libraries]
-# --- BOM (platform) ---
-# 이 BOM을 platform()으로 가져오면 아래 starter들을 "버전 없이" 선언해도
-# Spring Boot가 검증한 호환 버전으로 자동 정렬된다.
 spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
 
 # --- application 계층이 쓰는 최소 의존성 ---
@@ -26,13 +22,11 @@ mysql-connector = { module = "com.mysql:mysql-connector-j" }
 
 # --- bootstrap(실행 모듈) ---
 spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
-# /actuator/health 로 MySQL·Redis 연결을 실제로 확인한다. 부팅 성공만으로는 연결의 증거가 못 되기 때문.
-# (Redis 는 이걸 쓰는 코드가 생기기 전까진 커넥션을 열지 않는다 → 헬스 인디케이터가 대신 찔러본다)
+# /actuator/health 로 MySQL·Redis 연결을 실제로 확인한다.
 spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 
 # --- test ---
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
-spring-kafka-test = { module = "org.springframework.kafka:spring-kafka-test" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
 [plugins]

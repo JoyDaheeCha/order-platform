@@ -1,26 +1,4 @@
-# application-local.yml — 로컬 개발 환경(docker-compose.yml)에 붙기 위한 접속 정보.
-#
-# 이 파일의 주소들은 docker-compose.yml 이 호스트로 열어준 포트와 1:1로 대응한다:
-#   MySQL 13306 · Kafka 19092(PLAINTEXT_HOST 리스너) · Redis 16379
-#
-# ⚠️ 왜 표준 포트가 아닌가: 이 맥에는 brew 로 설치된 Kafka(9092)·MariaDB(3306)가 상시 떠 있고,
-#   Kafka 9092 는 회사 프로젝트가 실제로 쓴다. 그래서 이 프로젝트가 1xxxx 대역으로 비켰다.
-#   (자세한 근거는 docker-compose.yml 상단 주석)
-#   → 이 포트들을 표준으로 되돌리면 **회사 Kafka·MariaDB 에 붙는다.** 절대 그냥 바꾸지 말 것.
-#
-# 값을 ${VAR:default} 로 쓴 이유는, 나중에 컨테이너 안에서 앱을 돌리게 되면
-# 코드 수정 없이 환경변수만 바꿔 kafka:9092 같은 내부 주소를 가리킬 수 있게 하기 위해서다.
-
 spring:
-  # ───────────────────────────────────────────────────────────────────────────
-  # MySQL — order_schema 를 가리킨다.
-  #
-  # ⚠️ Day 2 예정: ADR-0004 B-2 는 **컨텍스트별 DataSource 3세트**를 요구한다.
-  #    아래 단일 datasource 는 Day 1(부팅 확인)까지만 쓰는 임시 구성이다.
-  #    Day 2에 order/payment/inventory 각각의 DataSource·EntityManager·TransactionManager 로 쪼개면서
-  #    이 블록은 사라진다. 그때 "하나의 트랜잭션이 multi datasource 를 거치면?"이라는
-  #    멘토님 질문(todo.md Day 2)을 정면으로 만나게 된다.
-  # ───────────────────────────────────────────────────────────────────────────
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/order_schema?characterEncoding=UTF-8&serverTimezone=UTC
     username: ${DB_USERNAME:root}
@@ -30,25 +8,21 @@ spring:
   jpa:
     properties:
       hibernate:
-        # 학습 프로젝트에선 "무슨 SQL이 나갔나"를 보는 게 곧 공부다. 운영이면 끈다(로그 폭증).
         format_sql: true
 
-  # ───────────────────────────────────────────────────────────────────────────
-  # Kafka — 컨텍스트 간 유일한 통신 채널(C-2).
-  # localhost:19092 는 compose 의 PLAINTEXT_HOST 리스너다(컨테이너 내부용 kafka:9092 와 구분).
-  # 9092 로 적으면 회사 프로젝트용 brew Kafka 에 붙는다 — 토픽이 안 보이는 원인이 된다.
-  # 컨슈머/프로듀서 상세 설정(직렬화·컨슈머 그룹 등)은 실제 이벤트가 생기는 Day 2 이후에 채운다.
-  # ───────────────────────────────────────────────────────────────────────────
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:19092}
 
-  # Redis — Day 15 재고 동시성 어댑터 D 용(ADR-0002). 지금은 연결만 확인한다.
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:16379}
 
+management:
+  endpoint:
+    health:
+      show-details: always
+
 logging:
   level:
-    # 커넥션 풀이 언제 열리는지 보이면 Day 1 완료 확인이 쉬워진다.
     com.zaxxer.hikari: INFO
