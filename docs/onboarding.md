@@ -29,11 +29,12 @@
 Java 파일이 13개 있지만, 내용을 보면 거의 다 **빈 껍데기**다:
 
 ```
-- package-info.java × 9        ← 패키지 선언만 (빈 파일)
-- IntegrationEvent.java        ← shared 마커 인터페이스 수준
+- package-info.java × 10       ← 패키지 선언만 (빈 파일)
 - ModuleBoundaryTest.java      ← ArchUnit 경계 테스트 (골격 강제용)
-- OrderPlatformApplication.java ← @SpringBootApplication main
+- OrderPlatformApplication.java     ← @SpringBootApplication main
+- OrderPlatformApplicationTest.java ← 부팅 스모크 테스트
 ```
+> `shared`는 현재 `package-info.java`뿐이다 — 이벤트 계약(`EventEnvelope`·payload)은 첫 사용처인 Outbox 릴레이와 함께 Day 6에 들어온다(todo.md).
 
 즉 **5개 Gradle 모듈 + 패키지 구조 + 빌드 스크립트 + ArchUnit 테스트**까지는 깔렸지만,
 **실제 도메인/비즈니스 로직은 아직 한 줄도 없다.**

@@ -17,7 +17,7 @@
 - 리스크가 큰 날(멀티 DataSource, Outbox 릴레이, 동시성)은 별도 표시(⚠️)하고 여유를 뒀다.
 - **각 Day에 `📚 완료 후 자문`** = 그날 작업을 마치고 스스로에게 던지는 질문. **막힘없이 답할 수 있으면 그 개념을 체득한 것**이다(면접 회고에도 그대로 쓴다). 이 프로젝트의 산출물 절반은 코드가 아니라 이 답들이다(design.md §0).
 
-> 💡 **학습 흐름 한눈에**: Kafka 기초(D1) → 이벤트 계약·경계(D2) → DDD 도메인(D3~4) → 멱등성 생산자측(D5) → **Outbox/dual-write(D6)** → 코레오그래피 구독(D7~8) → **Inbox/effectively-once(D9)** → **Saga 보상(D11~12)** → 코레오그래피의 빚: 타임아웃(D13)·재시도/DLQ(D14) → **동시성 4기법 비교(D15)** → 아키텍처 검증(D16)
+> 💡 **학습 흐름 한눈에**: Kafka 기초(D1) → 컨텍스트 경계·스키마 분리(D2) → DDD 도메인(D3~4) → 멱등성 생산자측(D5) → **이벤트 계약·Outbox/dual-write(D6)** → 코레오그래피 구독(D7~8) → **Inbox/effectively-once(D9)** → **Saga 보상(D11~12)** → 코레오그래피의 빚: 타임아웃(D13)·재시도/DLQ(D14) → **동시성 4기법 비교(D15)** → 아키텍처 검증(D16)
 
 | 주차 | 산출물 |
 |------|--------|
@@ -38,20 +38,26 @@
 - [x] `OrderPlatformApplication` 부팅 확인
 - **✅ 완료 기준**: `docker compose up` + `./gradlew bootRun` 성공, 컨테이너 3개 연결 로그 확인
 
-### Day 2 — 이벤트 계약 + 멀티 DataSource ⚠️ `Phase 0`
-**목표**: `shared` 계약이 컴파일되고, order 스키마에 저장이 된다.
-> 📚 **완료 후 자문**: 
-> ① 도메인 이벤트와 통합 이벤트를 왜 나누나(C-4)? 안 나누면 뭐가 문제인가? 
-> ② Envelope에서 payload가 메타(eventId 등)를 "모르게" 하면 뭐가 좋은가? 
-> ③ 스키마를 분리하면 컨텍스트 경계가 왜 *물리적으로* 강제되나(EntityManager에 안 보인다는 게 무슨 뜻)?
+### Day 2 — 멀티 DataSource: 컨텍스트 경계를 *물리*로 강제 ⚠️ `Phase 0`
+**목표**: 컨텍스트마다 자기 스키마만 보는 DataSource가 서고, "타 스키마가 안 보인다"를 테스트로 증명한다.
+> 📚 **완료 후 자문**:
+> ① 스키마를 분리하면 컨텍스트 경계가 왜 *물리적으로* 강제되나(EntityManager에 안 보인다는 게 무슨 뜻)?
+> ② ADR-0004가 B-1(단일 DataSource + `@Table(schema=)`)을 기각한 이유는 — "규약으로 막는 것"과 "구조로 막는 것"의 차이가 실제로 무엇을 바꾸나?
+> ③ Spring Boot 자동설정을 끄고 DataSource·EMF·TransactionManager를 손으로 배선하면, 원래 자동으로 되던 것 중 무엇이 사라지나?
 > > 📚 **멘토님 질문**:
 > ① 하나의 트랜잭션이 multi datasource를 거쳐야 한다면 어떻게 처리?
-- [ ] `EventEnvelope<T>` 봉투 record (ADR-0007 §4 옵션 c) — `eventId·occurredAt·orderId·eventType·payload`
-- [ ] payload record 10종 (ADR-0007 §3) + 토픽 상수 3개
-- [ ] `@Deprecated IntegrationEvent` **제거** (ADR-0007이 기각한 옵션 b)
-- [ ] 컨텍스트별 스키마 3개 + **DataSource 3세트**(ADR-0004 B-2) — order부터 확실히
-- **✅ 완료 기준**: 계약 컴파일 통과 + 더미 엔티티가 `order` 스키마에 저장됨 (타 스키마가 EntityManager에 안 보임 확인)
-> ⚠️ Spring 멀티 DataSource 설정이 하루 리스크의 대부분. 막히면 Day 3로 스키마 2·3세트는 미뤄도 됨(order만 있으면 Phase 1 진행 가능).
+> > → 이 프로젝트의 답은 **"그 상황을 만들지 않는다"**(ADR-0004 B-2, 컨텍스트 간 단일 트랜잭션 금지). 다만 그 앞단까지 답할 수 있어야 한다 — XA/2PC는 왜 존재하고 왜 실무에서 기피되나(블로킹·코디네이터 SPOF), `ChainedTransactionManager`는 왜 원자성을 못 주는 반쪽인가(그래서 deprecated), 그래서 왜 Saga로 가나.
+- [x] `IntegrationEvent` **제거** (ADR-0007이 기각한 옵션 b) — 참조처 0, 순수 삭제
+- [ ] **DataSource 3세트**(ADR-0004 B-2) — 컨텍스트별 DataSource·EntityManagerFactory·TransactionManager + `@EnableJpaRepositories`
+- [ ] **자동설정 3개 제외** — `DataSource`·`HibernateJpa`·`Flyway` AutoConfiguration. DataSource가 3개면 자동설정이 `@Primary` 하나만 배선하고 나머지를 방치해 "반쯤 동작하는" 상태를 만든다 → 전부 수동 배선해 미스터리를 0으로
+- [ ] **Flyway 컨텍스트별 마이그레이션** — DataSource마다 Flyway 1개(`locations: db/migration/{context}`). `ddl-auto: validate`보다 **먼저** 돌아야 함(`@DependsOn`)
+- [ ] 더미 `PingEntity` + `V1__create_ping.sql` — **Day 4에서 `OrderEntity`로 대체하며 삭제**
+- [ ] **Testcontainers MySQL** — 검증이 외부 컨테이너 상태에 의존하지 않게
+- **✅ 완료 기준**: ① 더미 엔티티가 `order` 스키마에 저장됨 ② **`payment`의 EntityManager Metamodel에 order 엔티티가 없음**을 테스트로 단언 ← ADR-0004가 B-2를 고른 근거 그 자체
+> ⚠️ 하루 리스크의 대부분은 수동 EMF 배선. **대표 함정**: 자동설정을 끄면 Spring Boot가 넣어주던 네이밍 전략이 사라져, Flyway가 만든 `order_id`와 Hibernate가 기대하는 `orderId`가 어긋나 `validate`가 실패한다(로그가 원인을 안 알려줌). `SpringPhysicalNamingStrategy`·`SpringImplicitNamingStrategy`·`dialect`·`hbm2ddl.auto`를 직접 넣어야 한다 — **`spring.jpa.*`는 수동 EMF에 적용되지 않는다.**
+> 📌 완료 기준 ②는 **DataSource가 2세트 이상이어야 성립**한다(비교 대상이 있어야 "안 보인다"를 단언). 그래서 3세트는 "여유되면"이 아니라 필수다.
+> 📌 **결정 기록(ADR 없음)**: DDL은 Flyway, 검증은 Testcontainers — 둘 다 실무 표준 우선으로 택했다. `ddl-auto`에 DDL을 맡기면 인덱스·제약을 통제 못 하고 `validate`가 주던 스키마 드리프트 감지를 잃는다.
+> 📌 **이벤트 계약은 Day 6으로 이동.** 첫 사용처(Outbox 릴레이가 `EventEnvelope`로 포장해 발행)가 거기다. 한 사람이 직렬로 진행하는 프로젝트라 계약을 미리 못 박아 풀리는 병렬 작업이 없고, 발행자 없이 쓴 payload는 첫 소비자가 생길 때 어차피 고쳐 쓰게 된다.
 
 ### Day 3 — Order 도메인 (순수 자바) `Phase 1`
 **목표**: 프레임워크 0 의존의 Order Aggregate가 불변식을 지킨다.
@@ -69,6 +75,7 @@
 - [ ] 인바운드 포트 `PlaceOrderUseCase`, 아웃바운드 포트 `OrderRepository`·`OrderEventPublisher`
 - [ ] `PlaceOrderService` — 시드 데이터로 상품/가격 검증(PO-5), 트랜잭션 경계 설정
 - [ ] JPA `OrderEntity` + repository 어댑터 (order 스키마)
+- [ ] **Day 2 더미 정리** — `PingEntity` 삭제 + `V2__drop_ping.sql` 추가. 적용된 마이그레이션 파일(`V1`)은 지우는 게 아니라 **새 버전으로 되돌린다**(Flyway는 checksum으로 이력을 검증하므로 과거 파일 수정·삭제 시 `validate` 실패)
 - [ ] 상품 시드 데이터
 - **✅ 완료 기준**: 서비스 테스트로 주문 생성→저장 확인, ArchUnit A-3(application→infra 금지) 통과
 
@@ -90,13 +97,19 @@
 > ① dual-write 문제가 정확히 무엇이고, 왜 "DB 저장 + Kafka 발행"을 트랜잭션 하나로 못 묶나? 
 > ② Outbox 패턴은 이걸 어떻게 푸나? 릴레이는 왜 별도로 도나? 
 > ③ 스키마 분리 때문에 왜 read model이 필요해지나?
+> ④ 도메인 이벤트와 통합 이벤트를 왜 나누나(C-4)? 안 나누면 뭐가 문제인가? *(D2에서 이동)*
+> ⑤ Envelope에서 payload가 메타(eventId 등)를 "모르게" 하면 뭐가 좋은가? *(D2에서 이동)*
 > > 📚 **멘토님 질문** ⭐:
 > ① 실무에서 Kafka partition key 활용하는 방법
 > ② orderId를 partition key로 사용했을 때 이점
+- [ ] **`EventEnvelope<T>` 봉투 record** (ADR-0007 §4 옵션 c) — `eventId·occurredAt·orderId·eventType·payload`. Outbox 테이블 컬럼과 1:1 일치하는지 여기서 직접 확인
+- [ ] **payload `OrderPlaced` 1종** (ADR-0007 §3) + 토픽 상수 `order.events` — 금액은 `long`(KRW 정수). `Money` VO는 order의 도메인 개념이라 shared에 넣으면 안 됨(C-3 위반)
 - [ ] **Outbox 테이블 + 릴레이** — 상태변경과 이벤트 적재를 원자적으로(PI-6, dual-write 해결). 릴레이가 `EventEnvelope`로 포장해 `order.events` 발행
 - [ ] **read model** `order_saga_progress` + `GET /orders/{id}` 폴링 조회 (ADR-0004, PC-4)
 - **✅ 완료 기준**: `POST /orders` → `order.events` 토픽에 `OrderPlaced` 실제로 뜸 → `GET`으로 PENDING 조회 ✨ **첫 walking skeleton 관통**
 > ⚠️ Outbox 릴레이(폴링 or `@TransactionalEventListener`)가 핵심 학습 포인트이자 리스크. 여유를 뒀다.
+> 📌 **계약은 just-in-time.** ADR-0007 §3의 payload 10종을 한 번에 내리지 않는다 — 나머지는 각자의 **발행자가 생기는 날**에 추가한다(D7 `PaymentCompleted`·`PaymentFailed` / D8 `StockDeducted`·`StockShortage` / D9 `OrderConfirmed` / D11 `PaymentRefunded` / D12 `OrderCancellationRequested`·`OrderCancelled`·`StockRestored`). 계약 설계 자체는 ADR-0007에서 이미 끝났고, 여기서 하는 건 사용처가 생긴 만큼만 옮겨 적는 일이다.
+> 📌 `eventType` 문자열↔타입 매핑은 **D7로** — 역방향(역직렬화 디스패치)이 실제로 필요해지는 첫 지점이 컨슈머다. 발행자 하나뿐인 D6에서는 정방향만 있으면 된다.
 
 ### Day 7 — Payment 컨텍스트 `Phase 2`
 **목표**: 주문 이벤트를 받아 결제하고 결과를 발행한다.
@@ -211,7 +224,7 @@
 
 | 학습 목표 | 관련 정책 | 커버 Day |
 |-----------|-----------|----------|
-| Kafka / EDA | PI-4·5·6, PT-* | 2·6~10·13~14 |
+| Kafka / EDA | PI-4·5·6, PT-* | 6~10·13~14 |
 | DDD (Aggregate·불변식) | §1, PS-*, PV-1 | 3·8·9 |
 | 보상 트랜잭션 | PB-*, PC-3, PV-5 | 11·12·13 |
 | 멱등성 | PI-*, PS-4, PB-2, PT-3 | 5·9·10·11 |
