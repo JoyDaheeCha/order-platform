@@ -14,6 +14,7 @@ import jakarta.persistence.EntityManagerFactory;
 
 import java.time.LocalDateTime;
 
+import static com.flab.orderplatform.order.infrastructure.persistence.status.OrderStatus.PENDING;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -43,7 +44,7 @@ class ContextIsolationTest {
     @Test
     @DisplayName("order 엔티티가 order 스키마에 실제로 저장된다")
     void savesIntoOrderSchema() {
-        orderJpaRepository.save(new OrderEntity("order-1", 12_000L, LocalDateTime.now(), "PENDING"));
+        orderJpaRepository.save(new OrderEntity("order-1", 12_000L, LocalDateTime.now(), PENDING));
         orderJpaRepository.flush();
 
         assertThat(orderJpaRepository.findById("order-1"))
