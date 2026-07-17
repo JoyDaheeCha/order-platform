@@ -136,8 +136,6 @@ docker compose down -v   # 정지 + 볼륨 삭제 (스키마 init SQL 을 다시
 ---
 
 ## 문서 맵
-
-- [docs/onboarding.md](docs/onboarding.md) — **처음 읽기** · 프로젝트가 지금 어디까지 와 있는지(설계 완료 / 구현 골격) 진행상황 스냅샷
 - [docs/design.md](docs/design.md) — **설계 논의용** · 설계 결정·트레이드오프 서사 (왜 이렇게 결정했나)
 - [docs/product-spec.md](docs/product-spec.md) — 기획서 (페르소나 · 스코프 · 유저 플로우)
 - [docs/policy.md](docs/policy.md) — 도메인 규칙 · 불변식 (정책서)
