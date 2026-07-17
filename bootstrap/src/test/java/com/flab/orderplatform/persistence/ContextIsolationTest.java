@@ -44,10 +44,10 @@ class ContextIsolationTest {
     @Test
     @DisplayName("order 엔티티가 order 스키마에 실제로 저장된다")
     void savesIntoOrderSchema() {
-        orderJpaRepository.save(new OrderEntity("order-1", 12_000L, LocalDateTime.now(), PENDING));
+        var order = orderJpaRepository.save(new OrderEntity("order-1", 12_000L, LocalDateTime.now(), PENDING));
         orderJpaRepository.flush();
 
-        assertThat(orderJpaRepository.findById("order-1"))
+        assertThat(orderJpaRepository.findById(order.getId()))
                 .as("save() 가 성공한 척만 하면 여기서 비어 있다")
                 .get()
                 .extracting(OrderEntity::getTotalAmount)
