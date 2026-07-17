@@ -49,14 +49,17 @@
 > > → 이 프로젝트의 답은 **"그 상황을 만들지 않는다"**(ADR-0004 B-2, 컨텍스트 간 단일 트랜잭션 금지). 다만 그 앞단까지 답할 수 있어야 한다 — XA/2PC는 왜 존재하고 왜 실무에서 기피되나(블로킹·코디네이터 SPOF), `ChainedTransactionManager`는 왜 원자성을 못 주는 반쪽인가(그래서 deprecated), 그래서 왜 Saga로 가나.
 - [x] `IntegrationEvent` **제거** (ADR-0007이 기각한 옵션 b) — 참조처 0, 순수 삭제
 - [ ] **DataSource 3세트**(ADR-0004 B-2) — 컨텍스트별 DataSource·EntityManagerFactory·TransactionManager + `@EnableJpaRepositories`
-- [ ] **자동설정 3개 제외** — `DataSource`·`HibernateJpa`·`Flyway` AutoConfiguration. DataSource가 3개면 자동설정이 `@Primary` 하나만 배선하고 나머지를 방치해 "반쯤 동작하는" 상태를 만든다 → 전부 수동 배선해 미스터리를 0으로
-- [ ] **Flyway 컨텍스트별 마이그레이션** — DataSource마다 Flyway 1개(`locations: db/migration/{context}`). `ddl-auto: validate`보다 **먼저** 돌아야 함(`@DependsOn`)
-- [ ] 더미 `PingEntity` + `V1__create_ping.sql` — **Day 4에서 `OrderEntity`로 대체하며 삭제**
-- [ ] **Testcontainers MySQL** — 검증이 외부 컨테이너 상태에 의존하지 않게
+- [ ] **자동설정 2개 제외** — `DataSource`·`HibernateJpa` AutoConfiguration. DataSource가 3개면 자동설정이 `@Primary` 하나만 배선하고 나머지를 방치해 "반쯤 동작하는" 상태를 만든다 → 전부 수동 배선해 미스터리를 0으로
+- [ ] **Hibernate 속성 직접 주입** — `hbm2ddl.auto=validate` · `SpringPhysicalNamingStrategy` · `SpringImplicitNamingStrategy` · `dialect`. 수동 EMF는 Boot가 넣어주던 이것들을 **하나도** 못 받는다(**`spring.jpa.*`는 수동 EMF에 적용되지 않음**)
+- [ ] **`application.yml`의 `spring.jpa.hibernate.ddl-auto` 정리** — 자동설정을 끄면 이 줄은 **죽은 설정**이 된다(살아 있는 척하며 아무 일도 안 함). `validate`라는 *정책*은 그대로지만 *선언 위치*가 수동 EMF 속성으로 옮겨간다
+- [ ] 더미 `PingEntity` + `docker/mysql/init/02-ping.sql` — **`validate` 정책은 D1~D16 내내 유지**. Day 4에서 `OrderEntity`·Flyway로 대체하며 삭제
+- [ ] **Testcontainers MySQL** — `docker/mysql/init` 디렉토리를 컨테이너 `/docker-entrypoint-initdb.d/`에 마운트해 **docker-compose와 스키마 초기화 출처를 하나로**. `@DynamicPropertySource`로 컨테이너 URL을 `datasource.*` 3개에 매핑
 - **✅ 완료 기준**: ① 더미 엔티티가 `order` 스키마에 저장됨 ② **`payment`의 EntityManager Metamodel에 order 엔티티가 없음**을 테스트로 단언 ← ADR-0004가 B-2를 고른 근거 그 자체
-> ⚠️ 하루 리스크의 대부분은 수동 EMF 배선. **대표 함정**: 자동설정을 끄면 Spring Boot가 넣어주던 네이밍 전략이 사라져, Flyway가 만든 `order_id`와 Hibernate가 기대하는 `orderId`가 어긋나 `validate`가 실패한다(로그가 원인을 안 알려줌). `SpringPhysicalNamingStrategy`·`SpringImplicitNamingStrategy`·`dialect`·`hbm2ddl.auto`를 직접 넣어야 한다 — **`spring.jpa.*`는 수동 EMF에 적용되지 않는다.**
-> 📌 완료 기준 ②는 **DataSource가 2세트 이상이어야 성립**한다(비교 대상이 있어야 "안 보인다"를 단언). 그래서 3세트는 "여유되면"이 아니라 필수다.
-> 📌 **결정 기록(ADR 없음)**: DDL은 Flyway, 검증은 Testcontainers — 둘 다 실무 표준 우선으로 택했다. `ddl-auto`에 DDL을 맡기면 인덱스·제약을 통제 못 하고 `validate`가 주던 스키마 드리프트 감지를 잃는다.
+> ⚠️ 하루 리스크의 대부분은 수동 EMF 배선. **대표 함정**: 자동설정을 끄면 Boot가 넣어주던 네이밍 전략이 사라져, SQL이 만든 `some_field`와 Hibernate가 기대하는 `someField`가 어긋나 `validate`가 부팅을 깬다(로그가 원인을 안 알려줌).
+> 📌 **`ddl-auto: create`를 쓰지 않는 이유** — `create`는 자기가 만든 테이블을 자기가 읽으니 네이밍이 틀려도 자기들끼리 정합해 **조용히 통과**하고, 함정을 Day 4(Flyway가 snake_case SQL을 들고 오는 날)로 미룬다. `validate` + 외부가 쓴 SQL이면 **오늘, 더미 테이블 하나 놓고 즉시** 터진다. 가장 싼 순간에 앞당겨 터뜨리는 쪽이 낫다. 설정도 안 흔들린다.
+> 📌 완료 기준 ②는 **DataSource가 2세트 이상이어야 성립**한다(비교 대상이 있어야 "안 보인다"를 단언). 그래서 3세트는 "여유되면"이 아니라 필수다. 반대로 ②는 **테이블이 필요 없다** — Metamodel은 부팅 시점의 매핑 정보라 DB 상태와 무관하다. 테이블이 필요한 건 ①뿐.
+> 📌 **결정 기록(ADR 없음)**: 검증은 Testcontainers, DDL은 Flyway — 단, **Flyway는 Day 4부터**. 오늘 넣으면 첫 작품이 "Day 4에 지울 더미 테이블의 생성 기록"이라 의식(ceremony)일 뿐이고, 가장 위험한 날에 움직이는 부품만 늘린다. 운영 DB도 다른 개발자도 배포도 없는 지금 Flyway가 푸는 문제는 **인스턴스가 0개**다. 미루는 비용도 0 — Day 4 시점 스키마는 새로 만드는 테이블 하나뿐이라 뜰 `baseline`이 없다. 그동안 더미 테이블 DDL은 이미 `01-schemas.sql`이 사는 `docker/mysql/init`에 얹는다(프로젝트의 진짜 DDL은 D4부터 전부 Flyway 소유).
+> 📌 자문 ③의 답이 **1번(의존성)에서 이미 나온다**: `@ServiceConnection`(Testcontainers 표준 편의)을 못 쓴다. 그건 `spring.datasource.*`에 값을 꽂아주는데 그걸 읽는 주체가 자동설정이고, 우리가 그걸 껐기 때문이다. **자동설정만 꺼지는 게 아니라 그 위에 얹혀 있던 생태계의 편의까지 같이 꺼진다.**
 > 📌 **이벤트 계약은 Day 6으로 이동.** 첫 사용처(Outbox 릴레이가 `EventEnvelope`로 포장해 발행)가 거기다. 한 사람이 직렬로 진행하는 프로젝트라 계약을 미리 못 박아 풀리는 병렬 작업이 없고, 발행자 없이 쓴 payload는 첫 소비자가 생길 때 어차피 고쳐 쓰게 된다.
 
 ### Day 3 — Order 도메인 (순수 자바) `Phase 1`
@@ -75,9 +78,14 @@
 - [ ] 인바운드 포트 `PlaceOrderUseCase`, 아웃바운드 포트 `OrderRepository`·`OrderEventPublisher`
 - [ ] `PlaceOrderService` — 시드 데이터로 상품/가격 검증(PO-5), 트랜잭션 경계 설정
 - [ ] JPA `OrderEntity` + repository 어댑터 (order 스키마)
-- [ ] **Day 2 더미 정리** — `PingEntity` 삭제 + `V2__drop_ping.sql` 추가. 적용된 마이그레이션 파일(`V1`)은 지우는 게 아니라 **새 버전으로 되돌린다**(Flyway는 checksum으로 이력을 검증하므로 과거 파일 수정·삭제 시 `validate` 실패)
+- [ ] **Flyway 도입** (Day 2에서 이동) — `flyway-core` + `flyway-mysql`(⚠️ Flyway 10부터 DB별 모듈 분리. 없으면 컴파일은 통과하고 런타임에 `Unsupported Database`. 이름도 `flyway-database-mysql`이 아니라 **`flyway-mysql`**), order의 Flyway 빈 1개(`locations: db/migration/order`), `@DependsOn`으로 EMF보다 **먼저** 실행
+- [ ] **`V1__create_orders.sql`** — Flyway의 첫 마이그레이션이 더미가 아니라 진짜 테이블이다
+- [ ] **Day 2 더미 정리** — `PingEntity` + `docker/mysql/init/02-ping.sql` 삭제. 로컬 DB는 `docker compose down -v`로 초기화(init 스크립트는 **최초 부팅에만** 돌아서 파일만 지우면 기존 컨테이너엔 테이블이 남는다. `validate`는 여분 테이블을 탓하지 않아 조용히 남는다)
 - [ ] 상품 시드 데이터
 - **✅ 완료 기준**: 서비스 테스트로 주문 생성→저장 확인, ArchUnit A-3(application→infra 금지) 통과
+> 📌 **왜 Day 2가 아니라 지금 Flyway인가** — 오늘 처음으로 *살아남는* 테이블(`orders`)이 생기기 때문. Flyway의 가치는 "같은 스키마 변경을 여러 환경에 시간에 걸쳐 결정적으로 반복 적용"인데, Day 2엔 그 인스턴스가 0개였다(운영 DB·타 개발자·배포 전부 없음). 미루는 비용도 0이었다 — 지금 스키마는 새로 만드는 테이블 하나뿐이라 뜰 `baseline`이 없다. 레트로핏이 아니라 그냥 시작일이 이틀 늦은 것.
+> 📌 **payment·inventory의 Flyway는 각자 첫 테이블이 생기는 D7·D8에.** 같은 이유(just-in-time). 그때까지 두 EMF는 엔티티가 0개라 `validate`할 것도 없다.
+> 📌 `ddl-auto`는 오늘도 **`validate` 그대로**다. Day 2에 `create`를 안 쓴 덕에 D1~D16 내내 안 흔들리고, DDL의 주인만 `02-ping.sql`(스캐폴드) → Flyway(진짜)로 조용히 교대한다. 네이밍 전략도 Day 2에 이미 `validate`로 검증받았으니 오늘 Flyway의 snake_case SQL과 충돌하지 않는다.
 
 ### Day 5 — 인바운드 API + 멱등키 `Phase 1`
 **목표**: `POST /orders`가 202를 주고, 중복 요청을 막는다.
@@ -114,6 +122,7 @@
 ### Day 7 — Payment 컨텍스트 `Phase 2`
 **목표**: 주문 이벤트를 받아 결제하고 결과를 발행한다.
 > 📚 **완료 후 자문**: ① 코레오그래피 Saga에서 "중앙 조정자가 없다"는 게 구체적으로 어떤 구조인가? ② 컨슈머가 한 토픽에 섞인 여러 이벤트를 어떻게 분기·역직렬화하나(`eventType`)? ③ 결정론적 실패 주입이 확률 기반보다 테스트에 유리한 이유는?
+- [ ] **payment Flyway 빈 + `V1__create_payments.sql`** (D4에서 예고) — payment의 첫 테이블이 오늘 생긴다. `ddl-auto`는 계속 `validate`
 - [ ] Payment 도메인 — 결제 금액 = 주문 총액 일치(PP-1), 1회·전액(PP-2)
 - [ ] `order.events` 구독 → `OrderPlaced` 수신 → 결제 시도
 - [ ] **가짜 PG** — 금액 끝자리 `7`이면 `PaymentFailed`, 그 외 `PaymentCompleted`(PP-3, 결정론적)
@@ -123,6 +132,7 @@
 ### Day 8 — Inventory 컨텍스트 `Phase 2`
 **목표**: 결제 완료를 받아 재고를 차감한다.
 > 📚 **완료 후 자문**: ① `WHERE qty >= n` 조건부 UPDATE는 왜 "충돌"이라는 개념이 없나? ② 왜 결제 *후*에 재고를 차감하나 — 순서를 바꾸면 보상 학습이 어떻게 달라지나(PV-2)? ③ all-or-nothing 차감(PV-3)은 왜 필요한가?
+- [ ] **inventory Flyway 빈 + `V1__create_stocks.sql`** (D4에서 예고) — inventory의 첫 테이블이 오늘 생긴다. 이로써 Flyway 3세트 완성
 - [ ] Stock 도메인 (물리 재고, 예약 개념 없음 PV-1) + **재고 시드**(셀러 없음)
 - [ ] `payment.events` 구독 → `PaymentCompleted` 수신 → 재고 차감(PV-2: 결제 후 차감)
 - [ ] all-or-nothing(PV-3), 기본 어댑터 = **원자적 조건부 UPDATE**(`WHERE qty >= n`, ADR-0002 기본 B)
