@@ -1,7 +1,7 @@
 package com.flab.orderplatform.persistence;
 
-import com.flab.orderplatform.order.infrastructure.persistence.PingEntity;
-import com.flab.orderplatform.order.infrastructure.persistence.PingRepository;
+import com.flab.orderplatform.order.infrastructure.persistence.OrderEntity;
+import com.flab.orderplatform.order.infrastructure.persistence.OrderJpaRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +11,8 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 import jakarta.persistence.EntityManagerFactory;
+
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,7 +26,7 @@ class ContextIsolationTest {
     }
 
     @Autowired
-    private PingRepository pingRepository;
+    private OrderJpaRepository orderJpaRepository;
 
     @Autowired
     @Qualifier("orderEntityManagerFactory")
@@ -39,16 +41,16 @@ class ContextIsolationTest {
     private EntityManagerFactory inventoryEntityManagerFactory;
 
     @Test
-    @DisplayName("더미 엔티티가 order 스키마에 실제로 저장된다")
+    @DisplayName("order 엔티티가 order 스키마에 실제로 저장된다")
     void savesIntoOrderSchema() {
-        pingRepository.save(new PingEntity("ping-1", "hello"));
-        pingRepository.flush();
+        orderJpaRepository.save(new OrderEntity("order-1", 12_000L, LocalDateTime.now(), "PENDING"));
+        orderJpaRepository.flush();
 
-        assertThat(pingRepository.findById("ping-1"))
+        assertThat(orderJpaRepository.findById("order-1"))
                 .as("save() 가 성공한 척만 하면 여기서 비어 있다")
                 .get()
-                .extracting(PingEntity::getNoteText)
-                .isEqualTo("hello");
+                .extracting(OrderEntity::getTotalAmount)
+                .isEqualTo(12_000L);
     }
 
     @Test
@@ -56,15 +58,15 @@ class ContextIsolationTest {
     void otherContextsCannotSeeOrderEntities() {
         assertThat(entityNamesOf(orderEntityManagerFactory))
                 .as("order 의 EMF 는 자기 엔티티를 안다")
-                .contains(PingEntity.class.getName());
+                .contains(OrderEntity.class.getName());
 
         assertThat(entityNamesOf(paymentEntityManagerFactory))
                 .as("payment 의 EMF 에 order 엔티티가 보이면 경계는 규약일 뿐이다")
-                .doesNotContain(PingEntity.class.getName());
+                .doesNotContain(OrderEntity.class.getName());
 
         assertThat(entityNamesOf(inventoryEntityManagerFactory))
                 .as("inventory 의 EMF 에 order 엔티티가 보이면 경계는 규약일 뿐이다")
-                .doesNotContain(PingEntity.class.getName());
+                .doesNotContain(OrderEntity.class.getName());
     }
 
     private static java.util.List<String> entityNamesOf(EntityManagerFactory emf) {

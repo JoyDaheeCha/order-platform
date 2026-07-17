@@ -48,9 +48,9 @@
 - [x] `IntegrationEvent` 제거 — ADR-0007이 기각한 옵션 b, 참조처 0
 - [x] **DataSource 3세트**(ADR-0004 B-2) — 컨텍스트별 DataSource·EMF(=EntityManagerFactory)·TransactionManager + `@EnableJpaRepositories`
 - [x] **자동설정 2개 제외**(`DataSource`·`HibernateJpa`) + Hibernate 속성을 수동 EMF에 직접 주입
-- [x] 더미 `PingEntity` + `docker/mysql/init/02-ping.sql` — 배관 점검용, Day 4에 삭제
+- [x] 최소 `OrderEntity` + `docker/mysql/init/02-orders.sql` — 배관 점검용 스캐폴드. 더미 `PingEntity` 대신 진짜 테이블 이름으로 시작한다(더미를 만들고 이틀 뒤 지우는 왕복 제거). 필드는 배관 증명에 필요한 최소 집합이고, 주문 라인·상태 전이는 Day 3 도메인이 정한 뒤 온다
 - [x] **Testcontainers MySQL** — `docker/mysql/init` 마운트로 compose와 스키마 출처 일원화
-- **✅ 완료 기준**: ① 더미 엔티티가 `order` 스키마에 저장됨 ② **`payment`의 EntityManager Metamodel에 order 엔티티가 없음**을 테스트로 단언 ← ADR-0004가 B-2를 고른 근거 그 자체 → **①② 모두 PASS, 전체 8개 테스트가 `docker compose up` 없이 통과**
+- **✅ 완료 기준**: ① `OrderEntity`가 `order` 스키마에 저장됨 ② **`payment`의 EntityManager Metamodel에 order 엔티티가 없음**을 테스트로 단언 ← ADR-0004가 B-2를 고른 근거 그 자체 → **①② 모두 PASS, 전체 8개 테스트가 `docker compose up` 없이 통과**
 - 
 ### Day 3 — Order 도메인 (순수 자바) `Phase 1`
 **목표**: 프레임워크 0 의존의 Order Aggregate가 불변식을 지킨다.
@@ -67,7 +67,7 @@
 > 📚 **완료 후 자문**: ① 인바운드 포트와 아웃바운드 포트는 무엇이 다른가? ② application이 인터페이스를 소유하고 infra가 구현하면(DIP) 의존 방향이 어떻게 뒤집히나? ③ 트랜잭션 경계를 왜 도메인이 아니라 유스케이스(application)에 두나?
 - [ ] 인바운드 포트 `PlaceOrderUseCase`, 아웃바운드 포트 `OrderRepository`·`OrderEventPublisher`
 - [ ] `PlaceOrderService` — 시드 데이터로 상품/가격 검증(PO-5), 트랜잭션 경계 설정
-- [ ] JPA `OrderEntity` + repository 어댑터 (order 스키마)
+- [ ] `OrderEntity` 확장(Day 2의 최소 스캐폴드 → Day 3 Aggregate에 맞춘 진짜 매핑: 주문 라인·상태) + repository 어댑터 (order 스키마). 아웃바운드 포트 `OrderRepository`를 `OrderJpaRepository`가 뒤에서 구현한다
 - [ ] **Flyway 도입** (Day 2에서 이동) — `flyway-core` + `flyway-mysql`(⚠️ Flyway 10부터 DB별 모듈 분리. 없으면 컴파일은 통과하고 런타임에 `Unsupported Database`. 이름도 `flyway-database-mysql`이 아니라 **`flyway-mysql`**), order의 Flyway 빈 1개(`locations: db/migration/order`), `@DependsOn`으로 EMF보다 **먼저** 실행
 - [ ] **`V1__create_orders.sql`** — Flyway의 첫 마이그레이션이 더미가 아니라 진짜 테이블이다
 - [ ] **Day 2 더미 정리** — `PingEntity` + `docker/mysql/init/02-ping.sql` 삭제. 로컬 DB는 `docker compose down -v`로 초기화(init 스크립트는 **최초 부팅에만** 돌아서 파일만 지우면 기존 컨테이너엔 테이블이 남는다. `validate`는 여분 테이블을 탓하지 않아 조용히 남는다)
