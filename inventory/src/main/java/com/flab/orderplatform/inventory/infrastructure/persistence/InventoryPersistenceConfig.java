@@ -20,12 +20,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import jakarta.persistence.EntityManagerFactory;
 
 /**
- * Inventory 컨텍스트의 영속화 배선. (ADR-0004 결정 B / B-2)
- *
- * <p>구조·중복의 근거는 {@code OrderPersistenceConfig}·{@code PaymentPersistenceConfig} 와 같다
- * (ADR-0004 §4 가 명시한 "컨텍스트당 영속화 3세트"의 비용).
- *
- * <p>엔티티는 아직 0개다 — 첫 테이블 {@code stocks} 는 Day 8 에 온다.
+ * Inventory 컨텍스트의 영속화 설정
  */
 @Configuration
 @EnableJpaRepositories(
@@ -37,7 +32,6 @@ public class InventoryPersistenceConfig {
 
     static final String CONTEXT_PACKAGE = "com.flab.orderplatform.inventory.infrastructure";
 
-    /** Boot 3.4.1 {@code HibernateProperties$Naming} 기본값과 동일. dialect 는 자동 감지에 맡긴다. */
     private static final Map<String, String> HIBERNATE_PROPERTIES = Map.of(
             "hibernate.hbm2ddl.auto", "validate",
             "hibernate.physical_naming_strategy", CamelCaseToUnderscoresNamingStrategy.class.getName(),

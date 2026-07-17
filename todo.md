@@ -46,7 +46,7 @@
 > > 📚 **멘토님 질문**:
 > ① 하나의 트랜잭션이 multi datasource를 거쳐야 한다면 어떻게 처리?
 - [x] `IntegrationEvent` 제거 — ADR-0007이 기각한 옵션 b, 참조처 0
-- [x] **DataSource 3세트**(ADR-0004 B-2) — 컨텍스트별 DataSource·EMF·TransactionManager + `@EnableJpaRepositories`
+- [x] **DataSource 3세트**(ADR-0004 B-2) — 컨텍스트별 DataSource·EMF(=EntityManagerFactory)·TransactionManager + `@EnableJpaRepositories`
 - [x] **자동설정 2개 제외**(`DataSource`·`HibernateJpa`) + Hibernate 속성을 수동 EMF에 직접 주입
 - [x] 더미 `PingEntity` + `docker/mysql/init/02-ping.sql` — 배관 점검용, Day 4에 삭제
 - [x] **Testcontainers MySQL** — `docker/mysql/init` 마운트로 compose와 스키마 출처 일원화
