@@ -1,0 +1,92 @@
+# docker-compose.yml — 로컬 개발 인프라 3종.
+#
+# 이 프로젝트는 "모듈러 모노리스 + 컨텍스트별 스키마 격리"다(ADR-0004 A-2).
+# 그래서 **MySQL 인스턴스는 하나**고, 격리는 인스턴스가 아니라 스키마로 한다.
+#   · DB 인스턴스 분리는 단계 3개짜리 학습 범위엔 오버스펙이라 의식적으로 뺐다(design.md §5).
+#
+# 사용법:
+#   docker compose up -d      # 기동
+#   docker compose ps         # 헬스체크 상태 확인 (3개 모두 healthy 여야 함)
+#   docker compose down       # 정지 (데이터 유지)
+#   docker compose down -v    # 정지 + 볼륨 삭제 (스키마 init SQL을 다시 돌리고 싶을 때)
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: order-platform-mysql
+    ports:
+      - "13306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root      # 학습용. 운영이라면 절대 이렇게 두지 않는다.
+      TZ: UTC
+    command:
+      - --default-time-zone=+00:00
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    volumes:
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" -e 'SELECT 1' order_schema >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  kafka:
+    image: apache/kafka:3.9.0
+    container_name: order-platform-kafka
+    ports:
+      - "19092:19092"
+    environment:
+      # --- KRaft 정체성 ---
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller        # 단일 노드가 둘 다 겸직 (학습용. 운영은 분리 권장)
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093  # Raft 투표자 = 자기 자신 하나
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # 클러스터 식별자. 고정해 두면 볼륨을 지우고 다시 떠도 같은 클러스터로 포맷된다.
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qg
+
+      # --- 리스너 ---
+      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:19092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT   # 브로커끼리 쓰는 리스너(단일 노드라 실질 의미는 적다)
+
+      # --- 단일 노드용 조정 ---
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      # 컨슈머 그룹이 뜰 때 "다른 멤버도 들어오나" 기다리는 시간. 개발 중엔 0이 편하다(리밸런스 즉시).
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    container_name: order-platform-redis
+    ports:
+      - "16379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+# 명명 볼륨(named volume) — 컨테이너를 지워도 데이터가 남는다.
+# 초기화하려면 `docker compose down -v`.
+volumes:
+  mysql-data:
+  kafka-data:
+  redis-data:

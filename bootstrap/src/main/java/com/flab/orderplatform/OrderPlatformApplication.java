@@ -2,14 +2,19 @@ package com.flab.orderplatform;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 
 /**
- * 모듈러 모노리스의 단일 실행 진입점. (architecture.md §1)
+ * 데이터소스를 3개로 컨텍스트별로 분리하였으므로,
+ * DataSource·EntityManagerFactory·TransactionManager 를 직접 설정합니다.
  *
- * <p>이 클래스가 {@code com.flab.orderplatform} 루트에 있으므로, 컴포넌트 스캔/엔티티 스캔이
- * 전 컨텍스트({@code .order}, {@code .payment}, {@code .inventory})의 빈을 한 번에 조립한다.
+ * 따라서 DataSourceAutoConfiguration, HibernateJpaAutoConfiguration 는 exclude 합니다.
  */
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        DataSourceAutoConfiguration.class,
+        HibernateJpaAutoConfiguration.class,
+})
 public class OrderPlatformApplication {
 
     public static void main(String[] args) {

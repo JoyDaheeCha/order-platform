@@ -30,6 +30,16 @@ subprojects {
     }
 
     dependencies {
+        compileOnly platform(libs.spring.boot.dependencies)
+        compileOnly libs.lombok
+        annotationProcessor platform(libs.spring.boot.dependencies)
+        annotationProcessor libs.lombok
+
+        testCompileOnly platform(libs.spring.boot.dependencies)
+        testCompileOnly libs.lombok
+        testAnnotationProcessor platform(libs.spring.boot.dependencies)
+        testAnnotationProcessor libs.lombok
+
         // 모든 모듈에 JUnit 5 테스트 환경 공통 제공.
         testImplementation platform(libs.spring.boot.dependencies)
         testImplementation "org.junit.jupiter:junit-jupiter"

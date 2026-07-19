@@ -1,0 +1,36 @@
+# 컨텍스트별 DataSource 3세트
+#   같은 인스턴스(포트 13306)를 보지만 스키마가 다르고, 각자 자기 EntityManagerFactory 를 갖는다.
+#   → 타 스키마 테이블이 EntityManager 에 아예 안 보이도록 설정
+datasource:
+  order:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/order_schema?characterEncoding=UTF-8&serverTimezone=UTC
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+  payment:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/payment_schema?characterEncoding=UTF-8&serverTimezone=UTC
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+  inventory:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/inventory_schema?characterEncoding=UTF-8&serverTimezone=UTC
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:19092}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:16379}
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+    com.zaxxer.hikari: DEBUG

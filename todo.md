@@ -5,7 +5,6 @@
 > 남도록 잘랐다 — 리뷰어가 매일의 진척을 실제로 확인할 수 있게.
 >
 > 총 **약 16 영업일(≈3.5주)**. 근거 정책은 `PI-5`·`PV-4` 같은 ID로, 결정은 ADR 번호로 표기.
-> 현재 좌표: 설계 100% / 코드 골격만(도메인 로직 0줄) — [`docs/onboarding.md`](./docs/onboarding.md).
 
 ---
 
@@ -13,11 +12,11 @@
 
 - **하루 8h = 구현 + 학습 + 검증** 포함. 학습 프로젝트라 "왜 이렇게 되는가" 확인 시간을 넣었다.
 - 각 Day는 **독립적으로 데모 가능한 결과물**로 끝난다. 빅뱅 통합을 만들지 않는다.
-- 순서 원칙: **가장 얇은 주문 한 건을 끝까지 관통(walking skeleton)** → 살 붙이기. (`onboarding.md §3`)
+- 순서 원칙: **가장 얇은 주문 한 건을 끝까지 관통(walking skeleton)** → 살 붙이기.
 - 리스크가 큰 날(멀티 DataSource, Outbox 릴레이, 동시성)은 별도 표시(⚠️)하고 여유를 뒀다.
 - **각 Day에 `📚 완료 후 자문`** = 그날 작업을 마치고 스스로에게 던지는 질문. **막힘없이 답할 수 있으면 그 개념을 체득한 것**이다(면접 회고에도 그대로 쓴다). 이 프로젝트의 산출물 절반은 코드가 아니라 이 답들이다(design.md §0).
 
-> 💡 **학습 흐름 한눈에**: Kafka 기초(D1) → 이벤트 계약·경계(D2) → DDD 도메인(D3~4) → 멱등성 생산자측(D5) → **Outbox/dual-write(D6)** → 코레오그래피 구독(D7~8) → **Inbox/effectively-once(D9)** → **Saga 보상(D11~12)** → 코레오그래피의 빚: 타임아웃(D13)·재시도/DLQ(D14) → **동시성 4기법 비교(D15)** → 아키텍처 검증(D16)
+> 💡 **학습 흐름 한눈에**: Kafka 기초(D1) → 컨텍스트 경계·스키마 분리(D2) → DDD 도메인(D3~4) → 멱등성 생산자측(D5) → **이벤트 계약·Outbox/dual-write(D6)** → 코레오그래피 구독(D7~8) → **Inbox/effectively-once(D9)** → **Saga 보상(D11~12)** → 코레오그래피의 빚: 타임아웃(D13)·재시도/DLQ(D14) → **동시성 4기법 비교(D15)** → 아키텍처 검증(D16)
 
 | 주차 | 산출물 |
 |------|--------|
@@ -32,27 +31,27 @@
 ### Day 1 — 로컬 인프라 + 빌드 그린 `Phase 0`
 **목표**: 앱이 뜨고, MySQL·Kafka·Redis에 붙는다.
 > 📚 **완료 후 자문**: ① Kafka의 토픽·파티션·컨슈머그룹은 각각 무엇을 결정하나? ② KRaft 모드는 주키퍼가 하던 어떤 역할을 대체했고, 왜 없애는 방향으로 갔나?
-- [ ] `docker-compose.yml` — MySQL 8 · Kafka(KRaft 단일 노드) · Redis (design.md §5: DB는 스키마로만 격리)
-- [ ] 5개 모듈 `build.gradle`에 필요한 starter 채우기 (libs.versions.toml 참조)
-- [ ] `application.yml` 기본 골격 + `local` 프로파일
-- [ ] `OrderPlatformApplication` 부팅 확인
+- [x] `docker-compose.yml` — MySQL 8 · Kafka(KRaft 단일 노드) · Redis (design.md §5: DB는 스키마로만 격리)
+- [x] 5개 모듈 `build.gradle`에 필요한 starter 채우기 (libs.versions.toml 참조)
+- [x] `application.yml` 기본 골격 + `local` 프로파일
+- [x] `OrderPlatformApplication` 부팅 확인
 - **✅ 완료 기준**: `docker compose up` + `./gradlew bootRun` 성공, 컨테이너 3개 연결 로그 확인
 
-### Day 2 — 이벤트 계약 + 멀티 DataSource ⚠️ `Phase 0`
-**목표**: `shared` 계약이 컴파일되고, order 스키마에 저장이 된다.
-> 📚 **완료 후 자문**: 
-> ① 도메인 이벤트와 통합 이벤트를 왜 나누나(C-4)? 안 나누면 뭐가 문제인가? 
-> ② Envelope에서 payload가 메타(eventId 등)를 "모르게" 하면 뭐가 좋은가? 
-> ③ 스키마를 분리하면 컨텍스트 경계가 왜 *물리적으로* 강제되나(EntityManager에 안 보인다는 게 무슨 뜻)?
+### Day 2 — 멀티 DataSource: 컨텍스트 경계를 *물리*로 강제 ⚠️ `Phase 0` ✅
+**목표**: 컨텍스트마다 자기 스키마만 보는 DataSource가 서고, "타 스키마가 안 보인다"를 테스트로 증명한다.
+> 📚 **완료 후 자문**:
+> ① 스키마를 분리하면 컨텍스트 경계가 왜 *물리적으로* 강제되나(EntityManager에 안 보인다는 게 무슨 뜻)?
+> ② ADR-0004가 B-1(단일 DataSource + `@Table(schema=)`)을 기각한 이유는 — "규약으로 막는 것"과 "구조로 막는 것"의 차이가 실제로 무엇을 바꾸나?
+> ③ Spring Boot 자동설정을 끄고 DataSource·EMF·TransactionManager를 손으로 배선하면, 원래 자동으로 되던 것 중 무엇이 사라지나?
 > > 📚 **멘토님 질문**:
 > ① 하나의 트랜잭션이 multi datasource를 거쳐야 한다면 어떻게 처리?
-- [ ] `EventEnvelope<T>` 봉투 record (ADR-0007 §4 옵션 c) — `eventId·occurredAt·orderId·eventType·payload`
-- [ ] payload record 10종 (ADR-0007 §3) + 토픽 상수 3개
-- [ ] `@Deprecated IntegrationEvent` **제거** (ADR-0007이 기각한 옵션 b)
-- [ ] 컨텍스트별 스키마 3개 + **DataSource 3세트**(ADR-0004 B-2) — order부터 확실히
-- **✅ 완료 기준**: 계약 컴파일 통과 + 더미 엔티티가 `order` 스키마에 저장됨 (타 스키마가 EntityManager에 안 보임 확인)
-> ⚠️ Spring 멀티 DataSource 설정이 하루 리스크의 대부분. 막히면 Day 3로 스키마 2·3세트는 미뤄도 됨(order만 있으면 Phase 1 진행 가능).
-
+- [x] `IntegrationEvent` 제거 — ADR-0007이 기각한 옵션 b, 참조처 0
+- [x] **DataSource 3세트**(ADR-0004 B-2) — 컨텍스트별 DataSource·EMF(=EntityManagerFactory)·TransactionManager + `@EnableJpaRepositories`
+- [x] **자동설정 2개 제외**(`DataSource`·`HibernateJpa`) + Hibernate 속성을 수동 EMF에 직접 주입
+- [x] 최소 `OrderEntity` + `docker/mysql/init/02-orders.sql` — 배관 점검용 스캐폴드. 더미 `PingEntity` 대신 진짜 테이블 이름으로 시작한다(더미를 만들고 이틀 뒤 지우는 왕복 제거). 필드는 배관 증명에 필요한 최소 집합이고, 주문 라인·상태 전이는 Day 3 도메인이 정한 뒤 온다
+- [x] **Testcontainers MySQL** — `docker/mysql/init` 마운트로 compose와 스키마 출처 일원화
+- **✅ 완료 기준**: ① `OrderEntity`가 `order` 스키마에 저장됨 ② **`payment`의 EntityManager Metamodel에 order 엔티티가 없음**을 테스트로 단언 ← ADR-0004가 B-2를 고른 근거 그 자체 → **①② 모두 PASS, 전체 8개 테스트가 `docker compose up` 없이 통과**
+- 
 ### Day 3 — Order 도메인 (순수 자바) `Phase 1`
 **목표**: 프레임워크 0 의존의 Order Aggregate가 불변식을 지킨다.
 > 📚 **완료 후 자문**: ① Aggregate·VO·불변식은 각각 무엇이고, 불변식은 어디서(생성자/팩토리) 강제해야 하나? ② VO의 불변성·값 동등성은 왜 필요한가? ③ 도메인이 Spring/JPA에 의존하면 구체적으로 뭐가 나빠지나?
@@ -68,9 +67,15 @@
 > 📚 **완료 후 자문**: ① 인바운드 포트와 아웃바운드 포트는 무엇이 다른가? ② application이 인터페이스를 소유하고 infra가 구현하면(DIP) 의존 방향이 어떻게 뒤집히나? ③ 트랜잭션 경계를 왜 도메인이 아니라 유스케이스(application)에 두나?
 - [ ] 인바운드 포트 `PlaceOrderUseCase`, 아웃바운드 포트 `OrderRepository`·`OrderEventPublisher`
 - [ ] `PlaceOrderService` — 시드 데이터로 상품/가격 검증(PO-5), 트랜잭션 경계 설정
-- [ ] JPA `OrderEntity` + repository 어댑터 (order 스키마)
+- [ ] `OrderEntity` 확장(Day 2의 최소 스캐폴드 → Day 3 Aggregate에 맞춘 진짜 매핑: 주문 라인·상태) + repository 어댑터 (order 스키마). 아웃바운드 포트 `OrderRepository`를 `OrderJpaRepository`가 뒤에서 구현한다
+- [ ] **Flyway 도입** (Day 2에서 이동) — `flyway-core` + `flyway-mysql`(⚠️ Flyway 10부터 DB별 모듈 분리. 없으면 컴파일은 통과하고 런타임에 `Unsupported Database`. 이름도 `flyway-database-mysql`이 아니라 **`flyway-mysql`**), order의 Flyway 빈 1개(`locations: db/migration/order`), `@DependsOn`으로 EMF보다 **먼저** 실행
+- [ ] **`V1__create_orders.sql`** — Flyway의 첫 마이그레이션이 더미가 아니라 진짜 테이블이다
+- [ ] **Day 2 더미 정리** — `PingEntity` + `docker/mysql/init/02-ping.sql` 삭제. 로컬 DB는 `docker compose down -v`로 초기화(init 스크립트는 **최초 부팅에만** 돌아서 파일만 지우면 기존 컨테이너엔 테이블이 남는다. `validate`는 여분 테이블을 탓하지 않아 조용히 남는다)
 - [ ] 상품 시드 데이터
 - **✅ 완료 기준**: 서비스 테스트로 주문 생성→저장 확인, ArchUnit A-3(application→infra 금지) 통과
+> 📌 **왜 Day 2가 아니라 지금 Flyway인가** — 오늘 처음으로 *살아남는* 테이블(`orders`)이 생기기 때문. Flyway의 가치는 "같은 스키마 변경을 여러 환경에 시간에 걸쳐 결정적으로 반복 적용"인데, Day 2엔 그 인스턴스가 0개였다(운영 DB·타 개발자·배포 전부 없음). 미루는 비용도 0이었다 — 지금 스키마는 새로 만드는 테이블 하나뿐이라 뜰 `baseline`이 없다. 레트로핏이 아니라 그냥 시작일이 이틀 늦은 것.
+> 📌 **payment·inventory의 Flyway는 각자 첫 테이블이 생기는 D7·D8에.** 같은 이유(just-in-time). 그때까지 두 EMF는 엔티티가 0개라 `validate`할 것도 없다.
+> 📌 `ddl-auto`는 오늘도 **`validate` 그대로**다. Day 2에 `create`를 안 쓴 덕에 D1~D16 내내 안 흔들리고, DDL의 주인만 `02-ping.sql`(스캐폴드) → Flyway(진짜)로 조용히 교대한다. 네이밍 전략도 Day 2에 이미 `validate`로 검증받았으니 오늘 Flyway의 snake_case SQL과 충돌하지 않는다.
 
 ### Day 5 — 인바운드 API + 멱등키 `Phase 1`
 **목표**: `POST /orders`가 202를 주고, 중복 요청을 막는다.
@@ -90,17 +95,24 @@
 > ① dual-write 문제가 정확히 무엇이고, 왜 "DB 저장 + Kafka 발행"을 트랜잭션 하나로 못 묶나? 
 > ② Outbox 패턴은 이걸 어떻게 푸나? 릴레이는 왜 별도로 도나? 
 > ③ 스키마 분리 때문에 왜 read model이 필요해지나?
+> ④ 도메인 이벤트와 통합 이벤트를 왜 나누나(C-4)? 안 나누면 뭐가 문제인가? *(D2에서 이동)*
+> ⑤ Envelope에서 payload가 메타(eventId 등)를 "모르게" 하면 뭐가 좋은가? *(D2에서 이동)*
 > > 📚 **멘토님 질문** ⭐:
 > ① 실무에서 Kafka partition key 활용하는 방법
 > ② orderId를 partition key로 사용했을 때 이점
+- [ ] **`EventEnvelope<T>` 봉투 record** (ADR-0007 §4 옵션 c) — `eventId·occurredAt·orderId·eventType·payload`. Outbox 테이블 컬럼과 1:1 일치하는지 여기서 직접 확인
+- [ ] **payload `OrderPlaced` 1종** (ADR-0007 §3) + 토픽 상수 `order.events` — 금액은 `long`(KRW 정수). `Money` VO는 order의 도메인 개념이라 shared에 넣으면 안 됨(C-3 위반)
 - [ ] **Outbox 테이블 + 릴레이** — 상태변경과 이벤트 적재를 원자적으로(PI-6, dual-write 해결). 릴레이가 `EventEnvelope`로 포장해 `order.events` 발행
 - [ ] **read model** `order_saga_progress` + `GET /orders/{id}` 폴링 조회 (ADR-0004, PC-4)
 - **✅ 완료 기준**: `POST /orders` → `order.events` 토픽에 `OrderPlaced` 실제로 뜸 → `GET`으로 PENDING 조회 ✨ **첫 walking skeleton 관통**
 > ⚠️ Outbox 릴레이(폴링 or `@TransactionalEventListener`)가 핵심 학습 포인트이자 리스크. 여유를 뒀다.
+> 📌 **계약은 just-in-time.** ADR-0007 §3의 payload 10종을 한 번에 내리지 않는다 — 나머지는 각자의 **발행자가 생기는 날**에 추가한다(D7 `PaymentCompleted`·`PaymentFailed` / D8 `StockDeducted`·`StockShortage` / D9 `OrderConfirmed` / D11 `PaymentRefunded` / D12 `OrderCancellationRequested`·`OrderCancelled`·`StockRestored`). 계약 설계 자체는 ADR-0007에서 이미 끝났고, 여기서 하는 건 사용처가 생긴 만큼만 옮겨 적는 일이다.
+> 📌 `eventType` 문자열↔타입 매핑은 **D7로** — 역방향(역직렬화 디스패치)이 실제로 필요해지는 첫 지점이 컨슈머다. 발행자 하나뿐인 D6에서는 정방향만 있으면 된다.
 
 ### Day 7 — Payment 컨텍스트 `Phase 2`
 **목표**: 주문 이벤트를 받아 결제하고 결과를 발행한다.
 > 📚 **완료 후 자문**: ① 코레오그래피 Saga에서 "중앙 조정자가 없다"는 게 구체적으로 어떤 구조인가? ② 컨슈머가 한 토픽에 섞인 여러 이벤트를 어떻게 분기·역직렬화하나(`eventType`)? ③ 결정론적 실패 주입이 확률 기반보다 테스트에 유리한 이유는?
+- [ ] **payment Flyway 빈 + `V1__create_payments.sql`** (D4에서 예고) — payment의 첫 테이블이 오늘 생긴다. `ddl-auto`는 계속 `validate`
 - [ ] Payment 도메인 — 결제 금액 = 주문 총액 일치(PP-1), 1회·전액(PP-2)
 - [ ] `order.events` 구독 → `OrderPlaced` 수신 → 결제 시도
 - [ ] **가짜 PG** — 금액 끝자리 `7`이면 `PaymentFailed`, 그 외 `PaymentCompleted`(PP-3, 결정론적)
@@ -110,6 +122,7 @@
 ### Day 8 — Inventory 컨텍스트 `Phase 2`
 **목표**: 결제 완료를 받아 재고를 차감한다.
 > 📚 **완료 후 자문**: ① `WHERE qty >= n` 조건부 UPDATE는 왜 "충돌"이라는 개념이 없나? ② 왜 결제 *후*에 재고를 차감하나 — 순서를 바꾸면 보상 학습이 어떻게 달라지나(PV-2)? ③ all-or-nothing 차감(PV-3)은 왜 필요한가?
+- [ ] **inventory Flyway 빈 + `V1__create_stocks.sql`** (D4에서 예고) — inventory의 첫 테이블이 오늘 생긴다. 이로써 Flyway 3세트 완성
 - [ ] Stock 도메인 (물리 재고, 예약 개념 없음 PV-1) + **재고 시드**(셀러 없음)
 - [ ] `payment.events` 구독 → `PaymentCompleted` 수신 → 재고 차감(PV-2: 결제 후 차감)
 - [ ] all-or-nothing(PV-3), 기본 어댑터 = **원자적 조건부 UPDATE**(`WHERE qty >= n`, ADR-0002 기본 B)
@@ -191,7 +204,6 @@
 - [ ] 멱등성 4층위 통합 테스트(클라이언트 멱등키·Inbox·상태전이·보상, design.md §4)
 - [ ] 보상 시나리오 통합 테스트(E1·E2·E6·타임아웃 최종 정합)
 - [ ] (스필오버 버퍼) Day 15 Redis 어댑터 / 밀린 항목 마무리
-- [ ] `onboarding.md` 갱신 — "골격만" → 실제 상태
 - **✅ 완료 기준**: 전체 테스트 그린 + ArchUnit 경계 강제 활성 + 데모 시나리오(정상·실패·타임아웃·동시성) 재현 가능
 
 ---
@@ -211,7 +223,7 @@
 
 | 학습 목표 | 관련 정책 | 커버 Day |
 |-----------|-----------|----------|
-| Kafka / EDA | PI-4·5·6, PT-* | 2·6~10·13~14 |
+| Kafka / EDA | PI-4·5·6, PT-* | 6~10·13~14 |
 | DDD (Aggregate·불변식) | §1, PS-*, PV-1 | 3·8·9 |
 | 보상 트랜잭션 | PB-*, PC-3, PV-5 | 11·12·13 |
 | 멱등성 | PI-*, PS-4, PB-2, PT-3 | 5·9·10·11 |
