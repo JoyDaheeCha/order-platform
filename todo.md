@@ -1,57 +1,32 @@
-# todo — order-platform 구현 일정 (하루 8h 기준)
+# 프로젝트 요약
+주문 플랫폼의 분산 환경 시스템을 구현
 
-> **이 문서의 역할**: 설계 문서(product-spec·policy·architecture·design·ADR 7건)는 전부 Accepted다.
-> 이 문서는 그걸 코드로 옮기는 **하루 단위 실행 계획**이다. 각 Day는 끝나면 **"돌아가는 것"** 하나가
-> 남도록 잘랐다 — 리뷰어가 매일의 진척을 실제로 확인할 수 있게.
->
-> 총 **약 16 영업일(≈3.5주)**. 근거 정책은 `PI-5`·`PV-4` 같은 ID로, 결정은 ADR 번호로 표기.
+## 프로젝트 내 기능
+- POST /orders 
+- GET /orders/{id} 
+- POST /orders/{id}/cancel
 
----
+## 목적
+- 도메인 유즈케이스는 단순화 하되, 분산환경에서 사용하는 다양한 기법 (예. SAGA 패턴, 동시성) 을 익힌다
+- 부하테스트에서 트래픽을 충분히 견디도록 설계한다. 
 
-## 산정 기준 (리뷰어용 메모)
+# TODO
+##  환경세팅
+[x] 앱이 뜨고, MySQL·Kafka·Redis에 붙는다.
+[x] 주문, 재고, 결제 컨텍스트마다 자기 스키마만 확인할 수 있음을 테스트로 증명한다. 
 
-- **하루 8h = 구현 + 학습 + 검증** 포함. 학습 프로젝트라 "왜 이렇게 되는가" 확인 시간을 넣었다.
-- 각 Day는 **독립적으로 데모 가능한 결과물**로 끝난다. 빅뱅 통합을 만들지 않는다.
-- 순서 원칙: **가장 얇은 주문 한 건을 끝까지 관통(walking skeleton)** → 살 붙이기.
-- 리스크가 큰 날(멀티 DataSource, Outbox 릴레이, 동시성)은 별도 표시(⚠️)하고 여유를 뒀다.
-- **각 Day에 `📚 완료 후 자문`** = 그날 작업을 마치고 스스로에게 던지는 질문. **막힘없이 답할 수 있으면 그 개념을 체득한 것**이다(면접 회고에도 그대로 쓴다). 이 프로젝트의 산출물 절반은 코드가 아니라 이 답들이다(design.md §0).
+## 주문 생성(POST /orders) api 추가 7/19 구현 목표 (day3~day6)
+[ ] 주문을 생성하면 PENDING 주문이 DB에 저장된다
+[ ] 주문 생성 중복 요청을 방지
+    - [ ] 같은 멱등키 재요청은 기존 주문을 반환한다.
+    - [ ] 같은 키에 다른 페이로드는 409로 거부한다. 
+[ ] OrderPlaced(주문이 요청되었다) 이벤트가 발행된다
 
-> 💡 **학습 흐름 한눈에**: Kafka 기초(D1) → 컨텍스트 경계·스키마 분리(D2) → DDD 도메인(D3~4) → 멱등성 생산자측(D5) → **이벤트 계약·Outbox/dual-write(D6)** → 코레오그래피 구독(D7~8) → **Inbox/effectively-once(D9)** → **Saga 보상(D11~12)** → 코레오그래피의 빚: 타임아웃(D13)·재시도/DLQ(D14) → **동시성 4기법 비교(D15)** → 아키텍처 검증(D16)
+## 주문 조회 api(GET /orders/{id}) 추가
 
-| 주차 | 산출물 |
-|------|--------|
-| **Week 1** (Day 1~5) | 무대 세팅 + Order 도메인/저장/API 골격 |
-| **Week 2** (Day 6~10) | 첫 관통 완성 → Saga happy path (3 컨텍스트 연결) |
-| **Week 3** (Day 11~16) | 보상 트랜잭션 · 타임아웃 · 동시성 · 검증 종합 |
+## 주문 취소 api 추가
 
----
-
-# Week 1 — 무대 세팅 + Order 골격
-
-### Day 1 — 로컬 인프라 + 빌드 그린 `Phase 0`
-**목표**: 앱이 뜨고, MySQL·Kafka·Redis에 붙는다.
-> 📚 **완료 후 자문**: ① Kafka의 토픽·파티션·컨슈머그룹은 각각 무엇을 결정하나? ② KRaft 모드는 주키퍼가 하던 어떤 역할을 대체했고, 왜 없애는 방향으로 갔나?
-- [x] `docker-compose.yml` — MySQL 8 · Kafka(KRaft 단일 노드) · Redis (design.md §5: DB는 스키마로만 격리)
-- [x] 5개 모듈 `build.gradle`에 필요한 starter 채우기 (libs.versions.toml 참조)
-- [x] `application.yml` 기본 골격 + `local` 프로파일
-- [x] `OrderPlatformApplication` 부팅 확인
-- **✅ 완료 기준**: `docker compose up` + `./gradlew bootRun` 성공, 컨테이너 3개 연결 로그 확인
-
-### Day 2 — 멀티 DataSource: 컨텍스트 경계를 *물리*로 강제 ⚠️ `Phase 0` ✅
-**목표**: 컨텍스트마다 자기 스키마만 보는 DataSource가 서고, "타 스키마가 안 보인다"를 테스트로 증명한다.
-> 📚 **완료 후 자문**:
-> ① 스키마를 분리하면 컨텍스트 경계가 왜 *물리적으로* 강제되나(EntityManager에 안 보인다는 게 무슨 뜻)?
-> ② ADR-0004가 B-1(단일 DataSource + `@Table(schema=)`)을 기각한 이유는 — "규약으로 막는 것"과 "구조로 막는 것"의 차이가 실제로 무엇을 바꾸나?
-> ③ Spring Boot 자동설정을 끄고 DataSource·EMF·TransactionManager를 손으로 배선하면, 원래 자동으로 되던 것 중 무엇이 사라지나?
-> > 📚 **멘토님 질문**:
-> ① 하나의 트랜잭션이 multi datasource를 거쳐야 한다면 어떻게 처리?
-- [x] `IntegrationEvent` 제거 — ADR-0007이 기각한 옵션 b, 참조처 0
-- [x] **DataSource 3세트**(ADR-0004 B-2) — 컨텍스트별 DataSource·EMF(=EntityManagerFactory)·TransactionManager + `@EnableJpaRepositories`
-- [x] **자동설정 2개 제외**(`DataSource`·`HibernateJpa`) + Hibernate 속성을 수동 EMF에 직접 주입
-- [x] 최소 `OrderEntity` + `docker/mysql/init/02-orders.sql` — 배관 점검용 스캐폴드. 더미 `PingEntity` 대신 진짜 테이블 이름으로 시작한다(더미를 만들고 이틀 뒤 지우는 왕복 제거). 필드는 배관 증명에 필요한 최소 집합이고, 주문 라인·상태 전이는 Day 3 도메인이 정한 뒤 온다
-- [x] **Testcontainers MySQL** — `docker/mysql/init` 마운트로 compose와 스키마 출처 일원화
-- **✅ 완료 기준**: ① `OrderEntity`가 `order` 스키마에 저장됨 ② **`payment`의 EntityManager Metamodel에 order 엔티티가 없음**을 테스트로 단언 ← ADR-0004가 B-2를 고른 근거 그 자체 → **①② 모두 PASS, 전체 8개 테스트가 `docker compose up` 없이 통과**
-- 
+# (참고) 세부 구현 사항
 ### Day 3 — Order 도메인 (순수 자바) `Phase 1`
 **목표**: 프레임워크 0 의존의 Order Aggregate가 불변식을 지킨다.
 > 📚 **완료 후 자문**: ① Aggregate·VO·불변식은 각각 무엇이고, 불변식은 어디서(생성자/팩토리) 강제해야 하나? ② VO의 불변성·값 동등성은 왜 필요한가? ③ 도메인이 Spring/JPA에 의존하면 구체적으로 뭐가 나빠지나?
