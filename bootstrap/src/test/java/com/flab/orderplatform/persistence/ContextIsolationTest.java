@@ -14,7 +14,7 @@ import jakarta.persistence.EntityManagerFactory;
 
 import java.time.LocalDateTime;
 
-import static com.flab.orderplatform.order.infrastructure.persistence.status.OrderStatus.PENDING;
+import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest

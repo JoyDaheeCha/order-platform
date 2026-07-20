@@ -1,4 +1,4 @@
-package com.flab.orderplatform.order.infrastructure.persistence.status;
+package com.flab.orderplatform.order.domain.status;
 
 /**
  * 주문 상태
