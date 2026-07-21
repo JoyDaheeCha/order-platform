@@ -5,6 +5,7 @@ import com.flab.orderplatform.order.domain.OrderItem;
 import com.flab.orderplatform.order.domain.external.Product;
 import lombok.Builder;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,7 @@ public record OrderCreateCommand(
     ) {
     }
 
-    public Order createOrder(String orderNumber, Map<String, Product> productsMap) {
+    public Order createOrder(String orderNumber, Map<String, Product> productsMap, Clock clock) {
         var orderItems = this.orderItems.stream().map(item -> {
                     var product = productsMap.get(item.productCode);
                     return OrderItem.builder()
@@ -46,7 +47,7 @@ public record OrderCreateCommand(
                             .build();
                 })
                 .toList();
-        return Order.create(customerId, orderItems, orderNumber);
+        return Order.create(customerId, orderItems, orderNumber, clock);
     }
 
     public List<String> getProductCodes() {
