@@ -1,9 +1,6 @@
 package com.flab.orderplatform.order.infrastructure.persistence;
 
-import java.util.Map;
-
-import javax.sql.DataSource;
-
+import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
@@ -17,7 +14,8 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import jakarta.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
+import java.util.Map;
 
 /**
  * Order 컨텍스트의 영속화 설정
@@ -30,7 +28,7 @@ import jakarta.persistence.EntityManagerFactory;
 )
 public class OrderPersistenceConfig {
 
-    static final String CONTEXT_PACKAGE = "com.flab.orderplatform.order.infrastructure";
+    static final String CONTEXT_PACKAGE = "com.flab.orderplatform.order";
 
     private static final Map<String, String> HIBERNATE_PROPERTIES = Map.of(
             "hibernate.hbm2ddl.auto", "validate",
