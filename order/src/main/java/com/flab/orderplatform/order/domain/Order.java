@@ -43,7 +43,7 @@ public class Order extends BaseEntity {
     private OrderStatus status;
 
     @OneToMany(cascade = {PERSIST, REMOVE})
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_id", nullable = false)
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @Column(name = "customer_id", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '구매자 ID'")
@@ -66,8 +66,9 @@ public class Order extends BaseEntity {
                                String orderNumber) {
 
         var totalAmount = orderItems.stream()
-                .mapToLong(OrderItem::getPrice)
+                .mapToLong(OrderItem::calculateAmount)
                 .sum();
+
         return Order.builder()
                 .customerId(customerId)
                 .orderNumber(orderNumber)

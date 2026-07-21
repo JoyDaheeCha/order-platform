@@ -38,4 +38,8 @@ public class OrderItem extends BaseEntity {
         this.price = price;
         this.quantity = quantity;
     }
+
+    public Long calculateAmount() {
+        return price * quantity;
+    }
 }
