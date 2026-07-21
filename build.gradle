@@ -44,9 +44,17 @@ subprojects {
         testImplementation platform(libs.spring.boot.dependencies)
         testImplementation "org.junit.jupiter:junit-jupiter"
         testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+
+        // controller slice test 위해 추가
+        testImplementation libs.spring.boot.starter.test   // ★ MockMvc, @MockitoBean, AssertJ
     }
 
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
+
+        // 테스트 출력값을 터미널에서도 보여준다.
+        testLogging {
+            showStandardStreams = true
+        }
     }
 }

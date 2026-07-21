@@ -1,8 +1,10 @@
 package com.flab.orderplatform.order.infrastructure.web;
 
 import com.flab.orderplatform.order.application.command.OrderCreateCommand;
-import com.flab.orderplatform.order.domain.OrderItem;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.Builder;
 
 import java.util.List;
 
@@ -12,10 +14,13 @@ import java.util.List;
  * @param customerId    구매자 PK
  * @param orderItemDtos 주문 상품 목록
  */
+@Builder
 public record OrderCreateRequest(
-        @NotNull
+        @NotNull(message = "주문자 id는 필수입니다.")
         Long customerId,
-        @NotNull
+
+        @Valid
+        @NotNull(message = "주문상품 정보 목록은 필수입니다.")
         List<OrderItemDto> orderItemDtos
 ) {
     /**
@@ -24,12 +29,14 @@ public record OrderCreateRequest(
      * @param name        상품명
      * @param productCode 상품 코드
      */
+    @Builder
     public record OrderItemDto(
-            @NotNull
+            @NotNull(message = "주문 수량은 필수입니다.")
+            @Positive(message = "주문 수량은 양수이어야합니다.")
             Integer quantity,
-            @NotNull
+            @NotNull(message = "상품명은 필수입니다.")
             String name,
-            @NotNull
+            @NotNull(message = "상품코드는 필수입니다.")
             String productCode
     ) {
     }

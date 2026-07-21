@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-// TODO controller E2E 테스트 추가
 @RequiredArgsConstructor
 @RestController
 public class OrderCommandController {
