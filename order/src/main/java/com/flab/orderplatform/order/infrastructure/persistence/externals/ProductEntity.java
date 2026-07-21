@@ -20,7 +20,7 @@ public class ProductEntity {
     private Long id;
 
     @Column(length = 36, unique = true, nullable = false,
-            columnDefinition = "VARCHAR(36) NOT NULL COMMENT '상품코드 (예. GD10001'")
+            columnDefinition = "VARCHAR(36) NOT NULL COMMENT '상품코드 (예. GD10001)'")
     private String productCode;
 
     @Column(name = "price", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '상품가격'")

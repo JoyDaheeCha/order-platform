@@ -20,15 +20,11 @@ public record OrderCreateRequest(
 ) {
     /**
      * 주문한 상품
-     *
-     * @param productId   상품 pk
      * @param quantity    주문 수량
      * @param name        상품명
      * @param productCode 상품 코드
      */
     public record OrderItemDto(
-            @NotNull
-            Long productId, // TODO: 이거 지우는것 고려. 웹에서 주문의 product 테이블 PK를 아는게 이상해.
             @NotNull
             Integer quantity,
             @NotNull
@@ -43,7 +39,6 @@ public record OrderCreateRequest(
                 .customerId(this.customerId)
                 .orderItems(this.orderItemDtos.stream().map(item ->
                                 OrderCreateCommand.OrderItemDto.builder()
-                                        .productId(item.productId)
                                         .quantity(item.quantity)
                                         .name(item.name)
                                         .productCode(item.productCode).build())

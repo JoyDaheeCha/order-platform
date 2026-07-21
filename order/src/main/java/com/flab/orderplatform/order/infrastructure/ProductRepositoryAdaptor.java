@@ -14,8 +14,8 @@ public class ProductRepositoryAdaptor implements ProductRepository {
     private final ProductJpaRepository productJpaRepository;
 
     @Override
-    public List<Product> findAllById(List<Long> productIds) {
-        var productEntities = productJpaRepository.findAllById(productIds);
+    public List<Product> findAllByProductCode(List<String> productCodes) {
+        var productEntities = productJpaRepository.findAllByProductCodeIn(productCodes);
         return productEntities.stream().map(product ->
                         Product.builder()
                                 .productId(product.getId())

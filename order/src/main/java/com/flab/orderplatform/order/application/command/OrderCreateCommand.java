@@ -28,7 +28,6 @@ public record OrderCreateCommand(
      */
     @Builder
     public record OrderItemDto(
-            Long productId,
             Integer quantity,
             String name,
             String productCode
@@ -37,7 +36,6 @@ public record OrderCreateCommand(
 
     public Order createOrder(String orderNumber, Map<String, Long> productsMap) {
         var orderItemDomains = orderItems.stream().map(item -> OrderItem.builder()
-                        .productId(item.productId())
                         .quantity(item.quantity)
                         .name(item.name)
                         .productCode(item.productCode)
@@ -46,9 +44,9 @@ public record OrderCreateCommand(
         return Order.create(customerId, orderItemDomains, orderNumber, productsMap);
     }
 
-    public List<Long> getProductIds() {
+    public List<String> getProductCodes() {
         return this.orderItems.stream()
-                .map(OrderItemDto::productId)
+                .map(OrderItemDto::productCode)
                 .toList();
     }
 }

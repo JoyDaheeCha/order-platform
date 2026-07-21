@@ -7,5 +7,5 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository {
-    List<Product> findAllById(List<Long> productIds);
+    List<Product> findAllByProductCode(List<String> productCodes);
 }
