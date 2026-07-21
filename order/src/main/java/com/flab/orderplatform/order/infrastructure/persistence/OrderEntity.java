@@ -14,11 +14,11 @@ import lombok.NoArgsConstructor;
  * Order 컨텍스트의 영속화 모델
  * TODO: Day3 작업에서 order 로직 넣을때, 필요한 컬럼 추가. (현재는 order, payment, inventory간 경계가 물리적으로 제약되어 있는지 테스트할 용도로 일부 필드만 넣어두었음.)
  */
-@Getter // TODO: createdAt, updatedAt 추가
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "orders")
-public class OrderEntity {
+public class OrderEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
