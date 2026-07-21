@@ -29,7 +29,7 @@ public class OrderEntity extends BaseEntity {
     private String orderNumber;
 
     @Column(name = "total_amount", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '총 구매 금액'")
-    private long totalAmount;
+    private Long totalAmount;
 
     @Column(name = "ordered_at", nullable = false, columnDefinition = "DATETIME(6) NOT NULL COMMENT '주문일자'")
     private LocalDateTime orderedAt;
@@ -39,7 +39,7 @@ public class OrderEntity extends BaseEntity {
     private OrderStatus status;
 
     @Builder
-    public OrderEntity(String orderNumber, long totalAmount, LocalDateTime orderedAt, OrderStatus status) {
+    public OrderEntity(String orderNumber, Long totalAmount, LocalDateTime orderedAt, OrderStatus status) {
         this.orderNumber = orderNumber;
         this.totalAmount = totalAmount;
         this.orderedAt = orderedAt;
@@ -49,7 +49,7 @@ public class OrderEntity extends BaseEntity {
     public static OrderEntity from(Order order) {
         return OrderEntity.builder()
                 .orderNumber(order.orderNumber())
-                .totalAmount(0)// TODO 상품 테이블 에서 채워넣기.
+                .totalAmount(0L)// TODO 상품 테이블 에서 채워넣기.
                 .orderedAt(order.orderedAt())
                 .status(order.status())
                 .build();
