@@ -3,7 +3,7 @@ package com.flab.orderplatform.order.application;
 import com.flab.orderplatform.order.application.command.OrderCreateCommand;
 import com.flab.orderplatform.order.application.port.out.ProductRepository;
 import com.flab.orderplatform.order.domain.OrderNumberGenerator;
-import com.flab.orderplatform.order.domain.Product;
+import com.flab.orderplatform.order.domain.external.Product;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,11 +26,12 @@ public class OrderCreateFacade {
     public Long createOrder(OrderCreateCommand command) {
         var orderNumber = orderNumberGenerator.generate();
         var pricesByProductCode = createPriceByProductCodeMap(command.getProductCodes());
-        return orderCommandHandler.handle(orderNumber, pricesByProductCode, command);
+        var createdOrder = orderCommandHandler.handle(orderNumber, pricesByProductCode, command);
+        return createdOrder.getId();
     }
 
-    public Map<String, Long> createPriceByProductCodeMap(List<String> productCodes) {
-        var products = productRepository.findAllByProductCode(productCodes);
-        return products.stream().collect(Collectors.toMap(Product::productCode, Product::price));
+    public Map<String, Product> createPriceByProductCodeMap(List<String> productCodes) {
+        var products = productRepository.findAllByProductCodeIn(productCodes);
+        return products.stream().collect(Collectors.toMap(Product::getProductCode, p -> p));
     }
 }

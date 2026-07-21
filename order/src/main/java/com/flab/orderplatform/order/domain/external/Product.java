@@ -1,4 +1,4 @@
-package com.flab.orderplatform.order.infrastructure.persistence.externals;
+package com.flab.orderplatform.order.domain.external;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "product")
-public class ProductEntity {
+public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

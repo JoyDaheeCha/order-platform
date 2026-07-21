@@ -11,8 +11,7 @@ public class OrderRepositoryAdaptor implements OrderRepository {
     private final OrderJpaRepository orderJpaRepository;
 
     @Override
-    public Long save(Order order) {
-        var savedEntity = orderJpaRepository.save(OrderEntity.from(order)); // TODO Entity와 VO를 분리하는게 오히려 개발효율성을 떨어트리지 않을까? 지금 어떤 장점이 있지?
-        return savedEntity.getId();
+    public Order save(Order order) {
+        return orderJpaRepository.save(order);
     }
 }
