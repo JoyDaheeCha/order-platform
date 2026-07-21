@@ -44,6 +44,7 @@ public class Order extends BaseEntity {
     private OrderStatus status;
 
     @OneToMany(cascade = {PERSIST, REMOVE})
+    @JoinColumn(name = "order_id")
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @Column(name = "customer_id", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '구매자 ID'")
