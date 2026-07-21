@@ -1,6 +1,6 @@
 package com.flab.orderplatform.order.infrastructure.web;
 
-import com.flab.orderplatform.order.domain.Order;
+import com.flab.orderplatform.order.domain.OrderItem;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -31,9 +31,9 @@ public record OrderCreateRequest(
     ) {
     }
 
-    public List<Order.OrderItem> toOrderItems() {
+    public List<OrderItem> toOrderItems() {
         return orderItemDtos.stream()
-                .map(dto -> Order.OrderItem.builder()
+                .map(dto -> OrderItem.builder()
                         .productId(dto.productId)
                         .quantity(dto.quantity)
                         .build())

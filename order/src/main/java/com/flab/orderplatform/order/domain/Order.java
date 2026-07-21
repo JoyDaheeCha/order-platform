@@ -27,19 +27,8 @@ public record Order(
         LocalDateTime orderedAt,
         OrderStatus status
 ) {
-    /**
-     * 주문한 상품
-     *
-     * @param productId 상품 pk
-     * @param quantity  주문 수량
-     */
-    @Builder
-    public record OrderItem(
-            Long productId,
-            Integer quantity
-    ) {
-    }
 
+    // TODO: 도메인 로직 테스트 추가 (주문번호 지정, 주문일자 현재, status pending이다 확인)
     public static Order create(Long customerId,
                                List<OrderItem> orderItems,
                                String orderNumber) {
@@ -49,6 +38,7 @@ public record Order(
                 .orderItems(orderItems)
                 .orderedAt(LocalDateTime.now()) // TODO 테스트 가능한 형태로 변경 (orderedAt 주입 받도록)
                 .status(PENDING)
+                .totalAmount(0L) // TODO totalAmount 가져오는 테이블 필요
                 .build();
     }
 }
