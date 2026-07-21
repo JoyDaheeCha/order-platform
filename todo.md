@@ -34,9 +34,6 @@
 ## 환경 설정
 [ ] flyway 추가
 
-- DB 변경 사항 추적 위함
-  [ ] READ db 환경설정 추가
-
 ## 주문 조회 api(GET /orders/{id}) 추가
 
 ## 주문 취소 api 추가
