@@ -20,6 +20,6 @@ public class OrderCommandController {
     // TODO: 사용자가 post 요청을 두번 보냈을 때 1번만 처리되도록 서버에서 방어로직 추가 (방법: Idempotency 사용)
     @PostMapping("/order")
     public Long createOrder(@Valid @RequestBody OrderCreateRequest request) {
-        return orderService.createOrder(request.customerId(), request.toOrderItems());
+        return orderService.createOrder(request.toCommand());
     }
 }

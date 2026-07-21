@@ -1,5 +1,6 @@
 package com.flab.orderplatform.order.infrastructure.web;
 
+import com.flab.orderplatform.order.application.command.OrderCreateCommand;
 import com.flab.orderplatform.order.domain.OrderItem;
 import jakarta.validation.constraints.NotNull;
 
@@ -20,23 +21,34 @@ public record OrderCreateRequest(
     /**
      * 주문한 상품
      *
-     * @param productId 상품 pk
-     * @param quantity  주문 수량
+     * @param productId   상품 pk
+     * @param quantity    주문 수량
+     * @param name        상품명
+     * @param productCode 상품 코드
      */
     public record OrderItemDto(
             @NotNull
-            Long productId,
+            Long productId, // TODO: 이거 지우는것 고려. 웹에서 주문의 product 테이블 PK를 아는게 이상해.
             @NotNull
-            Integer quantity
+            Integer quantity,
+            @NotNull
+            String name,
+            @NotNull
+            String productCode
     ) {
     }
 
-    public List<OrderItem> toOrderItems() {
-        return orderItemDtos.stream()
-                .map(dto -> OrderItem.builder()
-                        .productId(dto.productId)
-                        .quantity(dto.quantity)
-                        .build())
-                .toList();
+    public OrderCreateCommand toCommand() {
+        return OrderCreateCommand.builder()
+                .customerId(this.customerId)
+                .orderItems(this.orderItemDtos.stream().map(item ->
+                                OrderCreateCommand.OrderItemDto.builder()
+                                        .productId(item.productId)
+                                        .quantity(item.quantity)
+                                        .name(item.name)
+                                        .productCode(item.productCode).build())
+                        .toList()
+                )
+                .build();
     }
 }

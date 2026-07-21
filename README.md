@@ -51,6 +51,9 @@ order-platform/
 
 의존 방향은 안쪽으로만: `infrastructure → application → domain`.
 
+## 외부도메인 관리법
+persistence, domain 내에서 externals 패키지를 두고 해당 패키지 하위에서 관리한다.
+예. 상품 도메인(product) 에서 동기화되는 데이터일 경우`externals.ProductEntity`
 ### 핵심 불변식
 
 - **C-1** 바운디드 컨텍스트 간 컴파일 의존 금지 — `order`는 `payment`·`inventory`를 import 불가 (모듈 경계로 컴파일타임 강제).

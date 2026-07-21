@@ -1,10 +1,12 @@
 package com.flab.orderplatform.order.domain;
 
 import com.flab.orderplatform.order.domain.status.OrderStatus;
+import com.flab.orderplatform.order.infrastructure.persistence.OrderItemEntity;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING;
 
@@ -31,14 +33,27 @@ public record Order(
     // TODO: 도메인 로직 테스트 추가 (주문번호 지정, 주문일자 현재, status pending이다 확인)
     public static Order create(Long customerId,
                                List<OrderItem> orderItems,
-                               String orderNumber) {
+                               String orderNumber,
+                               Map<String, Long> productPriceMap) {
+        var orderItemsWithPrice = orderItems.stream().map(item -> OrderItem.builder()
+                        .productId(item.productId())
+                        .name(item.name())
+                        .price(productPriceMap.get(item.productCode()))
+                        .productCode(item.productCode())
+                        .quantity(item.quantity())
+                        .build())
+                .toList();
+
+        var totalAmount = orderItems.stream()
+                .mapToLong(OrderItem::price)
+                .sum();
         return Order.builder()
                 .customerId(customerId)
                 .orderNumber(orderNumber)
-                .orderItems(orderItems)
+                .orderItems(orderItemsWithPrice)
                 .orderedAt(LocalDateTime.now()) // TODO 테스트 가능한 형태로 변경 (orderedAt 주입 받도록)
                 .status(PENDING)
-                .totalAmount(0L) // TODO totalAmount 가져오는 테이블 필요
+                .totalAmount(totalAmount)
                 .build();
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import jakarta.persistence.EntityManagerFactory;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,7 +45,7 @@ class ContextIsolationTest {
     @Test
     @DisplayName("order 엔티티가 order 스키마에 실제로 저장된다")
     void savesIntoOrderSchema() {
-        var order = orderJpaRepository.save(new OrderEntity("order-1", 12_000L, LocalDateTime.now(), PENDING));
+        var order = orderJpaRepository.save(new OrderEntity("order-1", 12_000L, LocalDateTime.now(), PENDING, List.of(), 100L));
         orderJpaRepository.flush();
 
         assertThat(orderJpaRepository.findById(order.getId()))
