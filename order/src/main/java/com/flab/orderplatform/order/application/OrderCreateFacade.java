@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class OrderService {  // TODO OrderCreateFacade로 분리해야하지 않을까?
+public class OrderCreateFacade {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final OrderNumberGenerator orderNumberGenerator;

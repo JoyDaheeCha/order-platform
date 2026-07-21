@@ -21,7 +21,6 @@ public record OrderCreateCommand(
     /**
      * 주문한 상품
      *
-     * @param productId   상품 pk
      * @param quantity    주문 수량
      * @param name        상품명
      * @param productCode 상품 코드
