@@ -1,10 +1,10 @@
 package com.flab.orderplatform.order.application;
 
+import com.flab.orderplatform.order.application.annotation.OrderTransactional;
 import com.flab.orderplatform.order.application.command.OrderCreateCommand;
 import com.flab.orderplatform.order.application.port.out.ProductRepository;
 import com.flab.orderplatform.order.domain.OrderNumberGenerator;
 import com.flab.orderplatform.order.domain.external.Product;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +22,7 @@ public class OrderCreateFacade {
     private final OrderNumberGenerator orderNumberGenerator;
     private final ProductRepository productRepository;
 
-    @Transactional
+    @OrderTransactional
     public Long createOrder(OrderCreateCommand command) {
         var orderNumber = orderNumberGenerator.generate();
         var pricesByProductCode = createPriceByProductCodeMap(command.getProductCodes());
