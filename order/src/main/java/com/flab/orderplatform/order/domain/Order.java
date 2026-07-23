@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,8 +62,7 @@ public class Order extends BaseEntity {
 
     public static Order create(Long customerId,
                                List<OrderItem> orderItems,
-                               String orderNumber,
-                               Clock clock) {
+                               String orderNumber) {
 
         var totalAmount = orderItems.stream()
                 .mapToLong(OrderItem::calculateAmount)
@@ -74,7 +72,7 @@ public class Order extends BaseEntity {
                 .customerId(customerId)
                 .orderNumber(orderNumber)
                 .orderItems(orderItems)
-                .orderedAt(LocalDateTime.now(clock))
+                .orderedAt(LocalDateTime.now())
                 .status(PENDING)
                 .totalAmount(totalAmount)
                 .build();

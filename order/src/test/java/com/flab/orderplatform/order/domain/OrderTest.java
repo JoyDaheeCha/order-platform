@@ -2,21 +2,18 @@ package com.flab.orderplatform.order.domain;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
-import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 
 import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mockStatic;
 
 @DisplayName("주문 단위테스트")
 class OrderTest {
-
-    private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
-    private static final LocalDateTime NOW = LocalDateTime.of(2026, 7, 21, 14, 30, 0);
-    private static final Clock FIXED_CLOCK = Clock.fixed(NOW.atZone(ZONE).toInstant(), ZONE);
 
     @DisplayName("주문 생성시 주문일자는 현재로 세팅되고, 주문 상태는 결제대기중으로 초기화된다.")
     @Test
@@ -32,13 +29,17 @@ class OrderTest {
                         .quantity(3)
                         .build()
         );
-
-        // when
-        var order = Order.create(customerId, orderItems, orderNumber, FIXED_CLOCK);
+        Order order;
+        var fixedNow = LocalDateTime.of(2026, 7, 21, 14, 30, 0);
+        try (MockedStatic<LocalDateTime> mocked = mockStatic(LocalDateTime.class, CALLS_REAL_METHODS)){
+            mocked.when(LocalDateTime::now).thenReturn(fixedNow);
+            // when
+            order = Order.create(customerId, orderItems, orderNumber);
+        }
 
         // then
         assertSoftly(softly -> {
-            softly.assertThat(order.getOrderedAt()).isEqualTo(NOW);
+            softly.assertThat(order.getOrderedAt()).isEqualTo(fixedNow);
             softly.assertThat(order.getStatus()).isEqualTo(PENDING);
         });
     }
@@ -64,7 +65,7 @@ class OrderTest {
         );
 
         // when
-        var order = Order.create(100L, orderItems, orderNumber, FIXED_CLOCK);
+        var order = Order.create(100L, orderItems, orderNumber);
 
         // then
         assertSoftly(softly -> {

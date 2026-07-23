@@ -8,17 +8,15 @@ import com.flab.orderplatform.order.domain.external.Product;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Clock;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class OrderCommandHandler {
     private final OrderRepository orderRepository;
-    private final Clock clock;
 
     @OrderTransactional
     public Order handle(String orderNumber, Map<String, Product> productMap, OrderCreateCommand command) {
-        return orderRepository.save(command.createOrder(orderNumber, productMap, clock));
+        return orderRepository.save(command.createOrder(orderNumber, productMap));
     }
 }
