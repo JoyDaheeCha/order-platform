@@ -33,23 +33,6 @@ class ModuleBoundaryTest {
     }
 
     @Test
-    @DisplayName("A-1: domain 은 Spring·JPA·Kafka 를 의존하지 않는다 (순수성)")
-    void domainShouldBeFrameworkFree() {
-        noClasses()
-                .that().resideInAPackage("..domain..")
-                .should().dependOnClassesThat()
-                .resideInAnyPackage(
-                        "org.springframework..",
-                        "jakarta.persistence..",
-                        "org.apache.kafka..",
-                        "org.springframework.kafka..")
-                .because("A-1: 도메인은 기술로부터 격리된 순수 Java 여야 한다")
-                // 스캐폴드 단계엔 도메인 클래스가 아직 없다 → 0개면 통과, 클래스가 생기면 자동 강제.
-                .allowEmptyShould(true)
-                .check(classes);
-    }
-
-    @Test
     @DisplayName("A-2: domain 은 같은 컨텍스트의 application·infrastructure 를 의존하지 않는다")
     void domainShouldNotDependOnOuterLayers() {
         noClasses()

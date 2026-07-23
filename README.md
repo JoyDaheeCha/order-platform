@@ -51,8 +51,6 @@ order-platform/
 
 의존 방향은 안쪽으로만: `infrastructure → application → domain`.
 
-### 핵심 불변식
-
 - **C-1** 바운디드 컨텍스트 간 컴파일 의존 금지 — `order`는 `payment`·`inventory`를 import 불가 (모듈 경계로 컴파일타임 강제).
 - **C-2** 컨텍스트 간 통신은 **Kafka 통합 이벤트 only** (직접 호출·공유 테이블 금지).
 - **C-3** 통합 이벤트 계약은 `shared`에만 정의.

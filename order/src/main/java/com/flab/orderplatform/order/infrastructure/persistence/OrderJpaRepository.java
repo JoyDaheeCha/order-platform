@@ -1,9 +1,8 @@
 package com.flab.orderplatform.order.infrastructure.persistence;
 
+import com.flab.orderplatform.order.domain.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-/**
- * {@link OrderEntity} 의 JPA 리포지토리
- */
-public interface OrderJpaRepository extends JpaRepository<OrderEntity, Long> {
+public interface OrderJpaRepository extends JpaRepository<Order, Long> {
+
 }
