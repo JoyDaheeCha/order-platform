@@ -2,6 +2,7 @@ package com.flab.orderplatform.order.domain.external;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -25,4 +26,10 @@ public class Product {
 
     @Column(name = "price", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '상품가격'")
     private Long price;
+
+    @Builder
+    public Product(String productCode, Long price) {
+        this.productCode = productCode;
+        this.price = price;
+    }
 }

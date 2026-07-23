@@ -1,5 +1,5 @@
 # 버전 카탈로그 — 모든 모듈이 공유하는 의존성 버전의 단일 출처(Single Source of Truth).
-# 각 모듈 build.gradle.kts 에서는 버전 없이 `libs.xxx` 로만 참조한다.
+# 각 모듈 build.gradle 에서는 버전 없이 `libs.xxx` 로만 참조한다.
 [versions]
 # Spring Boot 3.x — BOM(spring-boot-dependencies)으로 하위 의존성 버전을 일괄 관리한다.
 springBoot = "3.4.1"

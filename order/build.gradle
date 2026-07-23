@@ -23,4 +23,7 @@ dependencies {
     implementation libs.spring.kafka
     implementation libs.spring.boot.starter.validation
     runtimeOnly libs.mysql.connector
+
+    // Retry
+    implementation "org.springframework.retry:spring-retry"
 }
