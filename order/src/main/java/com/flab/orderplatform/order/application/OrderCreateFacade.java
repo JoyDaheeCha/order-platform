@@ -1,6 +1,5 @@
 package com.flab.orderplatform.order.application;
 
-import com.flab.orderplatform.order.application.annotation.OrderTransactional;
 import com.flab.orderplatform.order.application.command.OrderCreateCommand;
 import com.flab.orderplatform.order.application.exception.ProductNotFoundException;
 import com.flab.orderplatform.order.application.port.out.ProductRepository;
@@ -24,9 +23,8 @@ public class OrderCreateFacade {
     private final OrderNumberGenerator orderNumberGenerator;
     private final ProductRepository productRepository;
 
-    @OrderTransactional
     public Long createOrder(OrderCreateCommand command) {
-        // TODO: 주문 번호 retry 로직 추가, 주문번호 unique 제약 조건 추가
+        // TODO: 주문 번호 retry 로직 추가\
         var orderNumber = orderNumberGenerator.generate();
         var productsByCode = createProductByProductCodeMap(command.getProductCodes());
         var createdOrder = orderCommandHandler.handle(orderNumber, productsByCode, command);
