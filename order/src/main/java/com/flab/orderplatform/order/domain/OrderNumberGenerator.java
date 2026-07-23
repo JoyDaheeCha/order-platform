@@ -1,7 +1,6 @@
 package com.flab.orderplatform.order.domain;
 
 import java.security.SecureRandom;
-import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -21,15 +20,10 @@ public class OrderNumberGenerator {
     private static final DateTimeFormatter DATE_PREFIX = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final SecureRandom random = new SecureRandom();
-    private final Clock clock;
-
-    public OrderNumberGenerator(Clock clock) {
-        this.clock = clock;
-    }
 
     public String generate() {
         var sb = new StringBuilder(19);
-        sb.append(LocalDate.now(clock).format(DATE_PREFIX)).append('-');
+        sb.append(LocalDate.now().format(DATE_PREFIX)).append('-');
         for (int i = 0; i < RANDOM_LENGTH; i++) {
             sb.append(ALPHABET[random.nextInt(ALPHABET.length)]);
         }
