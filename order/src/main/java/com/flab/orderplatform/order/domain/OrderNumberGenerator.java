@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter;
  * <p>
  * 주문번호 생성기
  *
- * 숫자 10개 + 알파벳 22개 로 19개 자리의 주문번호를 만듭니다. (날짜 + Crockfor base32 10자리)
+ * 숫자 10개 + 알파벳 22개 로 19개 자리의 주문번호를 만듭니다. (날짜 + Crockford base32 10자리)
  *
  * 0/O, 1/I/L 같은 혼용문자는 사용하지 않습니다.
  * 예. 20260720-7K3M9QX2WF
