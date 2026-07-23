@@ -26,6 +26,7 @@ public class OrderCreateFacade {
 
     @OrderTransactional
     public Long createOrder(OrderCreateCommand command) {
+        // TODO: 주문 번호 retry 로직 추가, 주문번호 unique 제약 조건 추가
         var orderNumber = orderNumberGenerator.generate();
         var productsByCode = createProductByProductCodeMap(command.getProductCodes());
         var createdOrder = orderCommandHandler.handle(orderNumber, productsByCode, command);
