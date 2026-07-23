@@ -30,7 +30,11 @@
     - [ ] 같은 멱등키 재요청은 기존 주문을 반환한다.
         - [ ] 멱등키 어떻게 만들지?
     - [ ] 같은 키에 다른 페이로드는 409로 거부한다. 
+
+## Outbox 패턴 추가 + 이벤트 발행
 [ ] OrderPlaced(주문이 요청되었다) 이벤트가 발행된다
+[ ] Order, Order Item 양방향으로 변경할지 검토 (업데이트 쿼리 별도로 나가는지 확인)
+[ ] outbox 패턴 추가
 
 ## 환경 설정
 [ ] flyway 추가
@@ -40,31 +44,6 @@
 ## 주문 취소 api 추가
 
 # (참고) 세부 구현 사항
-### Day 3 — Order 도메인 (순수 자바) `Phase 1`
-**목표**: 프레임워크 0 의존의 Order Aggregate가 불변식을 지킨다.
-> 📚 **완료 후 자문**: ① Aggregate·VO·불변식은 각각 무엇이고, 불변식은 어디서(생성자/팩토리) 강제해야 하나? ② VO의 불변성·값 동등성은 왜 필요한가? ③ 도메인이 Spring/JPA에 의존하면 구체적으로 뭐가 나빠지나?
-- [ ] `Money` VO (KRW 정수, 소수/음수 금지, policy §0)
-- [ ] `OrderLine` VO (수량 1~99, PO-2)
-- [ ] `Order` Aggregate — 라인 1개↑(PO-1), 상품 중복 라인 거부(PO-3), 총액 스냅샷(PO-4)
-- [ ] `OrderStatus` enum (이 단계는 `PENDING` 생성까지) + 도메인 이벤트 `OrderPlaced`(내부, C-4)
-- [ ] 도메인 단위 테스트 (PO-1~4 불변식)
-- **✅ 완료 기준**: 도메인 단위테스트 그린 + ArchUnit A-1(도메인 순수성) 통과
-
-### Day 4 — Order application + 저장 어댑터 `Phase 1`
-**목표**: 유스케이스가 주문을 생성해 DB에 저장한다.
-> 📚 **완료 후 자문**: ① 인바운드 포트와 아웃바운드 포트는 무엇이 다른가? ② application이 인터페이스를 소유하고 infra가 구현하면(DIP) 의존 방향이 어떻게 뒤집히나? ③ 트랜잭션 경계를 왜 도메인이 아니라 유스케이스(application)에 두나?
-- [ ] 인바운드 포트 `PlaceOrderUseCase`, 아웃바운드 포트 `OrderRepository`·`OrderEventPublisher`
-- [ ] `PlaceOrderService` — 시드 데이터로 상품/가격 검증(PO-5), 트랜잭션 경계 설정
-- [ ] `OrderEntity` 확장(Day 2의 최소 스캐폴드 → Day 3 Aggregate에 맞춘 진짜 매핑: 주문 라인·상태) + repository 어댑터 (order 스키마). 아웃바운드 포트 `OrderRepository`를 `OrderJpaRepository`가 뒤에서 구현한다
-- [ ] **Flyway 도입** (Day 2에서 이동) — `flyway-core` + `flyway-mysql`(⚠️ Flyway 10부터 DB별 모듈 분리. 없으면 컴파일은 통과하고 런타임에 `Unsupported Database`. 이름도 `flyway-database-mysql`이 아니라 **`flyway-mysql`**), order의 Flyway 빈 1개(`locations: db/migration/order`), `@DependsOn`으로 EMF보다 **먼저** 실행
-- [ ] **`V1__create_orders.sql`** — Flyway의 첫 마이그레이션이 더미가 아니라 진짜 테이블이다
-- [ ] **Day 2 더미 정리** — `PingEntity` + `docker/mysql/init/02-ping.sql` 삭제. 로컬 DB는 `docker compose down -v`로 초기화(init 스크립트는 **최초 부팅에만** 돌아서 파일만 지우면 기존 컨테이너엔 테이블이 남는다. `validate`는 여분 테이블을 탓하지 않아 조용히 남는다)
-- [ ] 상품 시드 데이터
-- **✅ 완료 기준**: 서비스 테스트로 주문 생성→저장 확인, ArchUnit A-3(application→infra 금지) 통과
-> 📌 **왜 Day 2가 아니라 지금 Flyway인가** — 오늘 처음으로 *살아남는* 테이블(`orders`)이 생기기 때문. Flyway의 가치는 "같은 스키마 변경을 여러 환경에 시간에 걸쳐 결정적으로 반복 적용"인데, Day 2엔 그 인스턴스가 0개였다(운영 DB·타 개발자·배포 전부 없음). 미루는 비용도 0이었다 — 지금 스키마는 새로 만드는 테이블 하나뿐이라 뜰 `baseline`이 없다. 레트로핏이 아니라 그냥 시작일이 이틀 늦은 것.
-> 📌 **payment·inventory의 Flyway는 각자 첫 테이블이 생기는 D7·D8에.** 같은 이유(just-in-time). 그때까지 두 EMF는 엔티티가 0개라 `validate`할 것도 없다.
-> 📌 `ddl-auto`는 오늘도 **`validate` 그대로**다. Day 2에 `create`를 안 쓴 덕에 D1~D16 내내 안 흔들리고, DDL의 주인만 `02-ping.sql`(스캐폴드) → Flyway(진짜)로 조용히 교대한다. 네이밍 전략도 Day 2에 이미 `validate`로 검증받았으니 오늘 Flyway의 snake_case SQL과 충돌하지 않는다.
-
 ### Day 5 — 인바운드 API + 멱등키 `Phase 1`
 **목표**: `POST /orders`가 202를 주고, 중복 요청을 막는다.
 > 📚 **완료 후 자문**: ① 클라이언트 멱등키는 무엇을 막나? 서버가 아니라 클라이언트가 키를 만드는 이유는? ② 왜 202를 주고 확정 응답을 안 주나(sync-over-async는 뭐가 문제)? ③ "멱등성도 원자성 문제"란 무슨 뜻인가 — 키 기록과 주문 생성이 분리되면 어떤 사고가 나나?
