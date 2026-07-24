@@ -1,7 +1,7 @@
 package com.flab.orderplatform.order.application;
 
 import com.flab.orderplatform.order.application.command.OrderCreateCommand;
-import com.flab.orderplatform.order.application.exception.SystemException;
+import com.flab.orderplatform.order.application.exception.DuplicatedOrderNumberException;
 import com.flab.orderplatform.order.application.port.out.ProductRepository;
 import com.flab.orderplatform.order.domain.Order;
 import com.flab.orderplatform.order.domain.OrderNumberGenerator;
@@ -84,8 +84,8 @@ class OrderCreateFacadeRetryTest {
     }
 
     @Test
-    @DisplayName("[실패] 재시도(최초 1회 + 재시도 2회)를 모두 소진하면 SystemException 을 던진다.")
-    void throwsSystemExceptionWhenRetriesExhausted() {
+    @DisplayName("[실패] 재시도(최초 1회 + 재시도 2회)를 모두 소진하면 예외를 던진다.")
+    void throwsExceptionWhenRetriesExhausted() {
         // given: 매번 중복 예외 발생
         givenProductExists();
         given(orderNumberGenerator.generate()).willReturn("20260723-AAAAAAAAA1", "20260723-AAAAAAAAA2", "20260723-AAAAAAAAA3");
@@ -96,7 +96,7 @@ class OrderCreateFacadeRetryTest {
 
         // when & then: recover 가 원인 예외를 담아 SystemException 으로 변환
         assertThatThrownBy(() -> orderCreateFacade.createOrder(command))
-                .isInstanceOf(SystemException.class)
+                .isInstanceOf(DuplicatedOrderNumberException.class)
                 .hasCauseInstanceOf(DuplicateKeyException.class);
 
         // 최초 1회 + 재시도 2회 = 총 3회 (@Retryable 기본 maxAttempts = 3)

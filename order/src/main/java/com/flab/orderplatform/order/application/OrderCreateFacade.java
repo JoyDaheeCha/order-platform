@@ -1,8 +1,8 @@
 package com.flab.orderplatform.order.application;
 
 import com.flab.orderplatform.order.application.command.OrderCreateCommand;
+import com.flab.orderplatform.order.application.exception.DuplicatedOrderNumberException;
 import com.flab.orderplatform.order.application.exception.ProductNotFoundException;
-import com.flab.orderplatform.order.application.exception.SystemException;
 import com.flab.orderplatform.order.application.port.out.ProductRepository;
 import com.flab.orderplatform.order.domain.OrderNumberGenerator;
 import com.flab.orderplatform.order.domain.external.Product;
@@ -48,8 +48,8 @@ public class OrderCreateFacade {
     @SuppressWarnings(value = "unused")
     @Recover
     public Long recover(DuplicateKeyException e, OrderCreateCommand command) {
-        log.error("주문 번호 생성에 실패하였습니다.", e);
-        throw new SystemException("주문 생성에 실패했습니다. 잠시 후 다시 시도해주세요", e);
+        log.error("주문 번호가 중복되어, 주문 생성에 실패하였습니다.", e);
+        throw new DuplicatedOrderNumberException(e);
     }
 
 
