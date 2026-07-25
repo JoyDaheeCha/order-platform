@@ -35,7 +35,7 @@ Saga 구현에는 두 갈래가 있다. **이 선택이 모듈 구조·코드 �
 각 컨텍스트가 이벤트를 구독해 **자율적으로** 다음 동작을 수행한다. 중앙 조정자 없음.
 
 ```
-OrderPlaced ─▶ [Payment] ─ PaymentCompleted ─▶ [Inventory] ─ StockDeducted ─▶ [Order] confirm
+OrderCreated ─▶ [Payment] ─ PaymentCompleted ─▶ [Inventory] ─ StockDeducted ─▶ [Order] confirm
                   │                                  │
             PaymentFailed ─▶ [Order] cancel    StockShortage ─▶ [Payment] refund ─▶ [Order] cancel
 ```

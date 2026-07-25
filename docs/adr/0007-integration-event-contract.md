@@ -34,7 +34,7 @@
 
 | 발행 컨텍스트 | 이벤트 | payload 필드 |
 |---------------|--------|--------------|
-| **Order** | `OrderPlaced` | `buyerId`, `lines:[{productId, quantity, unitPrice}]`, `totalAmount` |
+| **Order** | `OrderCreated` | `buyerId`, `lines:[{productId, quantity, unitPrice}]`, `totalAmount` |
 | | `OrderConfirmed` | — (orderId는 envelope) |
 | | `OrderCancellationRequested` | `reason`(USER_CANCEL \| TIMEOUT) ★ 신설 |
 | | `OrderCancelled` | `reason` (terminal) |
@@ -90,7 +90,7 @@ record EventEnvelope<T>(
     UUID eventId,        // PI-4 멱등키 → 소비자 Inbox 키(PI-5)
     Instant occurredAt,
     String orderId,      // PI-4 상관관계·파티션 키
-    String eventType,    // 'OrderPlaced' 등 (구독자 분기·역직렬화 디스패치)
+    String eventType,    // 'OrderCreated' 등 (구독자 분기·역직렬화 디스패치)
     T payload            // 도메인별 비즈니스 record (메타를 모름)
 ) {}
 ```
@@ -102,7 +102,7 @@ Outbox 컬럼:   event_id  occurred_at  aggregate_id  event_type  payload(JSON)
 EventEnvelope: eventId   occurredAt   orderId       eventType   payload(T)
 ```
 
-- payload record(`OrderPlaced` 등)는 메타·토픽·직렬화를 모른다 → C-4(도메인 격리, D1 ◎) 자연 충족. infra 어댑터가 도메인 이벤트 → payload → envelope 포장 → Outbox 적재.
+- payload record(`OrderCreated` 등)는 메타·토픽·직렬화를 모른다 → C-4(도메인 격리, D1 ◎) 자연 충족. infra 어댑터가 도메인 이벤트 → payload → envelope 포장 → Outbox 적재.
 - `eventType`은 단일 토픽에 섞인 이벤트의 **구독 분기 + 역직렬화 디스패치** 키(§5와 연계).
 
 ---

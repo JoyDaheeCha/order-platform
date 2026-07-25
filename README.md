@@ -73,7 +73,7 @@ order-platform/
     └─ 결제실패(E1) / 사용자취소(E6) ───────> [CANCELLED]
 ```
 
-**Happy path**: 주문 생성(`OrderPlaced`) → 즉시 `202 Accepted` 응답 → 결제(`PaymentCompleted`) → 재고 차감(`StockDeducted`) → `OrderConfirmed`. 구매자는 `GET /orders/{id}`로 상태를 폴링한다 ([ADR-0006](docs/adr/0006-inbound-api-response-and-idempotency.md)).
+**Happy path**: 주문 생성(`OrderCreated`) → 즉시 `202 Accepted` 응답 → 결제(`PaymentCompleted`) → 재고 차감(`StockDeducted`) → `OrderConfirmed`. 구매자는 `GET /orders/{id}`로 상태를 폴링한다 ([ADR-0006](docs/adr/0006-inbound-api-response-and-idempotency.md)).
 
 분산 패턴 학습 포인트:
 

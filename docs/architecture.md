@@ -69,7 +69,7 @@ domain ──▶ (아무것도 의존하지 않음)
 
 ## 4. shared 모듈
 
-- **포함**: 통합 이벤트 계약(`OrderPlaced`, `PaymentCompleted`, `StockShortage` … payload record), 공통 메타 봉투 `EventEnvelope<T>`(`eventId`·`occurredAt`·`orderId`·`eventType` — 정책 PI-4), 토픽 이름 상수(`<context>.events`).
+- **포함**: 통합 이벤트 계약(`OrderCreated`, `PaymentCompleted`, `StockShortage` … payload record), 공통 메타 봉투 `EventEnvelope<T>`(`eventId`·`occurredAt`·`orderId`·`eventType` — 정책 PI-4), 토픽 이름 상수(`<context>.events`).
 - **불포함**: 비즈니스 로직, Aggregate, 컨텍스트별 정책, **클라이언트 멱등키**(인바운드 경계 = ADR-0006 소관). (shared가 비대해지면 "분산된 모놀리스"가 됨 — 계약만 둔다.)
 - 계약 상세(이벤트 목록·envelope·토픽·파티션·버저닝): [ADR-0007](./adr/0007-integration-event-contract.md).
 

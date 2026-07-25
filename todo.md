@@ -31,7 +31,7 @@
     - [v] 같은 키에 다른 페이로드는 409로 거부한다. 
 
 ## Outbox 패턴 추가 + 이벤트 발행
-[ ] OrderPlaced(주문이 요청되었다) 이벤트가 발행된다
+[ ] OrderCreated(주문이 요청되었다) 이벤트가 발행된다
 [ ] Order, Order Item 양방향으로 변경할지 검토 (업데이트 쿼리 별도로 나가는지 확인)
 [ ] outbox 패턴 추가
 
@@ -57,10 +57,10 @@
 > ① 실무에서 Kafka partition key 활용하는 방법
 > ② orderId를 partition key로 사용했을 때 이점
 - [ ] **`EventEnvelope<T>` 봉투 record** (ADR-0007 §4 옵션 c) — `eventId·occurredAt·orderId·eventType·payload`. Outbox 테이블 컬럼과 1:1 일치하는지 여기서 직접 확인
-- [ ] **payload `OrderPlaced` 1종** (ADR-0007 §3) + 토픽 상수 `order.events` — 금액은 `long`(KRW 정수). `Money` VO는 order의 도메인 개념이라 shared에 넣으면 안 됨(C-3 위반)
+- [ ] **payload `OrderCreated` 1종** (ADR-0007 §3) + 토픽 상수 `order.events` — 금액은 `long`(KRW 정수). `Money` VO는 order의 도메인 개념이라 shared에 넣으면 안 됨(C-3 위반)
 - [ ] **Outbox 테이블 + 릴레이** — 상태변경과 이벤트 적재를 원자적으로(PI-6, dual-write 해결). 릴레이가 `EventEnvelope`로 포장해 `order.events` 발행
 - [ ] **read model** `order_saga_progress` + `GET /orders/{id}` 폴링 조회 (ADR-0004, PC-4)
-- **✅ 완료 기준**: `POST /orders` → `order.events` 토픽에 `OrderPlaced` 실제로 뜸 → `GET`으로 PENDING 조회 ✨ **첫 walking skeleton 관통**
+- **✅ 완료 기준**: `POST /orders` → `order.events` 토픽에 `OrderCreated` 실제로 뜸 → `GET`으로 PENDING 조회 ✨ **첫 walking skeleton 관통**
 > ⚠️ Outbox 릴레이(폴링 or `@TransactionalEventListener`)가 핵심 학습 포인트이자 리스크. 여유를 뒀다.
 > 📌 **계약은 just-in-time.** ADR-0007 §3의 payload 10종을 한 번에 내리지 않는다 — 나머지는 각자의 **발행자가 생기는 날**에 추가한다(D7 `PaymentCompleted`·`PaymentFailed` / D8 `StockDeducted`·`StockShortage` / D9 `OrderConfirmed` / D11 `PaymentRefunded` / D12 `OrderCancellationRequested`·`OrderCancelled`·`StockRestored`). 계약 설계 자체는 ADR-0007에서 이미 끝났고, 여기서 하는 건 사용처가 생긴 만큼만 옮겨 적는 일이다.
 > 📌 `eventType` 문자열↔타입 매핑은 **D7로** — 역방향(역직렬화 디스패치)이 실제로 필요해지는 첫 지점이 컨슈머다. 발행자 하나뿐인 D6에서는 정방향만 있으면 된다.
@@ -70,10 +70,10 @@
 > 📚 **완료 후 자문**: ① 코레오그래피 Saga에서 "중앙 조정자가 없다"는 게 구체적으로 어떤 구조인가? ② 컨슈머가 한 토픽에 섞인 여러 이벤트를 어떻게 분기·역직렬화하나(`eventType`)? ③ 결정론적 실패 주입이 확률 기반보다 테스트에 유리한 이유는?
 - [ ] **payment Flyway 빈 + `V1__create_payments.sql`** (D4에서 예고) — payment의 첫 테이블이 오늘 생긴다. `ddl-auto`는 계속 `validate`
 - [ ] Payment 도메인 — 결제 금액 = 주문 총액 일치(PP-1), 1회·전액(PP-2)
-- [ ] `order.events` 구독 → `OrderPlaced` 수신 → 결제 시도
+- [ ] `order.events` 구독 → `OrderCreated` 수신 → 결제 시도
 - [ ] **가짜 PG** — 금액 끝자리 `7`이면 `PaymentFailed`, 그 외 `PaymentCompleted`(PP-3, 결정론적)
 - [ ] Outbox로 `payment.events` 발행
-- **✅ 완료 기준**: `OrderPlaced` → `PaymentCompleted` 흐름 확인 (끝자리 7 주문은 `PaymentFailed`)
+- **✅ 완료 기준**: `OrderCreated` → `PaymentCompleted` 흐름 확인 (끝자리 7 주문은 `PaymentFailed`)
 
 ### Day 8 — Inventory 컨텍스트 `Phase 2`
 **목표**: 결제 완료를 받아 재고를 차감한다.
