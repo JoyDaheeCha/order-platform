@@ -1,6 +1,6 @@
 package com.flab.orderplatform.order.infrastructure.web.common;
 
-import com.flab.orderplatform.order.common.ErrorCode;
+import com.flab.orderplatform.order.common.BusinessErrorCode;
 import lombok.Builder;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public record ErrorResponse(
     ) {
     }
 
-    public static ErrorResponse of(ErrorCode errorCode, List<Violation> violations) {
+    public static ErrorResponse of(BusinessErrorCode errorCode, List<Violation> violations) {
         return new ErrorResponse(errorCode.name(), errorCode.getMessage(), violations);
     }
 }

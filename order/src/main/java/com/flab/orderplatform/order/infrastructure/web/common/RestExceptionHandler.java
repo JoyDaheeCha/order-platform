@@ -1,20 +1,18 @@
 package com.flab.orderplatform.order.infrastructure.web.common;
 
-import com.flab.orderplatform.order.common.ErrorCode;
+import com.flab.orderplatform.order.common.BusinessErrorCode;
 import com.flab.orderplatform.order.common.exception.BusinessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import static com.flab.orderplatform.order.common.ErrorCode.NOT_FOUND;
-
 @RestControllerAdvice
 public class RestExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handle(BusinessException e) {
-        var errorCode = NOT_FOUND;
+        var errorCode = e.getErrorCode();
         return ResponseEntity.status(errorCode.getStatus())
                 .body(ErrorResponse.builder()
                         .code(errorCode.name())
@@ -34,6 +32,6 @@ public class RestExceptionHandler {
                 .toList();
         return ResponseEntity.badRequest()
                 .body(
-                        ErrorResponse.of(ErrorCode.INVALID_REQUEST, violations));
+                        ErrorResponse.of(BusinessErrorCode.INVALID_REQUEST, violations));
     }
 }

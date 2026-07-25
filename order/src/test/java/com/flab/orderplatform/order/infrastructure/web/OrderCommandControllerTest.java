@@ -2,8 +2,8 @@ package com.flab.orderplatform.order.infrastructure.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flab.orderplatform.order.application.OrderCreateFacade;
+import com.flab.orderplatform.order.common.BusinessErrorCode;
 import com.flab.orderplatform.order.infrastructure.web.common.ApiResponseAdvice;
-import com.flab.orderplatform.order.infrastructure.web.common.ErrorCode;
 import com.flab.orderplatform.order.infrastructure.web.common.RestExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -79,7 +79,7 @@ public class OrderCommandControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value(ErrorCode.INVALID_REQUEST.name()))
+                .andExpect(jsonPath("$.error.code").value(BusinessErrorCode.INVALID_REQUEST.name()))
                 .andExpect(jsonPath("$.error.violations[0].field").value("customerId"));
     }
 }
