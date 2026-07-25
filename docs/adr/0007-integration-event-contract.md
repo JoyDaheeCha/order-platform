@@ -34,16 +34,16 @@
 
 | 발행 컨텍스트 | 이벤트 | payload 필드 |
 |---------------|--------|--------------|
-| **Order** | `OrderCreated` | `buyerId`, `lines:[{productId, quantity, unitPrice}]`, `totalAmount` |
+| **Order** | `OrderCreated` | `buyerId`, `orderItems:[{productId, quantity, unitPrice}]`, `totalAmount` |
 | | `OrderConfirmed` | — (orderId는 envelope) |
 | | `OrderCancellationRequested` | `reason`(USER_CANCEL \| TIMEOUT) ★ 신설 |
 | | `OrderCancelled` | `reason` (terminal) |
 | **Payment** | `PaymentCompleted` | `paymentId`, `amount` |
 | | `PaymentFailed` | `reason` |
 | | `PaymentRefunded` | `paymentId`, `amount` |
-| **Inventory** | `StockDeducted` | `lines:[{productId, quantity}]` |
+| **Inventory** | `StockDeducted` | `orderItems:[{productId, quantity}]` |
 | | `StockShortage` | `shortageProductIds:[]` |
-| | `StockRestored` | `lines:[{productId, quantity}]` |
+| | `StockRestored` | `orderItems:[{productId, quantity}]` |
 
 ### A-1. 보상-개시 이벤트 `OrderCancellationRequested` 신설 (D3 핵심)
 
