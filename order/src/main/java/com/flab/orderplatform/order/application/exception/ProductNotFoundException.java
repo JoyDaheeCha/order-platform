@@ -1,5 +1,7 @@
 package com.flab.orderplatform.order.application.exception;
 
+import com.flab.orderplatform.order.common.exception.BusinessException;
+
 import java.util.Collection;
 
 public class ProductNotFoundException extends BusinessException {

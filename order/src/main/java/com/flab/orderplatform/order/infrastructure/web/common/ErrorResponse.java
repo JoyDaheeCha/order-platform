@@ -1,5 +1,6 @@
 package com.flab.orderplatform.order.infrastructure.web.common;
 
+import com.flab.orderplatform.order.common.ErrorCode;
 import lombok.Builder;
 
 import java.util.List;

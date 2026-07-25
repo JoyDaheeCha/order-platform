@@ -1,4 +1,4 @@
-package com.flab.orderplatform.order.infrastructure.web.common;
+package com.flab.orderplatform.order.common;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
