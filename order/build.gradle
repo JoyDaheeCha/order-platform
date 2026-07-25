@@ -26,4 +26,7 @@ dependencies {
 
     // Retry
     implementation "org.springframework.retry:spring-retry"
+
+    // 레디스 (Redisson 사용)
+    implementation libs.redisson.spring.boot.starter
 }
