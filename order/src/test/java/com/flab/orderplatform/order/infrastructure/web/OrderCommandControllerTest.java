@@ -54,6 +54,7 @@ public class OrderCommandControllerTest {
                 .build();
         mockMvc.perform(post("/order")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("Idempotency-key", "123e4567-e89b-12d3-a456-556642440000")
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").value(1));
@@ -76,7 +77,8 @@ public class OrderCommandControllerTest {
 
         mockMvc.perform(post("/order")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request))
+                        .header("Idempotency-key", "123e4567-e89b-12d3-a456-556642440000"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value(BusinessErrorCode.INVALID_REQUEST.name()))

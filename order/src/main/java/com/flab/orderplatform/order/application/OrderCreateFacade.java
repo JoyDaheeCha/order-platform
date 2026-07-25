@@ -35,7 +35,7 @@ public class OrderCreateFacade {
      * 주문 생성한다.
      * 생성된 주문번호 생성시, 중복될 경우 retry (최초 1회,재시도 2회)
      */
-    @Idempotent(key="#command.idempotencyKey") // TODO 애노테이션 우선순위 확인
+    @Idempotent
     @Retryable(
             retryFor = DuplicateKeyException.class,
             backoff = @Backoff(delay = 0)
