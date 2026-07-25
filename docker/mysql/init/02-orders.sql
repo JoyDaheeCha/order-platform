@@ -48,3 +48,17 @@ CREATE TABLE IF NOT EXISTS order_item
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+-- 아웃박스 패턴용 테이블
+CREATE TABLE IF NOT EXISTS outbox
+(
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    aggregate_type VARCHAR(255) NOT NULL, -- 예: 'Order'
+    aggregate_id VARCHAR(255) NOT NULL,   -- 예: 주문 ID
+    event_type VARCHAR(255) NOT NULL,     -- 예: 'OrderCreated'
+    payload JSON NOT NULL,                -- 이벤트 상세 데이터 (JSON)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed BOOLEAN DEFAULT FALSE       -- 발행 여부 상태값
+) ENGINE = InnoDB
+    DEFAULT CHARSET = utf8mb4
+    COLLATE = utf8mb4_0900_ai_ci;
