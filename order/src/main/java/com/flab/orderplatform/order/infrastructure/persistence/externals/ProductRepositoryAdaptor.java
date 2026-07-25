@@ -2,13 +2,13 @@ package com.flab.orderplatform.order.infrastructure.persistence.externals;
 
 import com.flab.orderplatform.order.application.port.out.ProductRepository;
 import com.flab.orderplatform.order.domain.external.Product;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Service
-@AllArgsConstructor
+@Repository
+@RequiredArgsConstructor
 public class ProductRepositoryAdaptor implements ProductRepository {
     private final ProductJpaRepository productJpaRepository;
 
