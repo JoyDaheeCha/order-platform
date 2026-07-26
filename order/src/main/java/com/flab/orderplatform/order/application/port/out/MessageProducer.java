@@ -1,5 +1,9 @@
 package com.flab.orderplatform.order.application.port.out;
 
+import org.springframework.kafka.support.SendResult;
+
+import java.util.concurrent.CompletableFuture;
+
 public interface MessageProducer {
-    void sendMessage(String topic, String payload);
+    CompletableFuture<SendResult<String, String>> sendMessage(String topic, String payload);
 }

@@ -65,14 +65,24 @@ public class DomainEventMessagePublisher {
         @Override
         public void afterCommit() {
             savedOutboxEvents.forEach(outboxEvent -> {
-                try {
-                    messageProducer.sendMessage(outboxEvent.getTopic(), outboxEvent.getPayload());
-                    outboxEventRepository.save(outboxEvent.complete());
-                } catch (Exception e) {
-                    log.error("outbox 이벤트 발행 실패 (outboxEventId={}, topic={})", outboxEvent.getId(), outboxEvent.getTopic(), e);
-                    outboxEventRepository.save(outboxEvent.fail());
-                }
+                var future = messageProducer.sendMessage(outboxEvent.getTopic(), outboxEvent.getPayload());
+                future.whenComplete((result, e) -> {
+                    try {
+                        updateOutboxStatus(outboxEvent, e);
+                    } catch (Exception exception) {
+                        log.error("outbox 상태 갱신 실패 (outboxEventId={})", outboxEvent.getId(), exception);
+                    }
+                });
             });
+        }
+
+        private void updateOutboxStatus(OutboxEvent outboxEvent, Throwable e) {
+            if (e == null) {
+                outboxEventRepository.save(outboxEvent.complete());
+                return;
+            }
+            log.error("outbox 이벤트 발행 실패 (outboxEventId={}, topic={}", outboxEvent.getId(), outboxEvent.getTopic(), e);
+            outboxEventRepository.save(outboxEvent.fail());
         }
 
         /**
