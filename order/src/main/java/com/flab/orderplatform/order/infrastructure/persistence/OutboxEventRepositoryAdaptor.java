@@ -14,9 +14,4 @@ public class OutboxEventRepositoryAdaptor implements OutboxEventRepository {
     public OutboxEvent save(OutboxEvent event) {
         return outboxEventJpaRepository.save(event);
     }
-
-    @Override
-    public OutboxEvent findByAggregateId(String aggregateId) {
-        return outboxEventJpaRepository.findByAggregateId(aggregateId);
-    }
 }
