@@ -11,14 +11,27 @@ import java.util.Map;
 /**
  * 주문 생성
  *
- * @param customerId 구매자 PK
- * @param orderItems 주문 상품 목록
  */
-@Builder
-public record OrderCreateCommand(
-        Long customerId,
-        List<OrderItemDto> orderItems
-) {
+public final class OrderCreateCommand extends IdempotentKeyCommand {
+    private final Long customerId;
+    private final List<OrderItemDto> orderItems;
+
+    /**
+     * @param idempotentKey 멱등키
+     * @param customerId    구매자 PK
+     * @param orderItems    주문 상품 목록
+     */
+    @Builder
+    public OrderCreateCommand(
+            String idempotentKey,
+            Long customerId,
+            List<OrderItemDto> orderItems
+    ) {
+        this.idempotentKey = idempotentKey;
+        this.customerId = customerId;
+        this.orderItems = orderItems;
+    }
+
     /**
      * 주문한 상품
      *

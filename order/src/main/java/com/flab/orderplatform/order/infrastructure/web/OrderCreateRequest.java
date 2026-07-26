@@ -41,8 +41,9 @@ public record OrderCreateRequest(
     ) {
     }
 
-    public OrderCreateCommand toCommand() {
+    public OrderCreateCommand toCommand(String idempotentKey) {
         return OrderCreateCommand.builder()
+                .idempotentKey(idempotentKey)
                 .customerId(this.customerId)
                 .orderItems(this.orderItemDtos.stream().map(item ->
                                 OrderCreateCommand.OrderItemDto.builder()

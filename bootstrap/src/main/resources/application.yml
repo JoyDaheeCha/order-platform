@@ -5,6 +5,10 @@ spring:
   profiles:
     default: local
 
+idempotent:
+  # 멱등키 보관 기간. 이 시간 안에 들어온 동일 키는 중복 요청으로 간주한다.
+  ttl: 1m
+
 management:
   endpoints:
     web:
