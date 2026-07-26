@@ -1,5 +1,6 @@
 package com.flab.orderplatform.order.domain;
 
+import com.flab.orderplatform.order.domain.event.OrderCreatedEvent;
 import com.flab.orderplatform.order.domain.status.OrderStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -67,6 +68,23 @@ public class Order extends BaseEntity {
         var totalAmount = orderItems.stream()
                 .mapToLong(OrderItem::calculateAmount)
                 .sum();
+
+        var orderItemDtos = orderItems
+                .stream()
+                .map(item -> OrderCreatedEvent.OrderItemDto
+                        .builder()
+                        .productId(item.getProductId())
+                        .quantity(item.getQuantity())
+                        .unitPrice(item.getPrice())
+                        .build())
+                .toList();
+        DomainEventThreadManager.register(
+                OrderCreatedEvent.builder()
+                        .buyerId(customerId)
+                        .orderItems(
+                                orderItemDtos
+                        ).totalAmount(totalAmount)
+                        .build());
 
         return Order.builder()
                 .customerId(customerId)
