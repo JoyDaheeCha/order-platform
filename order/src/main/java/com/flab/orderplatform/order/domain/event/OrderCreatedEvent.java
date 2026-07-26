@@ -2,10 +2,12 @@ package com.flab.orderplatform.order.domain.event;
 
 import com.flab.orderplatform.order.domain.DomainEvent;
 import lombok.Builder;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Getter
 public class OrderCreatedEvent extends DomainEvent {
     private static final String TOPIC = "MSG-ORDER-CREATED";
 
@@ -35,18 +37,9 @@ public class OrderCreatedEvent extends DomainEvent {
         return TOPIC;
     }
 
-    public class OrderItemDto {
-        private final Long productId;
-        private final Integer quantity;
-        private final Long unitPrice;
-
+    public record OrderItemDto(Long productId, Integer quantity, Long unitPrice) {
         @Builder
-        public OrderItemDto(Long productId,
-                            Integer quantity,
-                            Long unitPrice) {
-            this.productId = productId;
-            this.quantity = quantity;
-            this.unitPrice = unitPrice;
+        public OrderItemDto {
         }
-    }
+        }
 }

@@ -53,12 +53,14 @@ CREATE TABLE IF NOT EXISTS order_item
 CREATE TABLE IF NOT EXISTS outbox
 (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    aggregate_type VARCHAR(255) NOT NULL, -- 예: 'Order'
-    aggregate_id VARCHAR(255) NOT NULL,   -- 예: 주문 ID
-    event_type VARCHAR(255) NOT NULL,     -- 예: 'OrderCreated'
-    payload JSON NOT NULL,                -- 이벤트 상세 데이터 (JSON)
+    aggregate_type VARCHAR(30) NOT NULL COMMENT '에그리거트명 (예. order)',
+    aggregate_id VARCHAR(30) NOT NULL COMMENT '에그리거트 식별자',
+    event_type VARCHAR(30) NOT NULL COMMENT '이벤트타입',
+    topic VARCHAR(30) NOT NULL COMMENT '이벤트 토픽명',
+    payload JSON NOT NULL COMMENT '이벤트 페이로드',
+    status VARCHAR(10) NOT NULL COMMENT '이벤트 상태 (CREATED/PUBLISHED/FAILED)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    processed BOOLEAN DEFAULT FALSE       -- 발행 여부 상태값
+    updated_at DATETIME(6) NOT NULL COMMENT '수정일'
 ) ENGINE = InnoDB
     DEFAULT CHARSET = utf8mb4
     COLLATE = utf8mb4_0900_ai_ci;

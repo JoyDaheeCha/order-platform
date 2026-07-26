@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicUpdate;
 
+import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.FAILED;
 import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.PUBLISHED;
 
 /**
@@ -35,6 +36,9 @@ public class OutboxEvent extends BaseTimeEntity{
     @Column(name = "event_type", length = 30, nullable = false, columnDefinition = "VARCHAR(30) COMMENT '이벤트 타입'")
     private String eventType;
 
+    @Column(name = "topic", length = 30, nullable = false, columnDefinition = "VARCHAR(30) COMMENT '토픽명'")
+    private String topic;
+
     @Column(name = "payload", nullable = false, columnDefinition = "JSON NOT NULL COMMENT '이벤트 페이로드'")
     private String payload;
 
@@ -44,10 +48,11 @@ public class OutboxEvent extends BaseTimeEntity{
 
     @SuppressWarnings("unused")
     @Builder
-    public OutboxEvent(String aggregateType, String aggregateId, String eventType, String payload, OutboxEventStatus status) {
+    public OutboxEvent(String aggregateType, String aggregateId, String eventType, String topic, String payload, OutboxEventStatus status) {
         this.aggregateType = aggregateType;
         this.aggregateId = aggregateId;
         this.eventType = eventType;
+        this.topic = topic;
         this.payload = payload;
         this.status = status;
     }
@@ -57,6 +62,7 @@ public class OutboxEvent extends BaseTimeEntity{
                 .aggregateType("order") // TODO: 추후 재고, 결제에서 outbound 패턴 동일 적용시 본 문자열에 대해 각각 도메인에 맞게 변경 필요
                 .aggregateId(domainEvent.getAggregateId())
                 .eventType(domainEvent.getAction())
+                .topic(domainEvent.getTopic())
                 .payload(JsonUtils.toJson(domainEvent))
                 .status(OutboxEventStatus.CREATED)
                 .build();
@@ -67,6 +73,14 @@ public class OutboxEvent extends BaseTimeEntity{
      */
     public OutboxEvent complete() {
         this.status = PUBLISHED;
+        return this;
+    }
+
+    /**
+     * 메시지 발행실패 처리
+     */
+    public OutboxEvent fail() {
+        this.status = FAILED;
         return this;
     }
 }

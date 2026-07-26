@@ -84,6 +84,8 @@ public class Order extends BaseEntity {
                         .orderItems(
                                 orderItemDtos
                         ).totalAmount(totalAmount)
+                        .aggregateId(orderNumber)
+                        .occurredOn(LocalDateTime.now())
                         .build());
 
         return Order.builder()
