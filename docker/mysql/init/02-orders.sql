@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS order_item
 CREATE TABLE IF NOT EXISTS outbox
 (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    event_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '이벤트 UUID',
     aggregate_type VARCHAR(30) NOT NULL COMMENT '에그리거트명 (예. order)',
     aggregate_id VARCHAR(30) NOT NULL COMMENT '에그리거트 식별자',
     event_type VARCHAR(30) NOT NULL COMMENT '이벤트타입',
@@ -61,7 +62,8 @@ CREATE TABLE IF NOT EXISTS outbox
     status VARCHAR(10) NOT NULL COMMENT '이벤트 상태 (CREATED/PUBLISHED/FAILED)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '생성일',
     updated_at DATETIME(6) NOT NULL COMMENT '수정일',
-    KEY idx_outbox_event_1 (status, created_at)
+    UNIQUE KEY uk_outbox_1 (event_id),
+    KEY idx_outbox_1 (status, created_at)
 ) ENGINE = InnoDB
     DEFAULT CHARSET = utf8mb4
     COLLATE = utf8mb4_0900_ai_ci;

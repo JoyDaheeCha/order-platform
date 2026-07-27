@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicUpdate;
 
+import java.util.Map;
+
 import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.FAILED;
 import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.PUBLISHED;
 
@@ -22,14 +24,19 @@ import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.PUBLI
 @Table(
         name = "outbox",
         indexes = {
-                @Index(name ="idx_outbox_event_1", columnList = "status, created_at")
+                @Index(name ="idx_outbox_1", columnList = "status, created_at")
         }
 )
 public class OutboxEvent extends BaseTimeEntity{
+    private static final String HEADER_EVENT_ID = "eventId";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "event_id", length = 36, nullable = false, unique = true,
+            columnDefinition = "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '이벤트 UUID'")
+    private String eventId;
 
     @Column(name = "aggregate_type", length = 30, nullable = false,
             columnDefinition = "VARCHAR(30) COMMENT '에그리거트명 (예. order)'")
@@ -53,7 +60,8 @@ public class OutboxEvent extends BaseTimeEntity{
 
     @SuppressWarnings("unused")
     @Builder
-    public OutboxEvent(String aggregateType, String aggregateId, String eventType, String topic, String payload, OutboxEventStatus status) {
+    public OutboxEvent(String eventId, String aggregateType, String aggregateId, String eventType, String topic, String payload, OutboxEventStatus status) {
+        this.eventId = eventId;
         this.aggregateType = aggregateType;
         this.aggregateId = aggregateId;
         this.eventType = eventType;
@@ -64,6 +72,7 @@ public class OutboxEvent extends BaseTimeEntity{
 
     public static OutboxEvent create(DomainEvent domainEvent) {
         return OutboxEvent.builder()
+                .eventId(domainEvent.getEventId())
                 .aggregateType("order") // TODO: 추후 재고, 결제에서 outbound 패턴 동일 적용시 본 문자열에 대해 각각 도메인에 맞게 변경 필요
                 .aggregateId(domainEvent.getAggregateId())
                 .eventType(domainEvent.getAction())
@@ -87,5 +96,9 @@ public class OutboxEvent extends BaseTimeEntity{
     public OutboxEvent fail() {
         this.status = FAILED;
         return this;
+    }
+
+    public Map<String, String> toMessageHeaders() {
+        return Map.of(HEADER_EVENT_ID, eventId);
     }
 }

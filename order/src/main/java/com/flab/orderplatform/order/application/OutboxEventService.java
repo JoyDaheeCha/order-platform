@@ -46,7 +46,8 @@ public class OutboxEventService {
     }
 
     private void retryPublish(OutboxEvent event) {
-        var future = messageProducer.sendMessage(event.getTopic(), event.getAggregateId(), event.getPayload());
+        var header = event.toMessageHeaders();
+        var future = messageProducer.sendMessage(event.getTopic(), event.getAggregateId(), event.getPayload(), header);
         future.whenComplete((result, e) -> {
             updateOutboxStatus(event, e);
         });
