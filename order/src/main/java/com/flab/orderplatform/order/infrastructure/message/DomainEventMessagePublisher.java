@@ -81,7 +81,7 @@ public class DomainEventMessagePublisher {
                 outboxEventRepository.save(outboxEvent.complete());
                 return;
             }
-            log.error("outbox 이벤트 발행 실패 (outboxEventId={}, topic={}", outboxEvent.getId(), outboxEvent.getTopic(), e);
+            log.error("outbox 이벤트 발행 실패 (outboxEventId={}, topic={})", outboxEvent.getId(), outboxEvent.getTopic(), e);
             outboxEventRepository.save(outboxEvent.fail());
         }
 
