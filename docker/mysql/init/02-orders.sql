@@ -59,8 +59,9 @@ CREATE TABLE IF NOT EXISTS outbox
     topic VARCHAR(30) NOT NULL COMMENT '이벤트 토픽명',
     payload JSON NOT NULL COMMENT '이벤트 페이로드',
     status VARCHAR(10) NOT NULL COMMENT '이벤트 상태 (CREATED/PUBLISHED/FAILED)',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME(6) NOT NULL COMMENT '수정일'
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '생성일',
+    updated_at DATETIME(6) NOT NULL COMMENT '수정일',
+    KEY idx_outbox_event_1 (status, created_at)
 ) ENGINE = InnoDB
     DEFAULT CHARSET = utf8mb4
     COLLATE = utf8mb4_0900_ai_ci;

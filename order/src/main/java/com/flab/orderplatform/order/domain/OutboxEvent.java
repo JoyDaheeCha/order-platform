@@ -19,7 +19,12 @@ import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.PUBLI
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DynamicUpdate
 @Entity
-@Table(name = "outbox")
+@Table(
+        name = "outbox",
+        indexes = {
+                @Index(name ="idx_outbox_event_1", columnList = "status, created_at")
+        }
+)
 public class OutboxEvent extends BaseTimeEntity{
 
     @Id
