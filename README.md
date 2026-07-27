@@ -95,8 +95,10 @@ order-platform/
 ### 1. 인프라 기동 (앱 실행 전 **필수**)
 
 ```bash
+docker compose down -v # 기존에 기동중인 볼륨이 있을 때 초기화
 docker compose up -d   # MySQL · Kafka · Redis 3종 기동
 docker compose ps      # 3개 모두 (healthy) 인지 확인
+docker logs order-platform-mysql 2>&1 | grep -iE "ERROR|initdb"   # docker/mysql/init 하위 DDL 모두 실행 되었는지 확인
 ```
 ### 2. 빌드 & 실행
 
