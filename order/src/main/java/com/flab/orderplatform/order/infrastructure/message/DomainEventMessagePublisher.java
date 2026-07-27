@@ -65,7 +65,7 @@ public class DomainEventMessagePublisher {
         @Override
         public void afterCommit() {
             savedOutboxEvents.forEach(outboxEvent -> {
-                var future = messageProducer.sendMessage(outboxEvent.getTopic(), outboxEvent.getPayload());
+                var future = messageProducer.sendMessage(outboxEvent.getTopic(), outboxEvent.getAggregateId(), outboxEvent.getPayload());
                 future.whenComplete((result, e) -> {
                     try {
                         updateOutboxStatus(outboxEvent, e);

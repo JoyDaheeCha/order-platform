@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 public class KafkaMessageProducer implements MessageProducer {
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public CompletableFuture<SendResult<String, String>> sendMessage(String topic, String message) {
-        return kafkaTemplate.send(topic, message);
+    public CompletableFuture<SendResult<String, String>> sendMessage(String topic, String messageKey, String message) {
+        return kafkaTemplate.send(topic, messageKey, message);
     }
 }
