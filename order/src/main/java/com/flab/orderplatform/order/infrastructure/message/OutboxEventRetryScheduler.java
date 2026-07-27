@@ -27,5 +27,12 @@ public class OutboxEventRetryScheduler {
         outboxEventRetryService.publishFailedOutboxEvents();
     }
 
-    // TODO: created 상태인데, kafka 에서 발행하고 ack를 주기전 application이 죽은 경우, published로 바뀌지 않을 수 있다. 해당 경우에 대비해 재발행 로직 추가
+    /**
+     * 시스템 장애로 발행 처리되지 않은 이벤트에 대해 재발행한다.
+     */
+    @Scheduled(fixedDelay = 10, timeUnit = MINUTES)
+    @SchedulerLock(name = "publishNeverTriedOutboxEvents", lockAtLeastFor = "10s", lockAtMostFor = "9m")
+    void publishNeverTriedOutboxEvents() {
+        outboxEventRetryService.publishNeverTriedOutboxEvents();
+    }
 }

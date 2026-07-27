@@ -41,6 +41,7 @@
 - [x] outbox 재발행 스케줄러 주가 (failed 상태 재발행)
 - [x] outbox 재발행 스케줄러 주가 (created 상태 재발행)
 - [ ] outbox 테이블에서 발송완료 데이터 제거 로직 추가
+- [ ] 테이블 인덱스 적용 (status, created_at) 복합키  
 
 ## 환경 설정 & 기타
 [ ] flyway 추가

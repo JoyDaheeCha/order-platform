@@ -4,8 +4,10 @@ import com.flab.orderplatform.order.application.port.out.OutboxEventRepository;
 import com.flab.orderplatform.order.domain.OutboxEvent;
 import com.flab.orderplatform.order.domain.status.OutboxEventStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -19,7 +21,14 @@ public class OutboxEventRepositoryAdaptor implements OutboxEventRepository {
     }
 
     @Override
-    public List<OutboxEvent> findFailedEvents() {
-        return outboxEventJpaRepository.findOutboxEventByStatus(OutboxEventStatus.FAILED);
+    public List<OutboxEvent> findEventByStatus(OutboxEventStatus status, Pageable pageable) {
+        return outboxEventJpaRepository.findByStatus(status, pageable);
+    }
+
+    @Override
+    public List<OutboxEvent> findEventsCreatedAndNeverExecuted(OutboxEventStatus status,
+                                                               LocalDateTime threshold,
+                                                               Pageable pageable) {
+        return outboxEventJpaRepository.findByStatusAndCreatedAtBefore(status, threshold, pageable);
     }
 }
