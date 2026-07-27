@@ -3,6 +3,7 @@ package com.flab.orderplatform.order.application;
 import com.flab.orderplatform.order.application.port.out.MessageProducer;
 import com.flab.orderplatform.order.application.port.out.OutboxEventRepository;
 import com.flab.orderplatform.order.domain.OutboxEvent;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -10,14 +11,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 
-import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.CREATED;
-import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.FAILED;
+import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.*;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OutboxEventRetryService {
+public class OutboxEventService {
     private final OutboxEventRepository outboxEventRepository;
     private final MessageProducer messageProducer;
     /**
@@ -61,5 +63,24 @@ public class OutboxEventRetryService {
         } catch (Exception ex) {
             log.error("outbox 상태 갱신 실패 (outboxEventId={})", event.getId(), ex);
         }
+    }
+
+    /**
+     * 발행 완료 데이터 중 현재로부터 7일이 경과한 데이터를 제거한다.
+     * - outbox 테이블에 더 이상 사용하지 않는 데이터가 쌓이는것을 방지합니다.
+     */
+    @Transactional
+    public List<Long> bulkDeletePublishedEvents() {
+        var threshold = LocalDateTime.now().minusDays(7);
+
+        var idsToDelete = outboxEventRepository.findIdByStatusAndCreatedAtBefore(PUBLISHED, threshold, DEFAULT_PAGE_REQUEST);
+
+        // 더 이상 삭제할 데이터가 없다면 return
+        if (idsToDelete.isEmpty()) {
+            return Collections.emptyList();
+        }
+        outboxEventRepository.deleteByIdsInBulk(idsToDelete);
+        log.info("outbox 발행완료 이벤트 정리 완료 (총 {}건)", idsToDelete.size());
+        return idsToDelete;
     }
 }

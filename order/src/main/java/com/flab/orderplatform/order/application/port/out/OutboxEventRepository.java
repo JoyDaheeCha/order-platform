@@ -13,4 +13,10 @@ public interface OutboxEventRepository {
     List<OutboxEvent> findEventByStatus(OutboxEventStatus status, Pageable pageable);
 
     List<OutboxEvent> findEventsCreatedAndNeverExecuted(OutboxEventStatus outboxEventStatus, LocalDateTime threshold, Pageable pageable);
+
+    List<Long> findIdByStatusAndCreatedAtBefore(OutboxEventStatus status,
+                                                LocalDateTime threshold,
+                                                Pageable pageable);
+
+    void deleteByIdsInBulk(List<Long> ids);
 }

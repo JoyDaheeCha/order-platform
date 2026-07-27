@@ -31,4 +31,16 @@ public class OutboxEventRepositoryAdaptor implements OutboxEventRepository {
                                                                Pageable pageable) {
         return outboxEventJpaRepository.findByStatusAndCreatedAtBefore(status, threshold, pageable);
     }
+
+    @Override
+    public List<Long> findIdByStatusAndCreatedAtBefore(OutboxEventStatus status,
+                                                       LocalDateTime threshold,
+                                                       Pageable pageable) {
+        return outboxEventJpaRepository.findIdByStatusAndCreatedAtBefore(status, threshold, pageable);
+    }
+
+    @Override
+    public void deleteByIdsInBulk(List<Long> ids) {
+        outboxEventJpaRepository.deleteByIdsInBulk(ids);
+    }
 }

@@ -33,15 +33,17 @@
   - [ ] redis callback 패턴 추가 (order 테이블에 impotent key 저장 후 유니크 인덱스 추가)
   - [ ] Order, Order Item 양방향으로 변경할지 검토 (업데이트 쿼리 별도로 나가는지 확인)
 
-## Outbox 패턴 추가 + 이벤트 발행
+## Outbox 패턴 추가 + '주문 생성되었다' 이벤트 발행
 - [x] OrderCreated(주문이 요청되었다) 이벤트가 발행된다
 - [x] outbox 패턴 추가
   - [x] order 모듈 내에서 메시지 발행시 Outbox 테이블 거쳐 발행되도록 도메인 이벤트 발행 로직 구성
   - [x] 인스턴스가 두개 이상일때 한번만 스케줄러가 돌도록 shedLock 추가
 - [x] outbox 재발행 스케줄러 주가 (failed 상태 재발행)
 - [x] outbox 재발행 스케줄러 주가 (created 상태 재발행)
-- [ ] outbox 테이블에서 발송완료 데이터 제거 로직 추가
+- [x] outbox 테이블에서 발송완료 데이터 제거 로직 추가
 - [x] 테이블 인덱스 적용 (status, created_at) 복합키  
+
+## Inbox 패턴 추가 + '주문 생성되었다' 이벤트 컨슈밍
 
 ## 환경 설정 & 기타
 [ ] flyway 추가
