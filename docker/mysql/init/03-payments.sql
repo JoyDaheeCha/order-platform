@@ -6,10 +6,10 @@ payment_schema;
 CREATE TABLE IF NOT EXISTS payments
 (
     id             BIGINT      NOT NULL AUTO_INCREMENT,
-    order_id       VARCHAR(30) NOT NULL COMMENT 'order 컨텍스트 상관관계 키',
-    buyer_id       BIGINT      NOT NULL,
-    amount         BIGINT      NOT NULL COMMENT 'KRW 정수. 1회·전액 (PP-2)',
-    status         VARCHAR(10) NOT NULL COMMENT 'REQUESTED/COMPLETED/FAILED/REFUNDED',
+    order_number   VARCHAR(36) NOT NULL COMMENT '주문번호 (대외 노출용 비즈니스 키)',
+    buyer_id       BIGINT      NOT NULL COMMENT '구매자 id',
+    amount         BIGINT      NOT NULL COMMENT '총 결제액',
+    status         VARCHAR(10) NOT NULL COMMENT '결제 상태 REQUESTED/COMPLETED/FAILED/REFUNDED',
     failure_reason VARCHAR(50) NULL COMMENT '결제 실패 사유',
     created_at     DATETIME    NOT NULL COMMENT '생성일',
     updated_at     DATETIME    NOT NULL COMMENT '수정일',

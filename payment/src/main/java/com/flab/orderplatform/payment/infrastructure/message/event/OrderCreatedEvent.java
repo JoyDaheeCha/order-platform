@@ -1,12 +1,14 @@
-package com.flab.orderplatform.order.domain.event;
+package com.flab.orderplatform.payment.infrastructure.message.event;
 
-import com.flab.orderplatform.order.domain.DomainEvent;
+import com.flab.orderplatform.payment.application.command.PaymentCreateCommand;
+import com.flab.orderplatform.payment.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+// TODO shared 분리 방법 찾기
 @Getter
 public class OrderCreatedEvent extends DomainEvent {
     private static final String TOPIC = "MSG-ORDER-CREATED";
@@ -35,6 +37,14 @@ public class OrderCreatedEvent extends DomainEvent {
     @Override
     public String getTopic() {
         return TOPIC;
+    }
+
+    public PaymentCreateCommand toCommand() {
+        return PaymentCreateCommand.builder()
+                .orderNumber(this.getAggregateId())
+                .buyerId(buyerId)
+                .amount(totalAmount)
+                .build();
     }
 
     @Builder
