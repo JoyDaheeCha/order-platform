@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 public class PaymentFacade {
     private final PaymentCommandHandler paymentCommandHandler;
 
+    // TODO 인박스 패턴에 읽어오도록 전환
     public Payment pay(PaymentCreateCommand createCommand) {
         paymentCommandHandler.handle(createCommand);
         // TODO: PG 호출
