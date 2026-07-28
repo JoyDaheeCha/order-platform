@@ -7,13 +7,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import static com.flab.orderplatform.payment.domain.status.PaymentStatus.REQUESTED;
+import static com.flab.orderplatform.payment.domain.status.PaymentStatus.*;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "payments")
-public class Payment extends BaseTimeEntity{
+public class Payment extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,8 +46,8 @@ public class Payment extends BaseTimeEntity{
     }
 
     public static Payment create(String orderNumber,
-                          Long buyerId,
-                          Long amount) {
+                                 Long buyerId,
+                                 Long amount) {
         return Payment
                 .builder()
                 .orderNumber(orderNumber)
@@ -56,5 +56,14 @@ public class Payment extends BaseTimeEntity{
                 .status(REQUESTED)
                 .failureReason("")
                 .build();
+    }
+
+    public Payment complete(Boolean isPaymentSucceed) {
+        if (isPaymentSucceed) {
+            this.status = COMPLETED;
+            return this;
+        }
+        this.status = FAILED;
+        return this;
     }
 }

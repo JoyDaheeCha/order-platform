@@ -4,12 +4,11 @@ import com.flab.orderplatform.payment.domain.Payment;
 import lombok.Builder;
 
 @Builder
-public record PaymentCreateCommand(
+public record PaymentCompleteCommand(
         String orderNumber,
-        Long buyerId,
-        Long amount
+        boolean isPaymentSucceed
 ) {
-    public Payment create() {
-        return Payment.create(orderNumber, buyerId, amount);
+    public Payment complete(Payment payment) {
+        return payment.complete(isPaymentSucceed);
     }
 }
