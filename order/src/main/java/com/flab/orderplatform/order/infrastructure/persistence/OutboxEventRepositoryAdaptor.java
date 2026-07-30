@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -42,5 +43,10 @@ public class OutboxEventRepositoryAdaptor implements OutboxEventRepository {
     @Override
     public void deleteByIdsInBulk(List<Long> ids) {
         outboxEventJpaRepository.deleteByIdsInBulk(ids);
+    }
+
+    @Override
+    public Optional<OutboxEvent> findByEventId(String eventId) {
+        return outboxEventJpaRepository.findByEventId(eventId);
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface OutboxEventRepository {
     OutboxEvent save(OutboxEvent event);
@@ -19,4 +20,6 @@ public interface OutboxEventRepository {
                                                 Pageable pageable);
 
     void deleteByIdsInBulk(List<Long> ids);
+
+    Optional<OutboxEvent> findByEventId(String eventId);
 }

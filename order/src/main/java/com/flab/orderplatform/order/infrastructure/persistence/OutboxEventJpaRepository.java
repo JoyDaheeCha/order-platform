@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface OutboxEventJpaRepository extends JpaRepository<OutboxEvent, Long> {
     List<OutboxEvent> findByStatus(OutboxEventStatus outboxEventStatus, Pageable pageable);
@@ -20,4 +21,6 @@ public interface OutboxEventJpaRepository extends JpaRepository<OutboxEvent, Lon
     @Modifying(clearAutomatically = true) // 벌크삭제후 영속성 컨텍스트 동기화
     @Query("delete from OutboxEvent o where o.id in:ids")
     void deleteByIdsInBulk(List<Long> ids);
+
+    Optional<OutboxEvent> findByEventId(String eventId);
 }

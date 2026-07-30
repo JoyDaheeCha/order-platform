@@ -50,15 +50,19 @@ public class Order extends BaseEntity {
     @Column(name = "customer_id", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '구매자 ID'")
     private Long customerId;
 
+    @Transient
+    private OrderCreatedEvent domainEvent;
+
     @Builder
     public Order(String orderNumber, Long totalAmount, LocalDateTime orderedAt, OrderStatus status,
-                 List<OrderItem> orderItems, Long customerId) {
+                 List<OrderItem> orderItems, Long customerId, OrderCreatedEvent domainEvent) {
         this.orderNumber = orderNumber;
         this.totalAmount = totalAmount;
         this.orderedAt = orderedAt;
         this.status = status;
         this.orderItems = orderItems;
         this.customerId = customerId;
+        this.domainEvent = domainEvent;
     }
 
     public static Order create(Long customerId,
@@ -78,15 +82,14 @@ public class Order extends BaseEntity {
                         .unitPrice(item.getPrice())
                         .build())
                 .toList();
-        DomainEventThreadManager.register(
-                OrderCreatedEvent.builder()
-                        .buyerId(customerId)
-                        .orderItems(
-                                orderItemDtos
-                        ).totalAmount(totalAmount)
-                        .aggregateId(orderNumber)
-                        .occurredOn(LocalDateTime.now())
-                        .build());
+        var domainEvent = OrderCreatedEvent.builder()
+                .buyerId(customerId)
+                .orderItems(
+                        orderItemDtos
+                ).totalAmount(totalAmount)
+                .aggregateId(orderNumber)
+                .occurredOn(LocalDateTime.now())
+                .build();
 
         return Order.builder()
                 .customerId(customerId)
@@ -95,6 +98,14 @@ public class Order extends BaseEntity {
                 .orderedAt(LocalDateTime.now())
                 .status(PENDING)
                 .totalAmount(totalAmount)
+                .domainEvent(domainEvent)
                 .build();
+    }
+
+    public OrderCreatedEvent pullDomainEvent() {
+        var event = domainEvent;
+        // 이벤트가 다른 곳에서 발행되는것을 막기 위해, 외부로 내보낸 이벤트는 도메인에서 할당 해제한다.
+        domainEvent = null;
+        return event;
     }
 }

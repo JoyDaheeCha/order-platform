@@ -1,9 +1,9 @@
 package com.flab.orderplatform.order.application;
 
+import com.flab.orderplatform.order.application.annotation.OrderTransactional;
 import com.flab.orderplatform.order.application.port.out.MessageProducer;
 import com.flab.orderplatform.order.application.port.out.OutboxEventRepository;
 import com.flab.orderplatform.order.domain.OutboxEvent;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -70,7 +70,7 @@ public class OutboxEventService {
      * 발행 완료 데이터 중 현재로부터 7일이 경과한 데이터를 제거한다.
      * - outbox 테이블에 더 이상 사용하지 않는 데이터가 쌓이는것을 방지합니다.
      */
-    @Transactional
+    @OrderTransactional
     public List<Long> bulkDeletePublishedEvents() {
         var threshold = LocalDateTime.now().minusDays(7);
 

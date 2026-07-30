@@ -6,6 +6,7 @@ import com.flab.orderplatform.order.application.port.out.OrderRepository;
 import com.flab.orderplatform.order.domain.Order;
 import com.flab.orderplatform.order.domain.external.Product;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -14,9 +15,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OrderCommandHandler {
     private final OrderRepository orderRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @OrderTransactional
     public Order handle(String orderNumber, Map<String, Product> productMap, OrderCreateCommand command) {
-        return orderRepository.save(command.createOrder(orderNumber, productMap));
+        var order = orderRepository.save(command.createOrder(orderNumber, productMap));
+        eventPublisher.publishEvent(order.pullDomainEvent());
+        return order;
     }
 }
