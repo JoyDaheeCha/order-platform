@@ -11,6 +11,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import static com.flab.orderplatform.shared.event.EventConstants.ORDER_CREATED_TOPIC;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -19,9 +21,8 @@ public class PaymentDomainEventListener {
     private final PaymentFacade paymentFacade;
 
     // TODO: groupId 구분
-    // TODO: 토픽 공통화
     @Inbox
-    @KafkaListener(topics = "MSG-ORDER-CREATED")
+    @KafkaListener(topics = ORDER_CREATED_TOPIC)
     public void handle(ConsumerRecord<String, String> payload) {
         log.debug("[OrderCreatedEvent] payload: {}", payload.value());
         var event = JsonUtils.fromJson(payload.value(), OrderCreatedPayload.class);

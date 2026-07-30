@@ -80,7 +80,6 @@ public class Order extends BaseEntity {
                 .toList();
         DomainEventThreadManager.register(
                 OrderCreatedEvent.builder()
-                        .orderNumber(orderNumber)
                         .buyerId(customerId)
                         .orderItems(
                                 orderItemDtos

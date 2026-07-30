@@ -9,12 +9,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicUpdate;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.FAILED;
 import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.PUBLISHED;
 import static com.flab.orderplatform.shared.event.EventConstants.AGGREGATE_ORDER;
+import static com.flab.orderplatform.shared.event.EventConstants.Headers.*;
 
 /**
  * 아웃박스 패턴에서 도메인 이벤트 페이로드를 저장하기 위한 테이블
@@ -30,10 +32,6 @@ import static com.flab.orderplatform.shared.event.EventConstants.AGGREGATE_ORDER
         }
 )
 public class OutboxEvent extends BaseTimeEntity{
-    private static final String HEADER_EVENT_ID = "eventId";
-    public static final String HEADER_AGGREGATE_TYPE_VALUE = "order";
-    private static final String HEADER_EVENT_TYPE = "eventType";
-    private static final String HEADER_AGGREGATE_TYPE = "aggregateType";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,9 +61,13 @@ public class OutboxEvent extends BaseTimeEntity{
     @Column(name = "status", length = 10, nullable = false, columnDefinition = "VARCHAR(10) NOT NULL COMMENT '이벤트 상태 (CREATED/PUBLISHED/FAILED)'")
     private OutboxEventStatus status;
 
+    @Column(name = "occurred_at", nullable = false, columnDefinition = "DATETIME(6) NOT NULL COMMENT '이벤트 발생일시'")
+    private LocalDateTime occurredAt;
+
     @SuppressWarnings("unused")
     @Builder
-    public OutboxEvent(String eventId, String aggregateType, String aggregateId, String eventType, String topic, String payload, OutboxEventStatus status) {
+    public OutboxEvent(String eventId, String aggregateType, String aggregateId, String eventType, String topic,
+                       String payload, OutboxEventStatus status, LocalDateTime occurredAt) {
         this.eventId = eventId;
         this.aggregateType = aggregateType;
         this.aggregateId = aggregateId;
@@ -73,6 +75,7 @@ public class OutboxEvent extends BaseTimeEntity{
         this.topic = topic;
         this.payload = payload;
         this.status = status;
+        this.occurredAt = occurredAt;
     }
 
     public static OutboxEvent create(DomainEvent domainEvent) {
@@ -85,6 +88,7 @@ public class OutboxEvent extends BaseTimeEntity{
                 .topic(payload.topic())
                 .payload(JsonUtils.toJson(payload))
                 .status(OutboxEventStatus.CREATED)
+                .occurredAt(domainEvent.getOccurredOn())
                 .build();
     }
 
@@ -104,10 +108,11 @@ public class OutboxEvent extends BaseTimeEntity{
         return this;
     }
 
-    public Map<String, String> toMessageHeaders() {
-        var map = new HashMap<>(Map.of(HEADER_EVENT_ID, eventId));
-        map.put(HEADER_AGGREGATE_TYPE, aggregateType);
-        map.put(HEADER_EVENT_TYPE, eventType);
-        return map;
+    public HashMap<String, String> toMessageHeaders() {
+        return new HashMap<>(Map.of(
+                EVENT_ID, eventId,
+                AGGREGATE_TYPE, aggregateType,
+                EVENT_TYPE, eventType,
+                OCCURRED_AT, occurredAt.toString()));
     }
 }

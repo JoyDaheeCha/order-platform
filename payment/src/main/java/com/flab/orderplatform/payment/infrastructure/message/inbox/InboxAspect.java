@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import static com.flab.orderplatform.shared.event.EventConstants.Headers.*;
+
 /**
  * 인박스 패턴 적용 aspect
  * {@link } 보다 나중에 수행
@@ -40,8 +42,8 @@ public class InboxAspect {
     }
 
     private void createInboxLog(ConsumerRecord<String, String> consumerRecord, String eventId) {
-        var eventType = getHeaderValueByKey(consumerRecord, "eventType");
-        var aggregateType = getHeaderValueByKey(consumerRecord, "aggregateType");
+        var eventType = getHeaderValueByKey(consumerRecord, EVENT_TYPE);
+        var aggregateType = getHeaderValueByKey(consumerRecord, AGGREGATE_TYPE);
         // 인박스 테이블 저장
         var command = InboxEventCreateCommand.builder()
                 .eventId(eventId)
@@ -64,7 +66,7 @@ public class InboxAspect {
     public Object handle(ProceedingJoinPoint joinPoint, Inbox inbox) throws Throwable {
 
         var consumerRecord = getConsumerRecord(joinPoint);
-        var eventId = getHeaderValueByKey(consumerRecord, "eventId");
+        var eventId = getHeaderValueByKey(consumerRecord, EVENT_ID);
 
         // 이미 처리된 이벤트이면 skip
         var existingInbox = inboxEventRepository.findByEventId(eventId);

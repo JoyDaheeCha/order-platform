@@ -10,7 +10,7 @@ public record OrderCreatedPayload(
         Long buyerId,
         List<OrderItem> orderItems,
         Long totalAmount
-) implements EventMeta {
+) implements EventContract {
 
     @Override
     public String eventType() {
