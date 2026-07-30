@@ -23,7 +23,6 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       acks: all              # 주문 도메인이면 유실 방지를 위해 all 권장
     consumer:
-      group-id: order
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       auto-offset-reset: earliest

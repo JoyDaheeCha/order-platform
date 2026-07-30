@@ -20,9 +20,8 @@ public class PaymentDomainEventListener {
 
     private final PaymentFacade paymentFacade;
 
-    // TODO: groupId 구분
     @Inbox
-    @KafkaListener(topics = ORDER_CREATED_TOPIC)
+    @KafkaListener(topics = ORDER_CREATED_TOPIC, groupId = "payment")
     public void handle(ConsumerRecord<String, String> payload) {
         log.debug("[OrderCreatedEvent] payload: {}", payload.value());
         var event = JsonUtils.fromJson(payload.value(), OrderCreatedPayload.class);
