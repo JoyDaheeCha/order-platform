@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS inbox
 (
     id       BIGINT NOT NULL AUTO_INCREMENT,
     event_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '이벤트 UUID',
+    aggregate_type VARCHAR(30) NOT NULL COMMENT '에그리거트명 (예. payment)'
+    event_type VARCHAR(30) NOT NULL COMMENT '이벤트타입',
     payload LONGTEXT NOT NULL COMMENT '이벤트 페이로드', -- 추후 타 도메인에서 메시지 받을때 규격 안 맞더라도 일단 저장은 가능해야하므로 longtext로 저장
     status VARCHAR(10) NOT NULL COMMENT '이벤트 상태 (CREATED/PROCESSED/FAILED)',
     created_at     DATETIME    NOT NULL COMMENT '생성일',
