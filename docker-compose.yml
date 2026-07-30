@@ -71,6 +71,49 @@ services:
       retries: 20
       start_period: 20s
 
+  # 토픽 생성 전용 일회성 컨테이너.
+  #
+  # 브로커가 auto.create.topics.enable=false 라서 토픽은 **누군가 명시적으로** 만들어야 한다.
+  #   · 자동 생성을 켜면 토픽명 오타가 나도 조용히 새 토픽이 생겨서
+  #     "발행은 됐는데 컨슈머가 못 받는" 디버깅하기 나쁜 상황이 만들어진다.
+  #     지금처럼 즉시 실패하는 편이 안전하다.
+  #   · 운영이라면 이 역할은 IaC/운영팀이 맡는다. 여기선 로컬 편의를 위해 컴포즈가 대신한다.
+  #
+  # 1회 실행 후 Exit 0 으로 종료된 채 남는 게 정상이다(restart: "no").
+  kafka-init:
+    image: apache/kafka:3.9.0
+    container_name: order-platform-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy   # 브로커 healthcheck 통과 후에만 실행
+    restart: "no"
+    entrypoint:
+      - /bin/bash
+      - -c
+      # $$TOPIC 의 `$$` — 컴포즈가 `$VAR` 를 자기 변수로 먼저 치환해버리므로 셸에 넘기려면 이스케이프해야 한다.
+      # --if-not-exists 라서 `docker compose up` 을 반복해도 안전하다(멱등).
+      - |
+        set -e
+        for TOPIC in \
+          MSG-ORDER-CREATED \
+          MSG-ORDER-CONFIRMED \
+          MSG-ORDER-CANCELLATION-REQUESTED \
+          MSG-ORDER-CANCELLED \
+          MSG-PAYMENT-COMPLETED \
+          MSG-PAYMENT-FAILED \
+          MSG-PAYMENT-REFUNDED \
+          MSG-STOCK-DEDUCTED \
+          MSG-STOCK-SHORTAGE \
+          MSG-STOCK-RESTORED ; do
+          /opt/kafka/bin/kafka-topics.sh \
+            --bootstrap-server kafka:9092 \
+            --create --if-not-exists \
+            --topic "$$TOPIC" \
+            --partitions 3 --replication-factor 1
+        done
+        echo "--- 생성된 토픽 ---"
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list
+
   redis:
     image: redis:7-alpine
     container_name: order-platform-redis
