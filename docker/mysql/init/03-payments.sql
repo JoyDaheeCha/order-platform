@@ -1,6 +1,5 @@
 -- 03-payments.sql — payment 스키마의 payments 테이블 (스캐폴드).
-USE
-payment_schema;
+USE payment_schema;
 
 -- 결제
 CREATE TABLE IF NOT EXISTS payments
@@ -11,6 +10,7 @@ CREATE TABLE IF NOT EXISTS payments
     amount         BIGINT      NOT NULL COMMENT '총 결제액',
     status         VARCHAR(10) NOT NULL COMMENT '결제 상태 REQUESTED/COMPLETED/FAILED/REFUNDED',
     failure_reason VARCHAR(50) NULL COMMENT '결제 실패 사유',
+    pg_tid          VARCHAR(36)    NULL COMMENT 'PG사 결제 ID(tid)',
     created_at     DATETIME(6)    NOT NULL COMMENT '생성일',
     updated_at     DATETIME(6)    NOT NULL COMMENT '수정일',
     PRIMARY KEY (id),
