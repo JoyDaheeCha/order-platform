@@ -2,6 +2,7 @@ package com.flab.orderplatform.payment.application;
 
 import com.flab.orderplatform.payment.application.command.PaymentCompleteCommand;
 import com.flab.orderplatform.payment.application.command.PaymentCreateCommand;
+import com.flab.orderplatform.payment.application.port.out.InboxEventRepository;
 import com.flab.orderplatform.payment.application.port.out.PaymentGateway;
 import com.flab.orderplatform.payment.application.port.out.PaymentRepository;
 import com.flab.orderplatform.payment.application.port.out.PgApprovalRequest;
@@ -20,11 +21,11 @@ import static com.flab.orderplatform.payment.domain.status.PaymentStatus.REFUNDE
 @Component
 @RequiredArgsConstructor
 public class PaymentFacade {
+    private final InboxEventRepository inboxEventRepository;
     private final PaymentRepository paymentRepository;
     private final PaymentCommandHandler paymentCommandHandler;
     private final PaymentGateway paymentGateway;
 
-    // TODO 인박스 패턴에 읽어오도록 전환
     public Payment pay(PaymentCreateCommand createCommand) {
         var paymentRegisteredOrCompleted = paymentRepository.findByOrderNumberAndStatusIn(createCommand.orderNumber(), List.of(COMPLETED, REFUNDED));
 

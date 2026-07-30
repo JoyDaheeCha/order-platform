@@ -41,6 +41,14 @@ public class JsonUtils {
         MAPPER.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     }
 
+    public static <T> T fromJson(final String json, Class<T> valueType) {
+        try {
+            return MAPPER.readValue(json, valueType);
+        } catch (IOException e) {
+            throw new JsonDecodeException(e);
+        }
+    }
+
     public static String toJson(final Object object) {
         try {
             return MAPPER.writeValueAsString(object);
@@ -51,6 +59,12 @@ public class JsonUtils {
 
     public static class JsonEncodeException extends RuntimeException {
         public JsonEncodeException(Throwable cause) {
+            super(cause);
+        }
+    }
+
+    public static class JsonDecodeException extends RuntimeException {
+        public JsonDecodeException(Throwable cause) {
             super(cause);
         }
     }
