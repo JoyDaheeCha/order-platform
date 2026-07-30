@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static com.tngtech.archunit.base.DescribedPredicate.not;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
@@ -20,6 +22,9 @@ import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 class ModuleBoundaryTest {
 
     private static final String ROOT = "com.flab.orderplatform";
+    private static final String SHARED = ROOT + ".shared..";
+    /** 도메인이 유일하게 알아도 되는 shared 하위 패키지 = 통합 이벤트 계약(C-4). */
+    private static final String SHARED_EVENT = ROOT + ".shared.event..";
 
     private static JavaClasses classes;
 
@@ -79,6 +84,57 @@ class ModuleBoundaryTest {
         assertNoCrossContextDependency("order", "payment", "inventory");
         assertNoCrossContextDependency("payment", "order", "inventory");
         assertNoCrossContextDependency("inventory", "order", "payment");
+    }
+
+    /** {@code com.flab.orderplatform.<context>..} 형태의 완전한 패키지 패턴을 만든다. */
+    private static String[] contextPackages(String... contexts) {
+        String[] packages = new String[contexts.length];
+        for (int i = 0; i < contexts.length; i++) {
+            packages[i] = "%s.%s..".formatted(ROOT, contexts[i]);
+        }
+        return packages;
+    }
+
+    @Test
+    @DisplayName("C-4: domain 이 의존할 수 있는 shared 는 통합 이벤트 계약(..shared.event..)뿐이다")
+    void domainMayOnlyDependOnSharedEventContract() {
+        noClasses()
+                .that().resideInAPackage("..domain..")
+                .should().dependOnClassesThat(
+                        resideInAPackage(SHARED)
+                                .and(not(resideInAPackage(SHARED_EVENT)))
+                                .as("통합 이벤트 계약(%s)이 아닌 shared 클래스".formatted(SHARED_EVENT)))
+                .because("C-4: 도메인 이벤트는 자신의 통합 이벤트 계약만 안다. 계약 외 shared 확장이 도메인으로 새면 안 된다")
+                .allowEmptyShould(true)
+                .check(classes);
+    }
+
+    @Test
+    @DisplayName("A-7: shared 는 어떤 바운디드 컨텍스트도 의존하지 않는다 (역방향 의존 금지)")
+    void sharedShouldNotDependOnAnyContext() {
+        noClasses()
+                .that().resideInAPackage(SHARED)
+                .should().dependOnClassesThat()
+                .resideInAnyPackage(contextPackages("order", "payment", "inventory"))
+                .because("C-3: shared 는 계약만 담는다. 컨텍스트를 알기 시작하면 '분산된 모놀리스'가 된다")
+                .allowEmptyShould(true)
+                .check(classes);
+    }
+
+    @Test
+    @DisplayName("A-8: shared 는 프레임워크를 의존하지 않는다 (순수 계약 = 분리 배포 가능)")
+    void sharedShouldBeFrameworkFree() {
+        noClasses()
+                .that().resideInAPackage(SHARED)
+                .should().dependOnClassesThat()
+                .resideInAnyPackage(
+                        "org.springframework..",
+                        "jakarta.persistence..",
+                        "org.apache.kafka..",
+                        "com.fasterxml.jackson..")
+                .because("C-3: shared 가 프레임워크를 알면 계약 라이브러리(jar)로 떼어낼 수 없다. 직렬화는 각 컨텍스트 infrastructure 책임(C-4)")
+                .allowEmptyShould(true)
+                .check(classes);
     }
 
     /**

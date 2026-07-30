@@ -35,7 +35,7 @@ order-platform/
 
 | 패키지(layer) | 책임 | 의존 가능 대상 | 프레임워크 |
 |------|------|----------------|-----------|
-| `..domain` | Aggregate · VO · 도메인 이벤트 · 불변식 · 도메인 서비스 | **없음** (순수 Java) | ❌ Spring/JPA 금지 |
+| `..domain` | Aggregate · VO · 도메인 이벤트 · 불변식 · 도메인 서비스 | **`..shared.event..`(통합 이벤트 계약)만** — 그 외 없음 (C-4) | ❌ Spring/JPA 금지 |
 | `..application` | 유스케이스(application service), **포트**(in/out interface), 트랜잭션 경계 | 같은 컨텍스트 domain, shared | ⚠️ 최소 (트랜잭션 추상만) |
 | `..infrastructure` | 어댑터 — JPA 영속화, Kafka 컨슈머/프로듀서, REST 컨트롤러, Outbox/Inbox 구현 | 같은 컨텍스트 application·domain, shared | ✅ Spring Boot·JPA·Kafka |
 
@@ -45,7 +45,7 @@ order-platform/
 ```
 infrastructure ──▶ application ──▶ domain
         └──────────────────────────▶ domain (어댑터가 도메인 직접 참조 가능)
-domain ──▶ (아무것도 의존하지 않음)
+domain ──▶ shared.event (통합 이벤트 계약 record 만, C-4)
 ```
 
 포트 패턴:
@@ -61,9 +61,13 @@ domain ──▶ (아무것도 의존하지 않음)
 | **C-1** | 바운디드 컨텍스트 간 **컴파일 의존 금지**. `order`는 `payment`·`inventory` 패키지를 import MUST NOT. |
 | **C-2** | 컨텍스트 간 통신은 **Kafka 통합 이벤트 only** (직접 메서드 호출·공유 DB 테이블 금지). |
 | **C-3** | 통합 이벤트 계약은 **`shared`에만** 정의한다. 각 컨텍스트는 `shared`를 의존해 발행·구독. |
-| **C-4** | **도메인 이벤트 ≠ 통합 이벤트**. domain은 내부 도메인 이벤트만 안다. infrastructure가 도메인 이벤트 → `shared`의 통합 이벤트로 변환해 Outbox 발행한다. | 
+| **C-4** | **도메인 이벤트 ≠ 통합 이벤트**(별개 타입). 단, 도메인 이벤트는 자신이 **어떤 통합 이벤트로 변환되는지**는 안다 — `DomainEvent.toPayload()`가 `..shared.event..`의 계약 record 를 반환한다. domain 이 의존할 수 있는 `shared` 는 **통합 이벤트 계약뿐**이며, 직렬화·토픽 발행은 여전히 infrastructure 책임이다. |
 
-> C-4가 중요한 학습 포인트: 도메인을 Kafka 메시지 포맷(통합 이벤트)으로부터 격리한다. 도메인은 "주문이 확정됐다"는 사실만 알고, 그게 어떤 JSON으로 어떤 토픽에 나가는지는 모른다.
+> **C-4 개정 이력 (2026-07)** — 최초 규약은 *"domain 은 내부 도메인 이벤트만 알고, infrastructure 가 통합 이벤트로 변환한다"* 였다. 구현해보니 이 격리의 대가가 이득보다 컸다: 변환 매퍼를 infrastructure 에 두면 이벤트 하나 추가할 때 **도메인 이벤트 · 계약 record · 매퍼**가 3곳으로 흩어지고, 무엇보다 **계약이 없는 도메인 이벤트를 만들어도 컴파일이 통과**한다(런타임에야 발행 누락을 안다).
+>
+> 개정 후에는 `DomainEvent.toPayload()`를 **추상 메서드**로 두어 *"발행 가능한 도메인 이벤트는 반드시 통합 이벤트 계약을 갖는다"* 를 컴파일러가 강제한다. 대신 domain 이 shared 를 알게 되므로, 침투 범위를 `..shared.event..`(의존성 0인 순수 record)로 못박고 ArchUnit(§6 C-4·A-7·A-8)으로 강제한다.
+>
+> **여전히 지켜지는 격리**: 도메인은 JSON 포맷도, 직렬화 방식도, Kafka 도 모른다(`JsonUtils`·`KafkaMessageProducer` 는 infrastructure 소관). 포기한 것은 "토픽 이름과 이벤트 타입 문자열까지의 무지"뿐이고, 그 둘은 계약 record 안에 상수로 갇혀 있다.
 
 ---
 
@@ -99,6 +103,9 @@ domain ──▶ (아무것도 의존하지 않음)
 - **A-4** 컨텍스트 간 패키지 의존 MUST NOT (`..order..` → `..payment..` 금지) (C-1). ※ 이건 모듈 경계로 컴파일타임에도 막힌다.
 - **A-5** 컨텍스트 간 유일한 공유는 `..shared..` 통합 이벤트뿐.
 - **A-6** 레이어 의존 방향: infrastructure → application → domain (역방향 금지).
+- **A-7** `..shared..`는 어떤 바운디드 컨텍스트(`order`·`payment`·`inventory`)도 의존 MUST NOT — 계약의 **역방향 의존 금지**.
+- **A-8** `..shared..`는 프레임워크(Spring·JPA·Kafka·Jackson)를 의존 MUST NOT — 순수 계약이어야 계약 라이브러리로 분리 배포할 수 있다.
+- **C-4** `..domain`이 의존할 수 있는 `shared`는 `..shared.event..`(통합 이벤트 계약)뿐. 계약 외 shared 확장이 도메인으로 새는 것을 막는다.
 
 패키지 루트: `com.flab.orderplatform.{context}.{layer}` (예: `com.flab.orderplatform.order.domain`).
 
