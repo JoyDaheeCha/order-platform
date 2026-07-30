@@ -1,5 +1,6 @@
 package com.flab.orderplatform.order.domain;
 
+import com.flab.orderplatform.shared.event.EventMeta;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -21,7 +22,5 @@ public abstract class DomainEvent implements Serializable {
         this.occurredOn = occurredOn;
     }
 
-    public abstract String getAction();
-
-    public abstract String getTopic();
+    public abstract EventMeta toPayload();
 }

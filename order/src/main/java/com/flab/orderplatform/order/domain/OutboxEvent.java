@@ -14,6 +14,7 @@ import java.util.Map;
 
 import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.FAILED;
 import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.PUBLISHED;
+import static com.flab.orderplatform.shared.event.EventConstants.AGGREGATE_ORDER;
 
 /**
  * 아웃박스 패턴에서 도메인 이벤트 페이로드를 저장하기 위한 테이블
@@ -46,13 +47,13 @@ public class OutboxEvent extends BaseTimeEntity{
             columnDefinition = "VARCHAR(30) COMMENT '에그리거트명 (예. order)'")
     private String aggregateType;
 
-    @Column(name = "aggregate_id", length = 30, nullable = false, columnDefinition = "VARCHAR(30) COMMENT '에그리거트 식별자'")
+    @Column(name = "aggregate_id", length = 36, nullable = false, columnDefinition = "VARCHAR(36) COMMENT '에그리거트 식별자'")
     private String aggregateId;
 
     @Column(name = "event_type", length = 30, nullable = false, columnDefinition = "VARCHAR(30) COMMENT '이벤트 타입'")
     private String eventType;
 
-    @Column(name = "topic", length = 30, nullable = false, columnDefinition = "VARCHAR(30) COMMENT '토픽명'")
+    @Column(name = "topic", length = 50, nullable = false, columnDefinition = "VARCHAR(50) COMMENT '토픽명'")
     private String topic;
 
     @Column(name = "payload", nullable = false, columnDefinition = "JSON NOT NULL COMMENT '이벤트 페이로드'")
@@ -75,13 +76,14 @@ public class OutboxEvent extends BaseTimeEntity{
     }
 
     public static OutboxEvent create(DomainEvent domainEvent) {
+        var payload = domainEvent.toPayload();
         return OutboxEvent.builder()
                 .eventId(domainEvent.getEventId())
-                .aggregateType(HEADER_AGGREGATE_TYPE_VALUE) // TODO: 추후 재고, 결제에서 outbound 패턴 동일 적용시 본 문자열에 대해 각각 도메인에 맞게 변경 필요
+                .aggregateType(AGGREGATE_ORDER)
                 .aggregateId(domainEvent.getAggregateId())
-                .eventType(domainEvent.getAction())
-                .topic(domainEvent.getTopic())
-                .payload(JsonUtils.toJson(domainEvent))
+                .eventType(payload.eventType())
+                .topic(payload.topic())
+                .payload(JsonUtils.toJson(payload))
                 .status(OutboxEventStatus.CREATED)
                 .build();
     }
