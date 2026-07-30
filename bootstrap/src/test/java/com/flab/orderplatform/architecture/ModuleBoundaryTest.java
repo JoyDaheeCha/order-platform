@@ -1,5 +1,7 @@
 package com.flab.orderplatform.architecture;
 
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
@@ -26,6 +29,22 @@ class ModuleBoundaryTest {
     /** 도메인이 유일하게 알아도 되는 shared 하위 패키지 = 통합 이벤트 계약(C-4). */
     private static final String SHARED_EVENT = ROOT + ".shared.event..";
 
+    /**
+     * A-1: 도메인 모델을 JPA 엔티티 겸용으로 두기로 했으므로(architecture.md §2 A-1 개정 이력)
+     * 도메인이 알아도 되는 Spring 은 <b>영속화 매핑·감사 애노테이션</b>뿐이다.
+     */
+    private static final String[] DOMAIN_ALLOWED_SPRING = {
+            "org.springframework.data.annotation..",
+            "org.springframework.data.jpa.domain.support..",
+    };
+
+    /** 영속화와 무관한 인프라 — 도메인은 "어떻게 전송·호출되는지"를 알면 안 된다. */
+    private static final String[] DOMAIN_FORBIDDEN_INFRA = {
+            "org.apache.kafka..",
+            "org.redisson..",
+            "com.fasterxml.jackson..",
+    };
+
     private static JavaClasses classes;
 
     @BeforeAll
@@ -35,6 +54,23 @@ class ModuleBoundaryTest {
         classes = new ClassFileImporter()
                 .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
                 .importPackages(ROOT);
+    }
+
+    @Test
+    @DisplayName("A-1: domain 은 영속화 매핑까지만 허용한다 (Spring DI·웹·Kafka·Jackson 금지)")
+    void domainShouldOnlyKnowPersistenceMapping() {
+        DescribedPredicate<JavaClass> forbidden =
+                resideInAPackage("org.springframework..")
+                        .and(not(resideInAnyPackage(DOMAIN_ALLOWED_SPRING)))
+                        .or(resideInAnyPackage(DOMAIN_FORBIDDEN_INFRA))
+                        .as("영속화 매핑·감사 애노테이션이 아닌 프레임워크 클래스");
+
+        noClasses()
+                .that().resideInAPackage("..domain..")
+                .should().dependOnClassesThat(forbidden)
+                .because("A-1: 도메인은 'DB에 어떻게 저장되는지'까지만 알고, '누가 호출하고 어떻게 전송되는지'는 모른다")
+                .allowEmptyShould(true)
+                .check(classes);
     }
 
     @Test
