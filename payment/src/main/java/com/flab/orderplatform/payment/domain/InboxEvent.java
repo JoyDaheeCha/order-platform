@@ -20,23 +20,23 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 public class InboxEvent extends BaseTimeEntity {
     @GeneratedValue(strategy = IDENTITY)
     @Id
-    Long id;
+    private Long id;
 
     @Column(name = "event_id", length = 36, nullable = false, unique = true, columnDefinition = "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '이벤트 UUID'")
-    String eventId;
+    private String eventId;
 
     @Column(name = "aggregate_type", length = 30, nullable = false, columnDefinition = "VARCHAR(30) NOT NULL COMMENT '에그리거트명 (예. payment)'")
-    String aggregateType;
+    private String aggregateType;
 
     @Column(name = "event_type", length = 30, nullable = false, columnDefinition = "VARCHAR(30) NOT NULL COMMENT '이벤트타입(예.OrderCreated)'")
-    String eventType;
+    private String eventType;
 
     @Column(name = "payload", nullable = false, columnDefinition = "LONGTEXT NOT NULL COMMENT '이벤트 페이로드'")
-    String payload;
+    private String payload;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(10) NOT NULL COMMENT '이벤트 상태 (CREATED/PROCESSED/FAILED)'")
-    InboxEventStatus status;
+    private InboxEventStatus status;
 
     @Builder
     public InboxEvent(String eventId,

@@ -22,7 +22,6 @@ import static com.flab.orderplatform.shared.event.EventConstants.Headers.*;
 
 /**
  * 인박스 패턴 적용 aspect
- * {@link } 보다 나중에 수행
  */
 @Aspect
 @Component
@@ -83,7 +82,7 @@ public class InboxAspect {
             inboxEventCommandHandler.handle(new InboxEventSucceedCommand(eventId));
             return result;
         } catch (Exception e){
-            var eventType = getHeaderValueByKey(consumerRecord, "eventType");
+            var eventType = getHeaderValueByKey(consumerRecord, EVENT_TYPE);
             log.error("인박스 이벤트 처리 실패 (eventId = {}, eventType = {})", eventId, eventType);
             try {
                 inboxEventCommandHandler.handle(new InboxEventFailCommand(eventId));
