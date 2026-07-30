@@ -4,7 +4,7 @@ import com.flab.orderplatform.payment.domain.status.InboxEventStatus;
 import jakarta.persistence.*;
 import lombok.Builder;
 
-import static com.flab.orderplatform.payment.domain.status.InboxEventStatus.CREATED;
+import static com.flab.orderplatform.payment.domain.status.InboxEventStatus.*;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 /**
@@ -58,5 +58,14 @@ public class InboxEvent extends BaseTimeEntity{
                 .payload(payload)
                 .status(CREATED)
                 .build();
+    }
+
+    public InboxEvent succeed() {
+        this.status = PROCESSED;
+        return this;
+    }
+    public InboxEvent fail() {
+        this.status = FAILED;
+        return this;
     }
 }

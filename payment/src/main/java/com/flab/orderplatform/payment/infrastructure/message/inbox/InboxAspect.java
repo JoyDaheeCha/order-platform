@@ -3,6 +3,8 @@ package com.flab.orderplatform.payment.infrastructure.message.inbox;
 import com.flab.orderplatform.payment.application.InboxEventCommandHandler;
 import com.flab.orderplatform.payment.application.annotation.Inbox;
 import com.flab.orderplatform.payment.application.command.InboxEventCreateCommand;
+import com.flab.orderplatform.payment.application.command.InboxEventFailCommand;
+import com.flab.orderplatform.payment.application.command.InboxEventSucceedCommand;
 import com.flab.orderplatform.payment.application.port.out.InboxEventRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,19 @@ public class InboxAspect {
                 .orElseThrow(() -> new IllegalStateException("@Inbox 애노테이션은 ConsumerRecord 파라메터가 필요합니다."));
     }
 
+    private void createInboxLog(ConsumerRecord<String, String> consumerRecord, String eventId) {
+        var eventType = getHeaderValueByKey(consumerRecord, "eventType");
+        var aggregateType = getHeaderValueByKey(consumerRecord, "aggregateType");
+        // 인박스 테이블 저장
+        var command = InboxEventCreateCommand.builder()
+                .eventId(eventId)
+                .eventType(eventType)
+                .aggregateType(aggregateType)
+                .payload(consumerRecord.value())
+                .build();
+        inboxEventCommandHandler.handle(command);
+    }
+
     private static String getHeaderValueByKey(ConsumerRecord<String, String> consumerRecord, String headerKey) {
         var header = consumerRecord.headers().lastHeader(headerKey);
         return new String(header.value());
@@ -52,21 +67,19 @@ public class InboxAspect {
             return null;
         }
 
+        // 인박스 데이터 생성
         createInboxLog(consumerRecord, eventId);
-        // 비즈니스 로직 실행
-        return joinPoint.proceed();
+
+        // 비즈니스 로직 진행 & 인박스 처리 상태 업데이트
+        try {
+            var result = joinPoint.proceed();
+            inboxEventCommandHandler.handle(new InboxEventSucceedCommand(eventId));
+            return result;
+        } catch (Exception e){
+            inboxEventCommandHandler.handle(new InboxEventFailCommand(eventId));
+            return null;
+        }
     }
 
-    private void createInboxLog(ConsumerRecord<String, String> consumerRecord, String eventId) {
-        var eventType = getHeaderValueByKey(consumerRecord, "eventType");
-        var aggregateType = getHeaderValueByKey(consumerRecord, "aggregateType");
-        // 인박스 테이블 저장
-        var command = InboxEventCreateCommand.builder()
-                .eventId(eventId)
-                .eventType(eventType)
-                .aggregateType(aggregateType)
-                .payload(consumerRecord.value())
-                .build();
-        inboxEventCommandHandler.handle(command);
-    }
+
 }

@@ -1,4 +1,4 @@
-package com.flab.orderplatform.payment.common.common;
+package com.flab.orderplatform.payment.common;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

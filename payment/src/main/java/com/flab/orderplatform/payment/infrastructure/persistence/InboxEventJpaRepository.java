@@ -8,5 +8,5 @@ import java.util.Optional;
 public interface InboxEventJpaRepository extends JpaRepository<Long, InboxEvent> {
     InboxEvent save(InboxEvent event);
 
-    Optional<Object> findByEventId(String eventId);
+    Optional<InboxEvent> findByEventId(String eventId);
 }

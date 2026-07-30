@@ -19,7 +19,7 @@ public class InboxEventRepositoryAdaptor implements InboxEventRepository {
     }
 
     @Override
-    public Optional<Object> findByEventId(String eventId) {
+    public Optional<InboxEvent> findByEventId(String eventId) {
         return inboxEventJpaRepository.findByEventId(eventId);
     }
 }

@@ -7,5 +7,5 @@ import java.util.Optional;
 public interface InboxEventRepository {
     InboxEvent save(InboxEvent event);
 
-    Optional<Object> findByEventId(String eventId);
+    Optional<InboxEvent> findByEventId(String eventId);
 }
