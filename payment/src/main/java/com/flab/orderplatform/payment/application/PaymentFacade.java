@@ -2,7 +2,6 @@ package com.flab.orderplatform.payment.application;
 
 import com.flab.orderplatform.payment.application.command.PaymentCompleteCommand;
 import com.flab.orderplatform.payment.application.command.PaymentCreateCommand;
-import com.flab.orderplatform.payment.application.port.out.InboxEventRepository;
 import com.flab.orderplatform.payment.application.port.out.PaymentGateway;
 import com.flab.orderplatform.payment.application.port.out.PaymentRepository;
 import com.flab.orderplatform.payment.application.port.out.PgApprovalRequest;
@@ -21,7 +20,6 @@ import static com.flab.orderplatform.payment.domain.status.PaymentStatus.REFUNDE
 @Component
 @RequiredArgsConstructor
 public class PaymentFacade {
-    private final InboxEventRepository inboxEventRepository;
     private final PaymentRepository paymentRepository;
     private final PaymentCommandHandler paymentCommandHandler;
     private final PaymentGateway paymentGateway;
@@ -48,6 +46,8 @@ public class PaymentFacade {
                 .builder()
                 .orderNumber(createCommand.orderNumber())
                 .isPaymentSucceed(pgApprovalResult.isSucceed())
+                .failureReason(pgApprovalResult.message())
+                .pgTid(pgApprovalResult.tid())
                 .build();
 
         // 결제 완료/실패 처리

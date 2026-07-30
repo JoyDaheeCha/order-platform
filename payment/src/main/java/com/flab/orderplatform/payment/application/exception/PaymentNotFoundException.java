@@ -1,4 +1,4 @@
-package com.flab.orderplatform.payment.common.exception;
+package com.flab.orderplatform.payment.application.exception;
 
 import com.flab.orderplatform.payment.common.BusinessErrorCode;
 import com.flab.orderplatform.payment.common.BusinessException;

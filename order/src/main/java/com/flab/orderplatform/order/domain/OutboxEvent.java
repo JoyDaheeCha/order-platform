@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicUpdate;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.FAILED;
@@ -29,6 +30,9 @@ import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.PUBLI
 )
 public class OutboxEvent extends BaseTimeEntity{
     private static final String HEADER_EVENT_ID = "eventId";
+    public static final String HEADER_AGGREGATE_TYPE_VALUE = "order";
+    private static final String HEADER_EVENT_TYPE = "event_type";
+    private static final String HEADER_AGGREGATE_TYPE = "aggregateType";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -73,7 +77,7 @@ public class OutboxEvent extends BaseTimeEntity{
     public static OutboxEvent create(DomainEvent domainEvent) {
         return OutboxEvent.builder()
                 .eventId(domainEvent.getEventId())
-                .aggregateType("order") // TODO: 추후 재고, 결제에서 outbound 패턴 동일 적용시 본 문자열에 대해 각각 도메인에 맞게 변경 필요
+                .aggregateType(HEADER_AGGREGATE_TYPE_VALUE) // TODO: 추후 재고, 결제에서 outbound 패턴 동일 적용시 본 문자열에 대해 각각 도메인에 맞게 변경 필요
                 .aggregateId(domainEvent.getAggregateId())
                 .eventType(domainEvent.getAction())
                 .topic(domainEvent.getTopic())
@@ -99,6 +103,9 @@ public class OutboxEvent extends BaseTimeEntity{
     }
 
     public Map<String, String> toMessageHeaders() {
-        return Map.of(HEADER_EVENT_ID, eventId);
+        var map = new HashMap<>(Map.of(HEADER_EVENT_ID, eventId));
+        map.put(HEADER_AGGREGATE_TYPE, aggregateType);
+        map.put(HEADER_EVENT_TYPE, eventType);
+        return map;
     }
 }

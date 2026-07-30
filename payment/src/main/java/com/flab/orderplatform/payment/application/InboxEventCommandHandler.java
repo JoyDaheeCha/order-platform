@@ -26,13 +26,15 @@ public class InboxEventCommandHandler {
     public InboxEvent handle(InboxEventSucceedCommand command) {
         var inboxEvent = inboxEventRepository.findByEventId(command.eventId())
                 .orElseThrow(() -> new InboxEventNotFoundException(command.eventId()));
-        return inboxEventRepository.save(inboxEvent);
+        var updatedInboxEvent = command.succeed(inboxEvent);
+        return inboxEventRepository.save(updatedInboxEvent);
     }
 
     @PaymentTransactional
     public InboxEvent handle(InboxEventFailCommand command) {
         var inboxEvent = inboxEventRepository.findByEventId(command.eventId())
                 .orElseThrow(() -> new InboxEventNotFoundException(command.eventId()));
-        return inboxEventRepository.save(inboxEvent);
+        var updatedInboxEvent = command.fail(inboxEvent);
+        return inboxEventRepository.save(updatedInboxEvent);
     }
 }

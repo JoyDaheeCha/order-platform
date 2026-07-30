@@ -8,27 +8,29 @@ import com.flab.orderplatform.payment.application.command.InboxEventSucceedComma
 import com.flab.orderplatform.payment.application.port.out.InboxEventRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
  * 인박스 패턴 적용 aspect
- * {@link Inbox} 보다 나중에 수행
+ * {@link } 보다 나중에 수행
  */
-@Order
 @Aspect
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class InboxAspect {
     private final InboxEventCommandHandler inboxEventCommandHandler;
     private final InboxEventRepository inboxEventRepository;
 
+    @SuppressWarnings("unchecked")
     private static @NonNull ConsumerRecord<String, String> getConsumerRecord(ProceedingJoinPoint joinPoint) {
         return Arrays.stream(joinPoint.getArgs())
                 .filter(ConsumerRecord.class::isInstance)
@@ -52,7 +54,10 @@ public class InboxAspect {
 
     private static String getHeaderValueByKey(ConsumerRecord<String, String> consumerRecord, String headerKey) {
         var header = consumerRecord.headers().lastHeader(headerKey);
-        return new String(header.value());
+        if (header == null) {
+            throw new IllegalStateException("필수 헤더(%s)가 없습니다.".formatted(headerKey));
+        }
+        return new String(header.value(), StandardCharsets.UTF_8);
     }
 
     @Around("@annotation(inbox)")
@@ -76,8 +81,14 @@ public class InboxAspect {
             inboxEventCommandHandler.handle(new InboxEventSucceedCommand(eventId));
             return result;
         } catch (Exception e){
-            inboxEventCommandHandler.handle(new InboxEventFailCommand(eventId));
-            return null;
+            var eventType = getHeaderValueByKey(consumerRecord, "eventType");
+            log.error("인박스 이벤트 처리 실패 (eventId = {}, eventType = {})", eventId, eventType);
+            try {
+                inboxEventCommandHandler.handle(new InboxEventFailCommand(eventId));
+            } catch (Exception ex){
+                log.error("인박스 실패 상태 갱신 실패 (eventId={})", eventId, ex);
+            }
+            throw e;
         }
     }
 

@@ -2,7 +2,10 @@ package com.flab.orderplatform.payment.domain;
 
 import com.flab.orderplatform.payment.domain.status.InboxEventStatus;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import static com.flab.orderplatform.payment.domain.status.InboxEventStatus.*;
 import static jakarta.persistence.GenerationType.IDENTITY;
@@ -10,13 +13,16 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 /**
  * 인박스 패턴 구현용 테이블
  */
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
 @Table(name = "inbox")
-public class InboxEvent extends BaseTimeEntity{
+public class InboxEvent extends BaseTimeEntity {
     @GeneratedValue(strategy = IDENTITY)
     @Id
     Long id;
 
-    @Column(name = "event_id", length = 36, nullable = false, columnDefinition = "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '이벤트 UUID'")
+    @Column(name = "event_id", length = 36, nullable = false, unique = true, columnDefinition = "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '이벤트 UUID'")
     String eventId;
 
     @Column(name = "aggregate_type", length = 30, nullable = false, columnDefinition = "VARCHAR(30) NOT NULL COMMENT '에그리거트명 (예. payment)'")

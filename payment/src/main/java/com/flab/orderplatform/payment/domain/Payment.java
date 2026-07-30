@@ -36,6 +36,9 @@ public class Payment extends BaseTimeEntity {
     @Column(name = "failure_reason", length = 50, columnDefinition = "VARCHAR(50) COMMENT '결제 실패 사유'")
     private String failureReason;
 
+    @Column(name = "pg_tid", columnDefinition = "VARCHAR(36) COMMENT 'PG사 결제 ID(tid)'")
+    private String pgTid;
+
     @Builder
     public Payment(String orderNumber, Long buyerId, Long amount, PaymentStatus status, String failureReason) {
         this.orderNumber = orderNumber;
@@ -54,16 +57,28 @@ public class Payment extends BaseTimeEntity {
                 .buyerId(buyerId)
                 .amount(amount)
                 .status(REQUESTED)
-                .failureReason("")
+                .failureReason(null)
                 .build();
     }
 
-    public Payment complete(Boolean isPaymentSucceed) {
+    public Payment complete(Boolean isPaymentSucceed, String failureReason, String pgTid) {
+        this.pgTid = pgTid;
         if (isPaymentSucceed) {
             this.status = COMPLETED;
+            this.failureReason = null;
             return this;
         }
         this.status = FAILED;
+        this.failureReason = failureReason;
+        return this;
+    }
+
+    public Payment retry() {
+        if (this.status != FAILED) {
+            throw new IllegalArgumentException("실패한 결제만 재시도 가능합니다. (현재상태: %s)".formatted(status.getDescription()));
+        }
+        this.status = REQUESTED;
+        this.failureReason = null;
         return this;
     }
 }

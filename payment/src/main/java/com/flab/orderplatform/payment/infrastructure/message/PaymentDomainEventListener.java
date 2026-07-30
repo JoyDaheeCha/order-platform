@@ -17,11 +17,12 @@ public class PaymentDomainEventListener {
 
     private final PaymentFacade paymentFacade;
 
+    // TODO: groupId 구분
     // TODO: 토픽 공통화
     @Inbox
     @KafkaListener(topics = "MSG-ORDER-CREATED")
     public void handle(ConsumerRecord<String, String> payload) {
-        log.debug("[OrderCreatedEvent] payload: {}", JsonUtils.toJson(payload));
+        log.debug("[OrderCreatedEvent] payload: {}",payload.value());
         var event = JsonUtils.fromJson(payload.value(), OrderCreatedEvent.class);
         paymentFacade.pay(event.toCommand());
     }

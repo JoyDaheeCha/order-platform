@@ -5,8 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface InboxEventJpaRepository extends JpaRepository<Long, InboxEvent> {
-    InboxEvent save(InboxEvent event);
-
+public interface InboxEventJpaRepository extends JpaRepository<InboxEvent, Long> {
     Optional<InboxEvent> findByEventId(String eventId);
 }

@@ -10,14 +10,14 @@ import java.util.UUID;
  */
 public record PgApprovalResult(
         String tid,
-        Boolean isSucceed,
+        boolean isSucceed,
         String message
 ) {
     public static PgApprovalResult fail() {
-        return new PgApprovalResult(UUID.randomUUID().toString(), Boolean.FALSE, "한도 초과");
+        return new PgApprovalResult(UUID.randomUUID().toString(), false, "한도 초과");
     }
 
     public static PgApprovalResult success() {
-        return new PgApprovalResult(UUID.randomUUID().toString(), Boolean.TRUE, null);
+        return new PgApprovalResult(UUID.randomUUID().toString(), true, null);
     }
 }

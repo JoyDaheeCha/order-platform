@@ -6,9 +6,11 @@ import lombok.Builder;
 @Builder
 public record PaymentCompleteCommand(
         String orderNumber,
-        boolean isPaymentSucceed
+        boolean isPaymentSucceed,
+        String failureReason,
+        String pgTid
 ) {
     public Payment complete(Payment payment) {
-        return payment.complete(isPaymentSucceed);
+        return payment.complete(isPaymentSucceed, failureReason, pgTid);
     }
 }

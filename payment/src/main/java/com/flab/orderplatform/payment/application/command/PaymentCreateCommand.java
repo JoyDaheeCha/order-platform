@@ -12,4 +12,8 @@ public record PaymentCreateCommand(
     public Payment create() {
         return Payment.create(orderNumber, buyerId, amount);
     }
+
+    public Payment retry(Payment payment) {
+        return payment.retry();
+    }
 }

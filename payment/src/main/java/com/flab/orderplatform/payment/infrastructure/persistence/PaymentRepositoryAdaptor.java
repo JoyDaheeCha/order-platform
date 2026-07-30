@@ -11,21 +11,21 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class PaymentAdaptor implements PaymentRepository {
-    private final PaymentJapRepository paymentJapRepository;
+public class PaymentRepositoryAdaptor implements PaymentRepository {
+    private final PaymentJpaRepository paymentJpaRepository;
 
     @Override
     public Payment save(Payment payment) {
-        return paymentJapRepository.save(payment);
+        return paymentJpaRepository.save(payment);
     }
 
     @Override
     public Optional<Payment> findByOrderNumberAndStatus(String orderNumber, PaymentStatus paymentStatus) {
-        return paymentJapRepository.findByOrderNumberAndStatus(orderNumber, paymentStatus);
+        return paymentJpaRepository.findByOrderNumberAndStatus(orderNumber, paymentStatus);
     }
 
     @Override
     public Optional<Payment> findByOrderNumberAndStatusIn(String orderNumber, List<PaymentStatus> paymentStatuses) {
-        return paymentJapRepository.findByOrderNumberAndStatusIn(orderNumber, paymentStatuses);
+        return paymentJpaRepository.findByOrderNumberAndStatusIn(orderNumber, paymentStatuses);
     }
 }

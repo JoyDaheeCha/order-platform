@@ -7,9 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface PaymentJapRepository extends JpaRepository<Long, Payment> {
-    Payment save(Payment payment);
-
+public interface PaymentJpaRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByOrderNumberAndStatus(String orderNumber, PaymentStatus status);
 
     Optional<Payment> findByOrderNumberAndStatusIn(String orderNumber, List<PaymentStatus> paymentStatuses);
