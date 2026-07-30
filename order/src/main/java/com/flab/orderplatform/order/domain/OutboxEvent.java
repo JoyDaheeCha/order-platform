@@ -31,7 +31,7 @@ import static com.flab.orderplatform.order.domain.status.OutboxEventStatus.PUBLI
 public class OutboxEvent extends BaseTimeEntity{
     private static final String HEADER_EVENT_ID = "eventId";
     public static final String HEADER_AGGREGATE_TYPE_VALUE = "order";
-    private static final String HEADER_EVENT_TYPE = "event_type";
+    private static final String HEADER_EVENT_TYPE = "eventType";
     private static final String HEADER_AGGREGATE_TYPE = "aggregateType";
 
     @Id
