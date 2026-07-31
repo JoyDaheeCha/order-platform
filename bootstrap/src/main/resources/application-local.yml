@@ -34,3 +34,8 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
     com.zaxxer.hikari: DEBUG
+
+order:
+  jpa:
+    hibernate:
+      ddl-auto: validate

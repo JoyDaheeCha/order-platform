@@ -3,6 +3,7 @@ package com.flab.orderplatform.order.infrastructure.persistence;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy;
@@ -30,12 +31,6 @@ public class OrderPersistenceConfig {
 
     static final String CONTEXT_PACKAGE = "com.flab.orderplatform.order";
 
-    private static final Map<String, String> HIBERNATE_PROPERTIES = Map.of(
-            "hibernate.hbm2ddl.auto", "validate",
-            "hibernate.physical_naming_strategy", CamelCaseToUnderscoresNamingStrategy.class.getName(),
-            "hibernate.implicit_naming_strategy", SpringImplicitNamingStrategy.class.getName()
-    );
-
     @Bean
     @ConfigurationProperties("datasource.order")
     DataSourceProperties orderDataSourceProperties() {
@@ -49,12 +44,18 @@ public class OrderPersistenceConfig {
 
     @Bean
     LocalContainerEntityManagerFactoryBean orderEntityManagerFactory(
-            @Qualifier("orderDataSource") DataSource dataSource) {
+            @Qualifier("orderDataSource") DataSource dataSource,
+            @Value("${order.jpa.hibernate.ddl-auto:validate}") String ddlAuto) {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
         emf.setDataSource(dataSource);
         emf.setPackagesToScan(CONTEXT_PACKAGE);
         emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
-        emf.setJpaPropertyMap(HIBERNATE_PROPERTIES);
+        emf.setJpaPropertyMap(Map.of(
+                "hibernate.hbm2ddl.auto", ddlAuto,
+                "hibernate.physical_naming_strategy", CamelCaseToUnderscoresNamingStrategy.class.getName(),
+                "hibernate.implicit_naming_strategy", SpringImplicitNamingStrategy.class.getName(),
+                "hibernate.format_sql", true
+        ));
         emf.setPersistenceUnitName("order");
         return emf;
     }
