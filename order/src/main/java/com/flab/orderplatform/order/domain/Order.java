@@ -12,8 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING;
-import static jakarta.persistence.CascadeType.PERSIST;
-import static jakarta.persistence.CascadeType.REMOVE;
+import static jakarta.persistence.CascadeType.*;
 
 /**
  * Order 컨텍스트의 영속화 모델
@@ -42,8 +41,7 @@ public class Order extends BaseEntity {
     @Column(length = 20, nullable = false, columnDefinition = "VARCHAR(20)  NOT NULL COMMENT '주문 상태 (PENDING/PAID/CONFIRMED/CANCELLED)'")
     private OrderStatus status;
 
-    @OneToMany(cascade = {PERSIST, REMOVE})
-    @JoinColumn(name = "order_id", nullable = false)
+    @OneToMany(mappedBy = "order", cascade = {PERSIST, REMOVE, MERGE})
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @Column(name = "customer_id", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '구매자 ID'")
@@ -69,22 +67,29 @@ public class Order extends BaseEntity {
     }
 
     public static Order create(Long customerId,
-                               List<OrderItem> orderItems,
+                               List<OrderItem> orderItemDtos,
                                String orderNumber,
                                String idempotentKey) {
 
-        var totalAmount = orderItems.stream()
+        var totalAmount = orderItemDtos.stream()
                 .mapToLong(OrderItem::calculateAmount)
                 .sum();
 
-        return Order.builder()
+        var order = Order.builder()
                 .customerId(customerId)
                 .orderNumber(orderNumber)
-                .orderItems(orderItems)
                 .orderedAt(LocalDateTime.now())
                 .status(PENDING)
                 .totalAmount(totalAmount)
                 .idempotentKey(idempotentKey)
                 .build();
+
+        order.addOrderItems(orderItemDtos);
+        return order;
+    }
+
+    private void addOrderItems(List<OrderItem> items) {
+        items.forEach(item -> item.setOrder(this));
+        this.orderItems = items;
     }
 }

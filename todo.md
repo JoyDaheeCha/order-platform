@@ -32,8 +32,11 @@
 
 ## Outbox 패턴 추가 + 이벤트 발행
 [ ] OrderPlaced(주문이 요청되었다) 이벤트가 발행된다
-[ ] Order, Order Item 양방향으로 변경할지 검토 (업데이트 쿼리 별도로 나가는지 확인)
 [ ] outbox 패턴 추가
+
+## backlog
+[x] 멱등키를 Order에 추가하라
+[x] Order, Order Item 양방향으로 변경할지 검토 (업데이트 쿼리 별도로 나가는지 확인)
 
 ## 환경 설정 & 기타
 [ ] flyway 추가
