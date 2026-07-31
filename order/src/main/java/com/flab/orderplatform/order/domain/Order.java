@@ -49,20 +49,29 @@ public class Order extends BaseEntity {
     @Column(name = "customer_id", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '구매자 ID'")
     private Long customerId;
 
+    /**
+     * 주문 생성시, 동일한 멱등키로 온 요청은 한번만 수행되도록 DB에서 방어합니다.
+     */
+    @Column(name = "idempotent_key", length = 36, nullable = false, unique = true,
+            columnDefinition = "VARCHAR(36)  NOT NULL COMMENT '주문 생성 멱등키'")
+    private String idempotentKey;
+
     @Builder
     public Order(String orderNumber, Long totalAmount, LocalDateTime orderedAt, OrderStatus status,
-                 List<OrderItem> orderItems, Long customerId) {
+                 List<OrderItem> orderItems, Long customerId, String idempotentKey) {
         this.orderNumber = orderNumber;
         this.totalAmount = totalAmount;
         this.orderedAt = orderedAt;
         this.status = status;
         this.orderItems = orderItems;
         this.customerId = customerId;
+        this.idempotentKey = idempotentKey;
     }
 
     public static Order create(Long customerId,
                                List<OrderItem> orderItems,
-                               String orderNumber) {
+                               String orderNumber,
+                               String idempotentKey) {
 
         var totalAmount = orderItems.stream()
                 .mapToLong(OrderItem::calculateAmount)
@@ -75,6 +84,7 @@ public class Order extends BaseEntity {
                 .orderedAt(LocalDateTime.now())
                 .status(PENDING)
                 .totalAmount(totalAmount)
+                .idempotentKey(idempotentKey)
                 .build();
     }
 }
