@@ -46,35 +46,15 @@
 ## Inbox 패턴 추가 + '주문 생성되었다' 이벤트 컨슈밍
 - [x] 결제 - 인박스 패턴 추가
 - [x] 결제 - 주문 생성되었다 이벤트 컨슈밍 로직 추가
+
 ## 환경 설정 & 기타
 [ ] flyway 추가
 [ ] docs 하위 문서 사람에게 가독성있게 간략화 (ai 전용 문서는 ./claude 하위로 옮길것)
 
 ## 주문 조회 api(GET /orders/{id}) 추가
-
-## 주문 취소 api 추가
-
-# Week 2 — 첫 관통 → Saga Happy Path
-
-### Day 6 — Outbox + read model → **첫 관통 완성** ⚠️ `Phase 1`
-**목표**: 주문이 요청부터 Kafka 발행·조회까지 관통한다. (Phase 1 完)
-> 📚 **완료 후 자문** ⭐: 
-> ① dual-write 문제가 정확히 무엇이고, 왜 "DB 저장 + Kafka 발행"을 트랜잭션 하나로 못 묶나? 
-> ② Outbox 패턴은 이걸 어떻게 푸나? 릴레이는 왜 별도로 도나? 
-> ③ 스키마 분리 때문에 왜 read model이 필요해지나?
-> ④ 도메인 이벤트와 통합 이벤트를 왜 나누나(C-4)? 안 나누면 뭐가 문제인가? *(D2에서 이동)*
-> ⑤ Envelope에서 payload가 메타(eventId 등)를 "모르게" 하면 뭐가 좋은가? *(D2에서 이동)*
-> > 📚 **멘토님 질문** ⭐:
-> ① 실무에서 Kafka partition key 활용하는 방법
-> ② orderId를 partition key로 사용했을 때 이점
-- [ ] **`EventEnvelope<T>` 봉투 record** (ADR-0007 §4 옵션 c) — `eventId·occurredAt·orderId·eventType·payload`. Outbox 테이블 컬럼과 1:1 일치하는지 여기서 직접 확인
-- [ ] **payload `OrderCreated` 1종** (ADR-0007 §3) + 토픽 상수 `order.events` — 금액은 `long`(KRW 정수). `Money` VO는 order의 도메인 개념이라 shared에 넣으면 안 됨(C-3 위반)
-- [ ] **Outbox 테이블 + 릴레이** — 상태변경과 이벤트 적재를 원자적으로(PI-6, dual-write 해결). 릴레이가 `EventEnvelope`로 포장해 `order.events` 발행
 - [ ] **read model** `order_saga_progress` + `GET /orders/{id}` 폴링 조회 (ADR-0004, PC-4)
-- **✅ 완료 기준**: `POST /orders` → `order.events` 토픽에 `OrderCreated` 실제로 뜸 → `GET`으로 PENDING 조회 ✨ **첫 walking skeleton 관통**
-> ⚠️ Outbox 릴레이(폴링 or `@TransactionalEventListener`)가 핵심 학습 포인트이자 리스크. 여유를 뒀다.
-> 📌 **계약은 just-in-time.** ADR-0007 §3의 payload 10종을 한 번에 내리지 않는다 — 나머지는 각자의 **발행자가 생기는 날**에 추가한다(D7 `PaymentCompleted`·`PaymentFailed` / D8 `StockDeducted`·`StockShortage` / D9 `OrderConfirmed` / D11 `PaymentRefunded` / D12 `OrderCancellationRequested`·`OrderCancelled`·`StockRestored`). 계약 설계 자체는 ADR-0007에서 이미 끝났고, 여기서 하는 건 사용처가 생긴 만큼만 옮겨 적는 일이다.
-> 📌 `eventType` 문자열↔타입 매핑은 **D7로** — 역방향(역직렬화 디스패치)이 실제로 필요해지는 첫 지점이 컨슈머다. 발행자 하나뿐인 D6에서는 정방향만 있으면 된다.
+- 
+## 주문 취소 api 추가
 
 ### Day 7 — Payment 컨텍스트 `Phase 2`
 **목표**: 주문 이벤트를 받아 결제하고 결과를 발행한다.
@@ -183,19 +163,5 @@
 - [ ] 단계별 타임아웃 / 워크플로 엔진(Temporal)(ADR-0003 §7)
 - [ ] 셀러·운영자 페르소나, 재고 예약 모델(product-spec §3, PV-1)
 - [ ] Schema Registry / `schemaVersion`(ADR-0007 §7)
-
----
-
-## 정책 커버리지 (완료 시 전부 ✅)
-
-| 학습 목표 | 관련 정책 | 커버 Day |
-|-----------|-----------|----------|
-| Kafka / EDA | PI-4·5·6, PT-* | 6~10·13~14 |
-| DDD (Aggregate·불변식) | §1, PS-*, PV-1 | 3·8·9 |
-| 보상 트랜잭션 | PB-*, PC-3, PV-5 | 11·12·13 |
-| 멱등성 | PI-*, PS-4, PB-2, PT-3 | 5·9·10·11 |
-| 동시성 제어 | PV-4, PC-4 | 8·13·15 |
-
----
 
 *근거는 각 항목의 정책 ID(`PI-5`)·ADR 번호로 [`docs/`](./docs) 검색. 설계 서사는 [`docs/design.md`](./docs/design.md).*
