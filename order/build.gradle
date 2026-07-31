@@ -35,4 +35,6 @@ dependencies {
     testImplementation libs.testcontainers.junit.jupiter
     // TTL 이 실제로 만료될 때까지 폴링하며 기다린다. 버전은 Boot BOM 이 관리한다.
     testImplementation "org.awaitility:awaitility"
+    // h2
+    testRuntimeOnly "com.h2database:h2"
 }
