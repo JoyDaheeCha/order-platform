@@ -29,9 +29,9 @@
 - [x] 주문 생성 중복 요청을 방지
     - [x] 같은 멱등키 재요청은 기존 주문을 반환한다.
     - [x] 같은 키에 다른 페이로드는 409로 거부한다. 
-- [ ] backlog
-  - [ ] redis callback 패턴 추가 (order 테이블에 impotent key 저장 후 유니크 인덱스 추가)
-  - [ ] Order, Order Item 양방향으로 변경할지 검토 (업데이트 쿼리 별도로 나가는지 확인)
+- [x] backlog
+  - [x] redis callback 패턴 추가 (order 테이블에 impotent key 저장 후 유니크 인덱스 추가)
+  - [x] Order, Order Item 양방향으로 변경할지 검토 (업데이트 쿼리 별도로 나가는지 확인)
 
 ## Outbox 패턴 추가 + '주문 생성되었다' 이벤트 발행
 - [x] OrderCreated(주문이 요청되었다) 이벤트가 발행된다
