@@ -44,7 +44,14 @@ class ContextIsolationTest {
     @Test
     @DisplayName("order 엔티티가 order 스키마에 실제로 저장된다")
     void savesIntoOrderSchema() {
-        var order = orderRepository.save(new Order("order-1", 12_000L, LocalDateTime.now(), PENDING, List.of(), 100L));
+        var entity = Order.builder().orderNumber("order-1")
+                .totalAmount(12_000L)
+                .orderedAt(LocalDateTime.now())
+                .status(PENDING)
+                .orderItems(List.of())
+                .customerId(100L).
+                build();
+        var order = orderRepository.save(entity);
         orderRepository.flush();
 
         assertThat(orderRepository.findById(order.getId()))

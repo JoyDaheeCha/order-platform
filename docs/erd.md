@@ -20,7 +20,7 @@ erDiagram
         status VARCHAR "사가 진행 상태 (PS 상태와 동기)"
         payment_completed DATETIME "PaymentCompleted 수신 시각 · nullable"
         stock_deducted DATETIME "StockDeducted 수신 시각 · nullable"
-        deadline_at DATETIME "ADR-0003 추가 · OrderPlaced 시 now()+N (전체 사가 마감)"
+        deadline_at DATETIME "ADR-0003 추가 · OrderCreated 시 now()+N (전체 사가 마감)"
         version BIGINT "ADR-0003 추가 · 낙관적 락 (정상 전이 vs 타임아웃 전이 경합 정리)"
         updated_at DATETIME "최종 갱신 시각"
     }
@@ -35,7 +35,7 @@ erDiagram
         id BIGINT "PK · AUTO_INCREMENT"
         event_id CHAR_36 "UUID · 통합 이벤트 멱등키 (PI-4) → 소비자 Inbox 키"
         aggregate_id VARCHAR "orderId (상관관계 키, PI-4)"
-        event_type VARCHAR "shared 계약명 (예: OrderPlaced)"
+        event_type VARCHAR "shared 계약명 (예: OrderCreated)"
         topic VARCHAR "발행 대상 토픽"
         payload JSON "통합 이벤트 직렬화 본문 (C-4: 도메인→통합 이벤트 변환 결과)"
         occurred_at DATETIME "이벤트 발생 시각"

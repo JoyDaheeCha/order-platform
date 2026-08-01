@@ -8,6 +8,8 @@ archunit = "1.3.0"
 testcontainers = "1.21.4"
 ## Redisson (분산락 위해 사용)
 redisson = "3.50.0"
+## shedlock (스케줄러 중복 실행 방지)
+shedlock = "6.6.0"
 
 [libraries]
 spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
@@ -24,6 +26,8 @@ spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-start
 spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
 redisson-spring-boot-starter = { module = "org.redisson:redisson-spring-boot-starter", version.ref = "redisson" }
+shedlock-spring = { module = "net.javacrumbs.shedlock:shedlock-spring", version.ref = "shedlock" }
+shedlock-provider-redisson = { module = "net.javacrumbs.shedlock:shedlock-provider-redis-spring", version.ref = "shedlock" }
 spring-kafka = { module = "org.springframework.kafka:spring-kafka" }
 mysql-connector = { module = "com.mysql:mysql-connector-j" }
 

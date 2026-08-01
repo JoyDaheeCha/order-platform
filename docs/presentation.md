@@ -67,7 +67,7 @@ style: |
 중앙 오케스트레이터 없이, 각 컨텍스트가 **이벤트를 구독해 자율 반응**.
 
 ```
-OrderPlaced ─▶ [Payment] ─ PaymentCompleted ─▶ [Inventory] ─ StockDeducted ─▶ [Order] confirm
+OrderCreated ─▶ [Payment] ─ PaymentCompleted ─▶ [Inventory] ─ StockDeducted ─▶ [Order] confirm
                   │                                  │
             PaymentFailed ─▶ cancel           StockShortage ─▶ refund ─▶ cancel
 ```

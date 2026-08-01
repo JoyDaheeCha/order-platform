@@ -97,7 +97,7 @@ architecture.md §1의 "마이크로서비스 수준 격리"와 D1·D3에 부합
   id            BIGINT PK AUTO
   event_id      CHAR(36)  -- UUID, 통합 이벤트의 멱등키 (PI-4) → 소비자 Inbox 키
   aggregate_id  VARCHAR   -- orderId (상관관계 키, PI-4)
-  event_type    VARCHAR   -- 'OrderPlaced' 등 (shared 계약명)
+  event_type    VARCHAR   -- 'OrderCreated' 등 (shared 계약명)
   topic         VARCHAR   -- 발행 대상 토픽
   payload       JSON      -- 통합 이벤트 직렬화 본문 (C-4: 도메인 이벤트→통합 이벤트 변환 결과)
   occurred_at   DATETIME

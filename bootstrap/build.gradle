@@ -24,6 +24,9 @@ dependencies {
     testImplementation libs.testcontainers.junit.jupiter
 
     testImplementation libs.spring.boot.starter.data.jpa
+
+    // MessageProducer 포트의 반환 타입이 Kafka 의 SendResult 라, 포트를 목으로 대체하려면 컴파일 타임에 필요하다.
+    testImplementation libs.spring.kafka
 }
 
 tasks.named("test") {
