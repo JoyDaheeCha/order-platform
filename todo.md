@@ -41,11 +41,14 @@
 - [x] outbox 재발행 스케줄러 주가 (failed 상태 재발행)
 - [x] outbox 재발행 스케줄러 주가 (created 상태 재발행)
 - [x] outbox 테이블에서 발송완료 데이터 제거 로직 추가
-- [x] 테이블 인덱스 적용 (status, created_at) 복합키  
+- [x] 테이블 인덱스 적용 (status, created_at) 복합키
+
+## backlog
+[x] 멱등키를 Order에 추가하라
+[x] Order, Order Item 양방향으로 변경할지 검토 (업데이트 쿼리 별도로 나가는지 확인)
 
 ## Inbox 패턴 추가 + '주문 생성되었다' 이벤트 컨슈밍
-- [x] 결제 - 인박스 패턴 추가
-- [x] 결제 - 주문 생성되었다 이벤트 컨슈밍 로직 추가
+
 ## 환경 설정 & 기타
 [ ] flyway 추가
 [ ] docs 하위 문서 사람에게 가독성있게 간략화 (ai 전용 문서는 ./claude 하위로 옮길것)

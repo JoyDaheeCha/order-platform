@@ -1,6 +1,6 @@
 # ADR-0007: shared 통합 이벤트 계약 — 이벤트 목록 · Envelope · 토픽 · 파티션 · 버저닝
 
-- **상태(Status)**: Accepted (2026-06-27) — 개정 2026-07-30: §5 토픽 전략을 컨텍스트별 토픽 → **이벤트별 토픽**으로 변경(§4·§6·§8 정합 반영)
+- **상태(Status)**: Accepted (2026-06-27)
 - **관련 정책**: [policy.md](../policy.md) §1(이벤트 맵), §3(PI-4·5·6) / [architecture.md](../architecture.md) §3(C-2·C-3·C-4), §4(shared 모듈)
 - **선행 결정**: [ADR-0001](./0001-saga-orchestration-vs-choreography.md) 코레오그래피, [ADR-0004](./0004-schema-separation-outbox-readmodel.md) Outbox/Inbox(payload JSON, envelope 컬럼 구조), [ADR-0003](./0003-order-deadline-checker.md) 타임아웃 → 보상-개시
 - **후속 의존**: ADR-0006(인바운드 응답·멱등키) — **클라이언트 멱등키는 이 이벤트 계약에 포함하지 않는다**(경계 분리, §3 주의)
@@ -90,7 +90,7 @@ record EventEnvelope<T>(
     UUID eventId,        // PI-4 멱등키 → 소비자 Inbox 키(PI-5)
     Instant occurredAt,
     String orderId,      // PI-4 상관관계·파티션 키
-    String eventType,    // 'OrderCreated' 등 (Outbox event_type과 1:1, 메시지 자기기술)
+    String eventType,    // 'OrderCreated' 등 (구독자 분기·역직렬화 디스패치)
     T payload            // 도메인별 비즈니스 record (메타를 모름)
 ) {}
 ```

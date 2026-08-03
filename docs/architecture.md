@@ -51,7 +51,7 @@ order-platform/
 ```
 infrastructure ──▶ application ──▶ domain
         └──────────────────────────▶ domain (어댑터가 도메인 직접 참조 가능)
-domain ──▶ shared.event (통합 이벤트 계약 record 만, C-4)
+domain ──▶ (아무것도 의존하지 않음)
 ```
 
 포트 패턴:

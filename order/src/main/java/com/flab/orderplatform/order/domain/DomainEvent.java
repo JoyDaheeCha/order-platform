@@ -22,5 +22,7 @@ public abstract class DomainEvent implements Serializable {
         this.occurredOn = occurredOn;
     }
 
-    public abstract EventContract toPayload();
+    public abstract String getAction();
+
+    public abstract String getTopic();
 }
