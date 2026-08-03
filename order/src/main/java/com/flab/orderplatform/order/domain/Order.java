@@ -124,4 +124,11 @@ public class Order extends BaseEntity {
         domainEvent = null;
         return event;
     }
+
+    public OrderCreatedEvent pullDomainEvent() {
+        var event = domainEvent;
+        // 이벤트가 다른 곳에서 발행되는것을 막기 위해, 외부로 내보낸 이벤트는 도메인에서 할당 해제한다.
+        domainEvent = null;
+        return event;
+    }
 }
