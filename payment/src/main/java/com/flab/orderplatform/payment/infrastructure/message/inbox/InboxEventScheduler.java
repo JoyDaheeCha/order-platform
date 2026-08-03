@@ -31,10 +31,10 @@ public class InboxEventScheduler {
      * 로직 실행이 필요한 인박스 상태: 생성완료, 실패 (실패한 로직은 재처리 필요)
      */
     public static final List<InboxEventStatus> INBOX_STATUSES_TO_PROCESS = List.of(CREATED, FAILED);
+    private static final PageRequest DEFAULT_PAGE_REQUEST = PageRequest.of(0, 500);
     private final InboxEventRepository inboxEventRepository;
     private final InboxEventCommandHandler inboxEventCommandHandler;
     private final Map<String, InboxEventProcessor> processorsByEventType;
-    private final PageRequest DEFAULT_PAGE_REQUEST = PageRequest.of(0, 500);
 
     @Scheduled(fixedDelay = 1, timeUnit = MINUTES)
     @SchedulerLock(name = "processInboxEvents", lockAtLeastFor = "10s", lockAtMostFor = "50s")
