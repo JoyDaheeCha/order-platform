@@ -3,16 +3,15 @@ package com.flab.orderplatform.payment.infrastructure.message.inbox;
 import com.flab.orderplatform.payment.application.InboxEventCommandHandler;
 import com.flab.orderplatform.payment.application.annotation.Inbox;
 import com.flab.orderplatform.payment.application.command.InboxEventCreateCommand;
-import com.flab.orderplatform.payment.application.command.InboxEventFailCommand;
-import com.flab.orderplatform.payment.application.command.InboxEventSucceedCommand;
 import com.flab.orderplatform.payment.application.port.out.InboxEventRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -61,8 +60,8 @@ public class InboxAspect {
         return new String(header.value(), StandardCharsets.UTF_8);
     }
 
-    @Around("@annotation(inbox)")
-    public Object handle(ProceedingJoinPoint joinPoint, Inbox inbox) throws Throwable {
+    @Before("@annotation(inbox)")
+    public void handle(ProceedingJoinPoint joinPoint, Inbox inbox) throws Throwable {
 
         var consumerRecord = getConsumerRecord(joinPoint);
         var eventId = getHeaderValueByKey(consumerRecord, EVENT_ID);
@@ -70,28 +69,14 @@ public class InboxAspect {
         // 이미 처리된 이벤트이면 skip
         var existingInbox = inboxEventRepository.findByEventId(eventId);
         if (existingInbox.isPresent()) {
-            return null;
+            return;
         }
 
         // 인박스 데이터 생성
-        createInboxLog(consumerRecord, eventId);
-
-        // 비즈니스 로직 진행 & 인박스 처리 상태 업데이트
         try {
-            var result = joinPoint.proceed();
-            inboxEventCommandHandler.handle(new InboxEventSucceedCommand(eventId));
-            return result;
-        } catch (Exception e){
-            var eventType = getHeaderValueByKey(consumerRecord, EVENT_TYPE);
-            log.error("인박스 이벤트 처리 실패 (eventId = {}, eventType = {})", eventId, eventType);
-            try {
-                inboxEventCommandHandler.handle(new InboxEventFailCommand(eventId));
-            } catch (Exception ex){
-                log.error("인박스 실패 상태 갱신 실패 (eventId={})", eventId, ex);
-            }
-            throw e;
+            createInboxLog(consumerRecord, eventId);
+        } catch (DataIntegrityViolationException e) {
+            // 이미 처리된 메시지일 경우 unique 제약 조건에 걸릴 수 있다. 따라서 이미처리됨으로 간주하고 무시한다.
         }
     }
-
-
 }
