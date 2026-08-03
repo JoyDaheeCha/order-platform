@@ -1,13 +1,14 @@
 # architecture — 모듈 / 패키지 구조 (v1.0)
 
 > **목적**: 멀티모듈 + 헥사고날 아키텍처의 물리 구조와 의존 규칙을 확정한다.
-> 상위 결정: [policy.md](./policy.md), [ADR-0001 코레오그래피](./adr/0001-saga-orchestration-vs-choreography.md).
 
 ---
 
 ## 1. 전체 구조 (Modular Monolith)
 
-3개 바운디드 컨텍스트(order · payment · inventory) + 공통(shared) + 실행 모듈(bootstrap) = **5개 Gradle 모듈**. **단일 배포 단위**지만 컨텍스트 모듈 경계로 마이크로서비스 수준의 격리를 강제한다.
+3개 바운디드 컨텍스트(order · payment · inventory) + 공통(shared) + 실행 모듈(bootstrap)  
+= **5개 Gradle 모듈**  
+**단일 배포 단위**지만 컨텍스트 모듈 경계로 마이크로서비스 수준의 격리를 강제한다.
 
 ```
 order-platform/
@@ -15,17 +16,15 @@ order-platform/
 ├── shared/                     ← 통합 이벤트 계약 (Kafka 메시지 스키마)
 ├── order/                      ← Order 컨텍스트 (단일 모듈)
 │   └── src/main/java/…/order/
-│       ├── domain/             ← 순수 도메인 (프레임워크 의존 0)
+│       ├── domain/             ← 순수 도메인
 │       ├── application/        ← 유스케이스, 포트(interface)
 │       └── infrastructure/     ← 어댑터: JPA · Kafka · REST · Outbox/Inbox
-├── payment/                    ← Payment 컨텍스트 (domain · application · infrastructure 패키지)
-└── inventory/                  ← Inventory 컨텍스트 (동일 구조 + 재고 동시성)
+├── payment/                    ← Payment 컨텍스트
+└── inventory/                  ← Inventory 컨텍스트
 ```
 
-> **모듈 단위 = 바운디드 컨텍스트**다. 헥사고날 3계층은 컨텍스트 모듈 *내부 패키지*로 둔다(레이어별 모듈 분리 X).
-> **트레이드오프**: 컨텍스트 간 격리(C-1)는 모듈 경계로 *컴파일타임 강제*되지만, 레이어 규칙(A-1·A-3·A-6)은 같은 모듈/클래스패스 안이라 컴파일러가 못 막고 **ArchUnit이 강제**한다(§6). 레이어를 모듈로 쪼개는 강제력을 포기한 대신, 한 컨텍스트의 변경이 한 모듈 안에서 완결되는 응집도를 얻는다.
-
-> **bootstrap 모듈을 추가한 이유**: 모듈러 모노리스는 단일 실행 파일로 뜬다. 전 컨텍스트 모듈을 조립하고 `@SpringBootApplication`을 두는 *실행 전용* 모듈이 필요하다. 도메인/애플리케이션 코드는 실행 책임을 갖지 않는다(todo.md 초안에 없던 모듈).
+> (참고) bootstrap 모듈을 추가한 이유  
+모듈러 모노리스는 단일 실행 파일로 뜬다. 전 컨텍스트 모듈을 조립하고 `@SpringBootApplication`을 두는 *실행 전용* 모듈
 
 ---
 
@@ -33,19 +32,11 @@ order-platform/
 
 각 컨텍스트 모듈 안에서 3계층을 패키지로 나눈다. 패키지 루트: `com.flab.orderplatform.{context}.{layer}`.
 
-| 패키지(layer) | 책임 | 의존 가능 대상 | 프레임워크 |
-|------|------|----------------|-----------|
-| `..domain` | Aggregate · VO · 도메인 이벤트 · 불변식 · 도메인 서비스 | **`..shared.event..`(통합 이벤트 계약)만** — 그 외 없음 (C-4) | ⚠️ **영속화 매핑까지만** (JPA·Hibernate·Spring Data 감사) — DI·웹·Kafka ❌ (A-1) |
-| `..application` | 유스케이스(application service), **포트**(in/out interface), 트랜잭션 경계 | 같은 컨텍스트 domain, shared | ⚠️ 최소 (트랜잭션 추상만) |
-| `..infrastructure` | 어댑터 — JPA 영속화, Kafka 컨슈머/프로듀서, REST 컨트롤러, Outbox/Inbox 구현 | 같은 컨텍스트 application·domain, shared | ✅ Spring Boot·JPA·Kafka |
-
-> ⚠️ 세 계층이 **같은 모듈/클래스패스**에 있으므로 의존 방향을 컴파일러가 막지 못한다. A-1·A-3·A-6은 전적으로 **ArchUnit(§6)** 이 강제한다 — 레이어 분리 모듈을 포기한 대가다.
-
-> **A-1 개정 이력 (2026-07)** — 최초 규약은 *"domain 은 Spring·JPA 를 의존 MUST NOT"* (순수 Java)였다. 실제 구현은 **도메인 모델 = JPA 엔티티**로 갔다: `Order`·`Payment`·`OutboxEvent` 가 `@Entity`이고, `BaseEntity`·`BaseTimeEntity` 는 Spring Data 감사 애노테이션(`@CreatedDate`·`AuditingEntityListener`)을 쓴다.
->
-> 이를 되돌리려면 **도메인 모델 ↔ 영속화 모델을 분리**하고 그 사이 매퍼를 전 애그리거트에 두어야 한다. 이 프로젝트의 학습 목표(사가·이벤트 정합성)에 비해 매퍼 유지 비용이 크다고 판단해, **엔티티 겸용을 정식 결정으로 승격**한다(ADR-0005 의 "무엇을 컴파일러에 맡기고 무엇을 테스트에 맡길지" 와 같은 계열의 비용 판단).
->
-> 대신 허용 범위를 **영속화 매핑·감사 애노테이션**으로 못박는다. 도메인이 실제로 쓰는 Spring 은 `org.springframework.data.annotation`·`org.springframework.data.jpa.domain.support` 두 곳뿐이고 **DI(`@Component`·`@Autowired`)·웹·트랜잭션·Kafka 는 한 건도 없다** — 이 경계를 ArchUnit(§6 A-1)이 지킨다. 즉 도메인은 "DB에 어떻게 저장되는지"는 알아도 "누가 언제 호출하는지·어떻게 전송되는지"는 여전히 모른다.
+| 패키지(layer) | 책임                                                     | 의존 가능 대상 | 프레임워크                                        |
+|------|--------------------------------------------------------|----------------|----------------------------------------------|
+| `..domain` | Aggregate · VO · 도메인 이벤트 · 불변식 · 도메인 서비스               | **`..shared.event..`(통합 이벤트 계약)만** — 그 외 없음 (C-4) | **영속화 매핑까지만** (JPA·Hibernate·Spring Data 감사) |
+| `..application` | 유스케이스, 포트, 트랜잭션 경계                                     | 같은 컨텍스트 domain, shared |                    |
+| `..infrastructure` | JPA 영속 어댑터, Kafka 컨슈머/프로듀서, REST 컨트롤러, Outbox/Inbox 구현 | 같은 컨텍스트 application·domain, shared | Spring Boot·JPA·Kafka                      |
 
 **의존 방향 (안쪽으로만)**:
 ```
@@ -61,89 +52,16 @@ domain ──▶ shared.event (통합 이벤트 계약 record 만, C-4)
 ---
 
 ## 3. 모듈 간 통신 규칙 (핵심 불변식)
-
-| 규칙 | 내용 |
-|------|------|
-| **C-1** | 바운디드 컨텍스트 간 **컴파일 의존 금지**. `order`는 `payment`·`inventory` 패키지를 import MUST NOT. |
-| **C-2** | 컨텍스트 간 통신은 **Kafka 통합 이벤트 only** (직접 메서드 호출·공유 DB 테이블 금지). |
-| **C-3** | 통합 이벤트 계약은 **`shared`에만** 정의한다. 각 컨텍스트는 `shared`를 의존해 발행·구독. |
-| **C-4** | **도메인 이벤트 ≠ 통합 이벤트**(별개 타입). 단, 도메인 이벤트는 자신이 **어떤 통합 이벤트로 변환되는지**는 안다 — `DomainEvent.toPayload()`가 `..shared.event..`의 계약 record 를 반환한다. domain 이 의존할 수 있는 `shared` 는 **통합 이벤트 계약뿐**이며, 직렬화·토픽 발행은 여전히 infrastructure 책임이다. |
-
-> **C-4 개정 이력 (2026-07)** — 최초 규약은 *"domain 은 내부 도메인 이벤트만 알고, infrastructure 가 통합 이벤트로 변환한다"* 였다. 구현해보니 이 격리의 대가가 이득보다 컸다: 변환 매퍼를 infrastructure 에 두면 이벤트 하나 추가할 때 **도메인 이벤트 · 계약 record · 매퍼**가 3곳으로 흩어지고, 무엇보다 **계약이 없는 도메인 이벤트를 만들어도 컴파일이 통과**한다(런타임에야 발행 누락을 안다).
->
-> 개정 후에는 `DomainEvent.toPayload()`를 **추상 메서드**로 두어 *"발행 가능한 도메인 이벤트는 반드시 통합 이벤트 계약을 갖는다"* 를 컴파일러가 강제한다. 대신 domain 이 shared 를 알게 되므로, 침투 범위를 `..shared.event..`(의존성 0인 순수 record)로 못박고 ArchUnit(§6 C-4·A-7·A-8)으로 강제한다.
->
-> **여전히 지켜지는 격리**: 도메인은 JSON 포맷도, 직렬화 방식도, Kafka 도 모른다(`JsonUtils`·`KafkaMessageProducer` 는 infrastructure 소관). 포기한 것은 "토픽 이름과 이벤트 타입 문자열까지의 무지"뿐이고, 그 둘은 계약 record 안에 상수로 갇혀 있다.
+- 컨텍스트 간 통신은 카프카로만 가능하며, 바운디드 컨텍스트간 의존은 금지한다. 
 
 ---
-
 ## 4. shared 모듈
-
-- **포함**:
-  - **payload record** — 통합 이벤트의 body 스키마(`OrderCreatedPayload`, `PaymentCompletedPayload` … ). 순수 `record`.
-  - **`EventMeta`** — payload record 가 구현하는 계약 인터페이스(`eventType()`·`topic()`). 도메인 이벤트의 `toPayload()` 반환 타입이자, "계약 없는 이벤트 발행"을 컴파일타임에 막는 장치(C-4).
-  - **`EventConstants`** — 이벤트 타입명 · 토픽 이름(이벤트당 1토픽, `MSG-<EVENT-NAME>`) · **Kafka 헤더 키**(`EventConstants.Headers`) 상수.
-- **불포함**: 비즈니스 로직, Aggregate, 컨텍스트별 정책, **클라이언트 멱등키**(인바운드 경계 = ADR-0006 소관), **프레임워크 의존**(§6 A-8). (shared가 비대해지면 "분산된 모놀리스"가 됨 — 계약만 둔다.)
-
-**메타데이터 전달 방식**: 메시지 메타(`eventId`·`eventType`·`aggregateType`)는 **Kafka 헤더**로 싣고, body 는 순수 payload 만 담는다.
-
-```
-Kafka 헤더  ──▶ eventId · eventType · aggregateType     (프로듀서: OutboxEvent.toMessageHeaders / 컨슈머: InboxAspect)
-message key ──▶ aggregateId (= orderNumber, 파티션 키)
-body(JSON)  ──▶ shared 의 payload record                (직렬화는 각 컨텍스트 infrastructure 책임 = C-4)
-```
-
-> 최초 설계는 body 안에 메타를 함께 담는 **봉투(`EventEnvelope<T>`)** 였다. 그러나 Inbox 멱등 처리(`InboxAspect`)가 **헤더에서** `eventId`를 읽는 구조라 메타가 헤더·body 두 곳에 중복되고, 둘이 어긋나면 어느 쪽이 진실인지 다투게 된다. 메타 채널을 **헤더 하나로 단일화**하고 `EventEnvelope` 는 삭제했다.
-> ⚠️ [ADR-0007](./adr/0007-integration-event-contract.md) 은 아직 `EventEnvelope<T>` 채택 상태로 기록돼 있다 — 봉투 결정만 이 절로 대체됐고, **ADR 갱신(Superseded 처리)이 필요**하다. 이벤트 목록·토픽·파티션·가산적 버저닝 정책은 ADR-0007 이 여전히 유효하다.
+- 바운디드 컨텍스트간 이벤트 인터페이스만 포함한다.
+  - 메시지 메타(`eventId`·`eventType`·`aggregateType`·`occuuredAt`)는 **Kafka 헤더**로 싣고, body 는 순수 payload 만 담는다.
 
 ---
+## 5. 빌드 (Gradle 멀티모듈)
 
-## 5. 코레오그래피 구성요소의 위치 (ADR-0001 반영)
-
-| 구성요소 | 위치 | 정책 |
-|----------|------|------|
-| 이벤트 컨슈머 (+ Inbox 중복제거) | 각 컨텍스트 `..infrastructure` 패키지 | PI-5 |
-| 이벤트 프로듀서 (+ Outbox) | 각 컨텍스트 `..infrastructure` 패키지 | PI-6 |
-| **Order 데드라인 체커** (타임아웃 감지) | `order.infrastructure` | PT-1 → ADR-0003 |
-| **주문 진행도 추적 / 상태 read model** | `order.application` + `order.infrastructure` | PC-4 → ADR-0004 |
-| 보상 반응 핸들러 (실패 이벤트 구독) | 각 컨텍스트 `..infrastructure` → application 호출 | PB-* |
-
-> 중앙 오케스트레이터가 없으므로 "주문이 어디까지 진행됐나"는 order 컨텍스트가 수신 이벤트로 자체 추적한다(§ADR-0001 §5 주의).
-
----
-
-## 6. 경계 강제 — ArchUnit 규칙
-
-`bootstrap` 테스트(`ModuleBoundaryTest`)에서 전 모듈을 한 클래스패스로 임포트해 검증한다. 컨텍스트당 단일 모듈이라 레이어 규칙(A-1·A-3·A-6)의 강제는 *전적으로* 여기에 달려 있다.
-
-- **A-1** `..domain` 패키지는 **영속화 매핑·감사 애노테이션까지만** 허용한다 — `jakarta.persistence`·`org.hibernate.annotations`·`org.springframework.data.annotation`·`org.springframework.data.jpa.domain.support`. 그 외 Spring(DI·웹·트랜잭션·Kafka)과 Kafka 클라이언트·Redisson·Jackson은 의존 MUST NOT. (§2 A-1 개정 이력 참조)
-- **A-2** `..domain` 패키지는 같은 컨텍스트의 application·infrastructure를 의존 MUST NOT.
-- **A-3** `..application` 패키지는 infrastructure를 의존 MUST NOT.
-- **A-4** 컨텍스트 간 패키지 의존 MUST NOT (`..order..` → `..payment..` 금지) (C-1). ※ 이건 모듈 경계로 컴파일타임에도 막힌다.
-- **A-5** 컨텍스트 간 유일한 공유는 `..shared..` 통합 이벤트뿐.
-- **A-6** 레이어 의존 방향: infrastructure → application → domain (역방향 금지).
-- **A-7** `..shared..`는 어떤 바운디드 컨텍스트(`order`·`payment`·`inventory`)도 의존 MUST NOT — 계약의 **역방향 의존 금지**.
-- **A-8** `..shared..`는 프레임워크(Spring·JPA·Kafka·Jackson)를 의존 MUST NOT — 순수 계약이어야 계약 라이브러리로 분리 배포할 수 있다.
-- **C-4** `..domain`이 의존할 수 있는 `shared`는 `..shared.event..`(통합 이벤트 계약)뿐. 계약 외 shared 확장이 도메인으로 새는 것을 막는다.
-
-패키지 루트: `com.flab.orderplatform.{context}.{layer}` (예: `com.flab.orderplatform.order.domain`).
-
----
-
-## 7. 빌드 (Gradle 멀티모듈)
-
-- 루트 `settings.gradle`에 5개 모듈(`shared`·`order`·`payment`·`inventory`·`bootstrap`) 등록, 루트 `build.gradle`에 공통 규약(toolchain·BOM·테스트). 빌드 스크립트는 **Groovy DSL**(`b6904b2`에서 Kotlin DSL → Groovy 전환).
-- Spring Boot 플러그인(`bootJar`)은 **`bootstrap`에만** 적용. 나머지는 `java-library`(plain jar).
+- 루트 `settings.gradle`에 5개 모듈(`shared`·`order`·`payment`·`inventory`·`bootstrap`) 등록
+- 루트 `build.gradle`에 공통 규약(toolchain·BOM·테스트)
 - 버전 카탈로그(`gradle/libs.versions.toml`)로 의존성 버전 중앙 관리.
-- 컴파일 toolchain은 **Java 21** 고정(foojay 자동 프로비저닝). Gradle 데몬은 JDK 25 비호환 이슈로 `gradle/gradle-daemon-jvm.properties`에서 **JDK 17**로 고정.
-
----
-
-## 8. 후속 ADR 연결
-
-- **ADR-0002** ✅ Accepted: [재고 동시성 기법](./adr/0002-inventory-concurrency.md) → `inventory.infrastructure`에 `StockDeducer` 포트 + 4개 어댑터(비관/낙관/원자/Redis), 기본 B
-- **ADR-0003** ✅ Accepted: [Order 데드라인 체커 · 재시도/DLQ](./adr/0003-order-deadline-checker.md) — 전체 사가 타임아웃 + DB 스위퍼(폴링) → `order.infrastructure`
-- **ADR-0004** ✅ Accepted: [스키마 분리 · Outbox/Inbox 테이블 · 주문 상태 read model](./adr/0004-schema-separation-outbox-readmodel.md) — 컨텍스트별 스키마(단일 인스턴스) + 컨텍스트별 DataSource(B-2)
-- **ADR-0005** ✅ Accepted: [헥사고날 레이어 — 별도 모듈 vs 패키지](./adr/0005-hexagonal-layer-as-package-vs-module.md) — 레이어는 패키지로(컨텍스트당 단일 모듈, 총 5모듈). §1·§2·§6 구조의 결정 근거
-- **ADR-0006** ✅ Accepted: [인바운드 주문 API — 응답 모델 & 멱등키 저장](./adr/0006-inbound-api-response-and-idempotency.md) — `202`+폴링(A-1, read model 재활용) + 전용 `idempotency_keys` 테이블(B-1, 주문과 같은 트랜잭션)
-- **ADR-0007** ✅ Accepted: [shared 통합 이벤트 계약](./adr/0007-integration-event-contract.md) — 이벤트 목록(+보상-개시 `OrderCancellationRequested`) · `EventEnvelope<T>` 봉투 · 이벤트당 1토픽(`MSG-<EVENT-NAME>`) · 파티션 키 `orderId` · 가산 버저닝. §4 shared 모듈의 계약 결정 근거
