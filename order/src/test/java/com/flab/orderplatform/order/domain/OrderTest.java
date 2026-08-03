@@ -7,6 +7,7 @@ import org.mockito.MockedStatic;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
@@ -35,7 +36,7 @@ class OrderTest {
         try (MockedStatic<LocalDateTime> mocked = mockStatic(LocalDateTime.class, CALLS_REAL_METHODS)){
             mocked.when(LocalDateTime::now).thenReturn(fixedNow);
             // when
-            order = Order.create(customerId, orderItems, orderNumber);
+            order = Order.create(customerId, orderItems, orderNumber, UUID.randomUUID().toString());
         }
 
         // then
@@ -66,7 +67,7 @@ class OrderTest {
         );
 
         // when
-        var order = Order.create(100L, orderItems, orderNumber);
+        var order = Order.create(100L, orderItems, orderNumber, UUID.randomUUID().toString());
 
         // then
         assertSoftly(softly -> {

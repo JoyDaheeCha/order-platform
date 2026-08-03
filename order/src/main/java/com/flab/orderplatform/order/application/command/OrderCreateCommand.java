@@ -59,7 +59,7 @@ public final class OrderCreateCommand extends IdempotentKeyCommand {
                             .build();
                 })
                 .toList();
-        return Order.create(customerId, orderItems, orderNumber);
+        return Order.create(customerId, orderItems, orderNumber, idempotentKey);
     }
 
     public List<String> getProductCodes() {
