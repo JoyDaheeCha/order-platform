@@ -19,10 +19,14 @@ public class OrderItem extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
+
     @Column(name = "product_id", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '상품 ID'")
     private Long productId;
 
-    @Column(name = "name", nullable = false, columnDefinition = "VARCHAR(100) NOT NULL COMMENT '상품명")
+    @Column(name = "name", nullable = false, columnDefinition = "VARCHAR(100) NOT NULL COMMENT '상품명'")
     private String name;
 
     @Column(name = "price", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '상품 가격'")
@@ -41,5 +45,10 @@ public class OrderItem extends BaseEntity {
 
     public Long calculateAmount() {
         return price * quantity;
+    }
+
+    public OrderItem setOrder(Order order) {
+        this.order = order;
+        return this;
     }
 }

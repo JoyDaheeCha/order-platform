@@ -28,7 +28,8 @@ public class Product {
     private Long price;
 
     @Builder
-    public Product(String productCode, Long price) {
+    public Product(Long id, String productCode, Long price) {
+        this.id = id;
         this.productCode = productCode;
         this.price = price;
     }

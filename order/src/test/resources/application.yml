@@ -1,0 +1,9 @@
+order:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop # jpa 테스트시 DDL 실행
+
+logging:
+  level:
+    org.hibernate.SQL: debug # 쿼리 출력
+    org.hibernate.orm.jdbc.bind: trace # 쿼리 바인딩되는 파라미터 값 출력

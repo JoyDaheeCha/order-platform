@@ -2,11 +2,10 @@ package com.flab.orderplatform.order.application.command;
 
 import com.flab.orderplatform.order.domain.Order;
 import com.flab.orderplatform.order.domain.OrderItem;
-import com.flab.orderplatform.order.domain.external.Product;
 import lombok.Builder;
+import lombok.Getter;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 주문 생성
@@ -14,6 +13,7 @@ import java.util.Map;
  */
 public final class OrderCreateCommand extends IdempotentKeyCommand {
     private final Long customerId;
+    @Getter
     private final List<OrderItemDto> orderItems;
 
     /**
@@ -47,19 +47,8 @@ public final class OrderCreateCommand extends IdempotentKeyCommand {
     ) {
     }
 
-    public Order createOrder(String orderNumber, Map<String, Product> productsMap) {
-        var orderItems = this.orderItems.stream().map(item -> {
-                    var product = productsMap.get(item.productCode);
-                    return OrderItem.builder()
-                            .quantity(item.quantity)
-                            .name(item.name)
-                            .productId(product.getId())
-                            .price(product.getPrice())
-                            .quantity(item.quantity)
-                            .build();
-                })
-                .toList();
-        return Order.create(customerId, orderItems, orderNumber);
+    public Order createOrder(String orderNumber, List<OrderItem> orderItems) {
+        return Order.create(customerId, orderItems, orderNumber, idempotentKey);
     }
 
     public List<String> getProductCodes() {

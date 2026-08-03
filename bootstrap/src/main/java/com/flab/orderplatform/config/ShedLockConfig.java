@@ -1,4 +1,4 @@
-package com.flab.orderplatform.order.infrastructure.message;
+package com.flab.orderplatform.config;
 
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.provider.redis.spring.RedisLockProvider;
