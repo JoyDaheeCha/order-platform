@@ -49,7 +49,7 @@
 
 ## 환경 설정 & 기타
 [ ] flyway 추가
-[ ] docs 하위 문서 사람에게 가독성있게 간략화 (ai 전용 문서는 ./claude 하위로 옮길것)
+[x] docs 하위 문서 사람에게 가독성있게 간략화 (ai 전용 문서는 ./claude 하위로 옮길것)
 
 ## 주문 조회 api(GET /orders/{id}) 추가
 - [ ] **read model** `order_saga_progress` + `GET /orders/{id}` 폴링 조회 (ADR-0004, PC-4)
