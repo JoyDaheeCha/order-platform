@@ -21,13 +21,13 @@
 
 | Aggregate | 받는 커맨드 (Command) | 내는 이벤트 (Event) |
 |-----------|----------------------|---------------------|
-| **Order** | `PlaceOrder`, `CancelOrder` | `OrderPlaced`, `OrderConfirmed`, `OrderCancellationRequested`, `OrderCancelled` |
+| **Order** | `PlaceOrder`, `CancelOrder` | `OrderCreated`, `OrderConfirmed`, `OrderCancellationRequested`, `OrderCancelled` |
 | **Payment** | `ProcessPayment`, `RefundPayment` | `PaymentCompleted`, `PaymentFailed`, `PaymentRefunded` |
 | **Inventory** | `DeductStock`, `RestoreStock` | `StockDeducted`, `StockShortage`, `StockRestored` |
 
 정상 흐름:
 ```
-PlaceOrder → OrderPlaced ─▶ ProcessPayment → PaymentCompleted ─▶ DeductStock → StockDeducted ─▶ OrderConfirmed
+PlaceOrder → OrderCreated ─▶ ProcessPayment → PaymentCompleted ─▶ DeductStock → StockDeducted ─▶ OrderConfirmed
 ```
 보상 흐름(역순):
 ```

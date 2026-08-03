@@ -2,11 +2,11 @@ package com.flab.orderplatform.order.infrastructure.persistence;
 
 import com.flab.orderplatform.order.application.port.out.OrderRepository;
 import com.flab.orderplatform.order.domain.Order;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class OrderRepositoryAdaptor implements OrderRepository {
     private final OrderJpaRepository orderJpaRepository;
 

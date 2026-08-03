@@ -52,7 +52,7 @@
 > 이 시퀀스가 이벤트 스토밍의 1차 이벤트 원천이 된다.
 
 1. 구매자가 상품·수량을 골라 **주문 생성** 요청 (멱등키 동반)
-2. 주문이 `PENDING` 상태로 생성되고 → **`OrderPlaced`** 이벤트 발행 → 구매자에게 **즉시 `202 Accepted {orderId, PENDING}` 응답** (HTTP 요청은 여기서 종료. 비동기 Saga이므로 확정까지 기다리지 않는다 — [ADR-0006](./adr/0006-inbound-api-response-and-idempotency.md))
+2. 주문이 `PENDING` 상태로 생성되고 → **`OrderCreated`** 이벤트 발행 → 구매자에게 **즉시 `202 Accepted {orderId, PENDING}` 응답** (HTTP 요청은 여기서 종료. 비동기 Saga이므로 확정까지 기다리지 않는다 — [ADR-0006](./adr/0006-inbound-api-response-and-idempotency.md))
 3. 결제 컨텍스트가 구독 → 결제 시도 → 성공 시 **`PaymentCompleted`**
 4. 재고 컨텍스트가 구독 → 재고 차감 → 성공 시 **`StockDeducted`**
 5. 주문이 `CONFIRMED`로 전이 → **`OrderConfirmed`** 발행
@@ -90,7 +90,7 @@
 
 | 상태 | 의미 | 진입 이벤트 |
 |------|------|-------------|
-| `PENDING` | 주문 생성, 결제 대기 | `OrderPlaced` |
+| `PENDING` | 주문 생성, 결제 대기 | `OrderCreated` |
 | `PAID` | 결제 완료, 재고 차감 대기 | `PaymentCompleted` |
 | `CONFIRMED` | 재고까지 확정, 주문 성립 | `OrderConfirmed` |
 | `CANCELLED` | 실패/취소로 종료 (보상 완료) | `OrderCancelled` |

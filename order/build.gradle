@@ -30,6 +30,10 @@ dependencies {
     // 레디스 (Redisson 사용)
     implementation libs.redisson.spring.boot.starter
 
+    // shedlock
+    implementation libs.shedlock.spring
+    implementation libs.shedlock.provider.redisson
+
     // --- test ---
     // 멱등키 aspect 검증이 외부 컨테이너 상태에 의존하지 않게 테스트가 자기 Redis 를 직접 띄운다.
     testImplementation libs.testcontainers.junit.jupiter

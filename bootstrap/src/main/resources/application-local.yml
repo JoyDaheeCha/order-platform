@@ -18,7 +18,15 @@ datasource:
 spring:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:19092}
-
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all              # 주문 도메인이면 유실 방지를 위해 all 권장
+    consumer:
+      group-id: order
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
   data:
     redis:
       host: ${REDIS_HOST:localhost}

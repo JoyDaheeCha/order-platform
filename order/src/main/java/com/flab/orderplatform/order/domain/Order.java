@@ -1,5 +1,6 @@
 package com.flab.orderplatform.order.domain;
 
+import com.flab.orderplatform.order.domain.event.OrderCreatedEvent;
 import com.flab.orderplatform.order.domain.status.OrderStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -54,42 +55,73 @@ public class Order extends BaseEntity {
             columnDefinition = "VARCHAR(36)  NOT NULL COMMENT '주문 생성 멱등키'")
     private String idempotentKey;
 
+    @Transient
+    private OrderCreatedEvent domainEvent;
+
     @Builder
     public Order(String orderNumber, Long totalAmount, LocalDateTime orderedAt, OrderStatus status,
-                 List<OrderItem> orderItems, Long customerId, String idempotentKey) {
+                 List<OrderItem> orderItems, Long customerId, OrderCreatedEvent domainEvent, String idempotentKey) {
         this.orderNumber = orderNumber;
         this.totalAmount = totalAmount;
         this.orderedAt = orderedAt;
         this.status = status;
         this.orderItems = orderItems;
         this.customerId = customerId;
+        this.domainEvent = domainEvent;
         this.idempotentKey = idempotentKey;
     }
 
     public static Order create(Long customerId,
-                               List<OrderItem> orderItemDtos,
+                               List<OrderItem> orderItems,
                                String orderNumber,
                                String idempotentKey) {
 
-        var totalAmount = orderItemDtos.stream()
+        var totalAmount = orderItems.stream()
                 .mapToLong(OrderItem::calculateAmount)
                 .sum();
+
+        var orderItemDtos = orderItems
+                .stream()
+                .map(item -> OrderCreatedEvent.OrderItemDto
+                        .builder()
+                        .productId(item.getProductId())
+                        .quantity(item.getQuantity())
+                        .unitPrice(item.getPrice())
+                        .build())
+                .toList();
+        var domainEvent = OrderCreatedEvent.builder()
+                .buyerId(customerId)
+                .orderItems(
+                        orderItemDtos
+                ).totalAmount(totalAmount)
+                .aggregateId(orderNumber)
+                .occurredOn(LocalDateTime.now())
+                .build();
 
         var order = Order.builder()
                 .customerId(customerId)
                 .orderNumber(orderNumber)
+                .orderItems(orderItems)
                 .orderedAt(LocalDateTime.now())
                 .status(PENDING)
                 .totalAmount(totalAmount)
                 .idempotentKey(idempotentKey)
+                .domainEvent(domainEvent)
                 .build();
 
-        order.addOrderItems(orderItemDtos);
+        order.addOrderItems(orderItems);
         return order;
     }
 
     private void addOrderItems(List<OrderItem> items) {
         items.forEach(item -> item.setOrder(this));
         this.orderItems = items;
+    }
+
+    public OrderCreatedEvent pullDomainEvent() {
+        var event = domainEvent;
+        // 이벤트가 다른 곳에서 발행되는것을 막기 위해, 외부로 내보낸 이벤트는 도메인에서 할당 해제한다.
+        domainEvent = null;
+        return event;
     }
 }

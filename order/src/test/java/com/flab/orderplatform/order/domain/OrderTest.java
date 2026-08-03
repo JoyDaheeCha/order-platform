@@ -1,5 +1,6 @@
 package com.flab.orderplatform.order.domain;
 
+import com.flab.orderplatform.order.domain.event.OrderCreatedEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -73,6 +74,60 @@ class OrderTest {
             softly.assertThat(order.getOrderNumber()).isEqualTo(orderNumber);
             softly.assertThat(order.getTotalAmount()).isEqualTo(8_500L);
             softly.assertThat(order.getOrderItems()).hasSize(2);
+        });
+    }
+
+    @DisplayName("주문 생성시 주문 생성 이벤트가 애그리거트에 등록된다.")
+    @Test
+    void createRegistersDomainEvent() {
+        // given
+        var orderNumber = "20260730-5T1QWE9BXK";
+        var orderItems = List.of(
+                OrderItem.builder()
+                        .productId(1L)
+                        .name("뽀로로 주스")
+                        .price(1_500L)
+                        .quantity(3)
+                        .build()
+        );
+
+        // when
+        var order = Order.create(100L, orderItems, orderNumber);
+
+        // then
+        var event = order.pullDomainEvent();
+        assertSoftly(softly -> {
+            softly.assertThat(event).isNotNull();
+            softly.assertThat(event.getAggregateId()).isEqualTo(orderNumber);
+            softly.assertThat(event.getEventId()).isNotBlank();
+            softly.assertThat(event.getBuyerId()).isEqualTo(100L);
+            softly.assertThat(event.getTotalAmount()).isEqualTo(4_500L);
+            softly.assertThat(event.getOrderItems())
+                    .containsExactly(new OrderCreatedEvent.OrderItemDto(1L, 3, 1_500L));
+        });
+    }
+
+    @DisplayName("등록된 이벤트는 한 번만 꺼내진다. (중복 발행 방지)")
+    @Test
+    void pullDomainEventDrainsTheEvent() {
+        // given
+        var order = Order.create(100L, List.of(
+                OrderItem.builder()
+                        .productId(1L)
+                        .name("뽀로로 주스")
+                        .price(1_500L)
+                        .quantity(3)
+                        .build()
+        ), "20260730-8N4ZLC2RPD");
+
+        // when: 첫 번째 pull 로 이벤트를 꺼낸다.
+        var firstPull = order.pullDomainEvent();
+
+        // then: 두 번째 pull 은 비어 있어야 한다.
+        //       비어 있지 않으면 같은 이벤트가 outbox 에 두 번 쌓이고 Kafka 로도 두 번 나간다.
+        assertSoftly(softly -> {
+            softly.assertThat(firstPull).isNotNull();
+            softly.assertThat(order.pullDomainEvent()).isNull();
         });
     }
 }

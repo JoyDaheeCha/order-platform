@@ -78,7 +78,7 @@ order_saga_progress   -- order_schema 소유 (ADR-0004)
   status            VARCHAR   -- PENDING/PAID/CONFIRMED/CANCELLED
   payment_completed DATETIME NULL
   stock_deducted    DATETIME NULL
-  deadline_at       DATETIME      -- ★ 추가: OrderPlaced 시 now()+N (전체 사가 마감)
+  deadline_at       DATETIME      -- ★ 추가: OrderCreated 시 now()+N (전체 사가 마감)
   version           BIGINT        -- ★ 추가: 낙관적 락 (정상 전이 vs 타임아웃 전이 경합 정리)
   updated_at        DATETIME
 ```
