@@ -49,8 +49,9 @@ class ContextIsolationTest {
                 .orderedAt(LocalDateTime.now())
                 .status(PENDING)
                 .orderItems(List.of())
-                .customerId(100L).
-                build();
+                .customerId(100L)
+                .idempotentKey("111-111-111-111")
+                .build();
         var order = orderRepository.save(entity);
         orderRepository.flush();
 
