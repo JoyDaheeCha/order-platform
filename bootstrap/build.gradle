@@ -27,6 +27,13 @@ dependencies {
 
     // MessageProducer 포트의 반환 타입이 Kafka 의 SendResult 라, 포트를 목으로 대체하려면 컴파일 타임에 필요하다.
     testImplementation libs.spring.kafka
+
+    // shedlock
+    implementation libs.shedlock.spring
+    implementation libs.shedlock.provider.redisson
+
+    // RedissonConnectionFactory (ShedLockConfig 의 LockProvider 빈 생성에 필요)
+    implementation libs.redisson.spring.boot.starter
 }
 
 tasks.named("test") {

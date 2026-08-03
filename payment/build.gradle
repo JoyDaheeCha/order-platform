@@ -23,7 +23,6 @@ dependencies {
 
     // shedlock
     implementation libs.shedlock.spring
-    implementation libs.shedlock.provider.redisson
 
     // 레디스 (Redisson 사용)
     implementation libs.redisson.spring.boot.starter
