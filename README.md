@@ -137,23 +137,6 @@ docker compose down -v   # 정지 + 볼륨 삭제 (스키마 init SQL 을 다시
 ---
 
 ## 7. 참고 문서
-### 7.1 설계 결정 히스토리 (ADR)
-
-| ADR | 결정                                               |
-|-----|--------------------------------------------------|
-| [0001](docs/adr/0001-saga-orchestration-vs-choreography.md) | Saga — 코레오그래피 채택                                 |
-| [0002](docs/adr/0002-inventory-concurrency.md) | 재고 동시성 — `StockDeducer` 포트 + 4어댑터, 기본 원자적 UPDATE |
-| [0003](docs/adr/0003-order-deadline-checker.md) | Order 데드라인 체커 · 재시도/DLQ                          |
-| [0004](docs/adr/0004-schema-separation-outbox-readmodel.md) | 스키마 분리 · Outbox/Inbox · 주문 상태 read model         |
-| [0005](docs/adr/0005-hexagonal-layer-as-package-vs-module.md) | 헥사고날 레이어 구성법 (컨텍스트당 단일 모듈)                       |
-| [0006](docs/adr/0006-inbound-api-response-and-idempotency.md) | 인바운드 주문 API — `202`+폴링 & 멱등키 저장                  |
-| [0007](docs/adr/0007-integration-event-contract.md) | shared 통합 이벤트 계약 |
-
----
-
-### 7.2 문서에서 확인 가능한  사항
-- [docs/design.md](docs/design.md) — 설계 결정 히스토리
-- [docs/product-spec.md](docs/product-spec.md) — 기획서 (페르소나, 스코프, 유저 플로우)
-- [docs/policy.md](docs/policy.md) — 도메인 규칙, 불변식 (정책서)
-- [docs/architecture.md](docs/architecture.md) — 모듈/패키지 물리 구조, 의존 규칙
-- [docs/adr/](docs/adr) — 아키텍처 결정 기록
+- [docs/architecture.md](docs/architecture.md) — 모듈/패키지 구조
+- [docs/product-spec.md](docs/product-spec.md) — 기획서(정책서)
+- [docs/adr/](docs/adr) — 설계 결정 히스토리
