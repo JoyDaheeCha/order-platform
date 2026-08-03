@@ -1,4 +1,4 @@
-# docker-compose.yml — 로컬 개발 인프라 3종.
+# docker-compose.yml — 로컬 개발 인프라(MySQL · Kafka · Redis) + 부속 컨테이너(kafka-init · kafka-ui).
 #
 # 이 프로젝트는 "모듈러 모노리스 + 컨텍스트별 스키마 격리"다(ADR-0004 A-2).
 # 그래서 **MySQL 인스턴스는 하나**고, 격리는 인스턴스가 아니라 스키마로 한다.
@@ -6,7 +6,8 @@
 #
 # 사용법:
 #   docker compose up -d      # 기동
-#   docker compose ps         # 헬스체크 상태 확인 (3개 모두 healthy 여야 함)
+#   docker compose ps         # 헬스체크 상태 확인 (mysql · kafka · redis 3개가 healthy 여야 함)
+#                             #   kafka-init 은 Exit 0, kafka-ui 는 Up 으로 보이는 게 정상
 #   docker compose down       # 정지 (데이터 유지)
 #   docker compose down -v    # 정지 + 볼륨 삭제 (스키마 init SQL을 다시 돌리고 싶을 때)
 
@@ -70,6 +71,33 @@ services:
       timeout: 10s
       retries: 20
       start_period: 20s
+  # Kafka 웹 콘솔 — 토픽/메시지/컨슈머 그룹 랙을 눈으로 확인하는 용도.
+  #
+  # 이미지: kafbat/kafka-ui
+  #   · 원조 provectuslabs/kafka-ui 는 2024년 이후 유지보수가 멈췄고,
+  #     원 메인테이너들이 kafbat 조직으로 옮겨 이어가고 있다. 신규 구성은 이쪽이 표준.
+  #   · `latest` 대신 버전을 고정한다. 로컬 인프라가 어느 날 갑자기 바뀌면
+  #     "내 코드 문제인지 인프라 문제인지" 구분이 안 되기 때문(mysql:8.0, kafka:3.9.0 과 같은 정책).
+  kafka-ui:
+    image: kafbat/kafka-ui:v1.3.0
+    container_name: order-platform-kafka-ui
+    ports:
+      # 컨테이너는 8080 이지만 호스트는 18080 으로 뺀다.
+      # 앱(bootstrap)이 server.port=8080 을 쓰고 있어서 그대로 두면 포트가 충돌한다.
+      # 다른 인프라와 같은 규칙(호스트 포트 = 1 + 원래 포트: 13306 / 19092 / 16379).
+      - "18080:8080"
+    environment:
+      # UI 좌측에 표시될 클러스터 이름.
+      KAFKA_CLUSTERS_0_NAME: local-cluster
+      # 컨테이너끼리는 같은 compose 네트워크 안에 있으므로 서비스명:내부포트로 붙는다.
+      # localhost:19092 가 아니다 — 19092(PLAINTEXT_HOST)는 호스트 머신에서 붙을 때 쓰는 리스너다.
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      # UI에서 클러스터 설정을 추가/수정할 수 있게 한다.
+      # 변경분은 컨테이너 안에만 남아서 재생성하면 사라진다(로컬 실습용이라 이대로 둔다).
+      DYNAMIC_CONFIG_ENABLED: "true"
+    depends_on:
+      kafka:
+        condition: service_healthy   # 브로커가 뜨기 전에 붙으면 UI가 빈 클러스터로 보인다
 
   # 토픽 생성 전용 일회성 컨테이너.
   #
@@ -96,6 +124,7 @@ services:
         set -e
         for TOPIC in \
           MSG-ORDER-CREATED \
+          MSG-ORDER-PAID \
           MSG-ORDER-CONFIRMED \
           MSG-ORDER-CANCELLATION-REQUESTED \
           MSG-ORDER-CANCELLED \

@@ -1,8 +1,10 @@
 package com.flab.orderplatform.order.domain;
 
 import com.flab.orderplatform.order.domain.event.OrderCreatedEvent;
+import com.flab.orderplatform.order.domain.event.OrderPaidEvent;
 import com.flab.orderplatform.order.domain.status.OrderStatus;
 import com.flab.orderplatform.shared.domain.BaseEntity;
+import com.flab.orderplatform.shared.domain.DomainEvent;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -12,9 +14,13 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
+import static com.flab.orderplatform.order.domain.status.OrderStatus.PAID;
 import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING;
 import static jakarta.persistence.CascadeType.*;
+import static jakarta.persistence.FetchType.LAZY;
 
 /**
  * Order 컨텍스트의 영속화 모델
@@ -43,7 +49,7 @@ public class Order extends BaseEntity {
     @Column(length = 20, nullable = false, columnDefinition = "VARCHAR(20)  NOT NULL COMMENT '주문 상태 (PENDING/PAID/CONFIRMED/CANCELLED)'")
     private OrderStatus status;
 
-    @OneToMany(mappedBy = "order", cascade = {PERSIST, REMOVE, MERGE})
+    @OneToMany(mappedBy = "order", fetch = LAZY, cascade = {PERSIST, REMOVE, MERGE})
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @Column(name = "customer_id", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '구매자 ID'")
@@ -57,18 +63,17 @@ public class Order extends BaseEntity {
     private String idempotentKey;
 
     @Transient
-    private OrderCreatedEvent domainEvent;
+    private DomainEvent domainEvent;
 
     @Builder
     public Order(String orderNumber, Long totalAmount, LocalDateTime orderedAt, OrderStatus status,
-                 List<OrderItem> orderItems, Long customerId, OrderCreatedEvent domainEvent, String idempotentKey) {
+                 List<OrderItem> orderItems, Long customerId, String idempotentKey) {
         this.orderNumber = orderNumber;
         this.totalAmount = totalAmount;
         this.orderedAt = orderedAt;
         this.status = status;
         this.orderItems = orderItems;
         this.customerId = customerId;
-        this.domainEvent = domainEvent;
         this.idempotentKey = idempotentKey;
     }
 
@@ -90,14 +95,6 @@ public class Order extends BaseEntity {
                         .unitPrice(item.getPrice())
                         .build())
                 .toList();
-        var domainEvent = OrderCreatedEvent.builder()
-                .buyerId(customerId)
-                .orderItems(
-                        orderItemDtos
-                ).totalAmount(totalAmount)
-                .aggregateId(orderNumber)
-                .occurredOn(LocalDateTime.now())
-                .build();
 
         var order = Order.builder()
                 .customerId(customerId)
@@ -107,22 +104,66 @@ public class Order extends BaseEntity {
                 .status(PENDING)
                 .totalAmount(totalAmount)
                 .idempotentKey(idempotentKey)
-                .domainEvent(domainEvent)
                 .build();
 
         order.addOrderItems(orderItems);
+        order.domainEvent = OrderCreatedEvent.builder()
+                .orderNumber(orderNumber)
+                .buyerId(customerId)
+                .orderItems(
+                        orderItemDtos
+                ).totalAmount(totalAmount)
+                .aggregateId(orderNumber)
+                .occurredOn(LocalDateTime.now())
+                .build();
         return order;
     }
+
+
 
     private void addOrderItems(List<OrderItem> items) {
         items.forEach(item -> item.setOrder(this));
         this.orderItems = items;
     }
 
-    public OrderCreatedEvent pullDomainEvent() {
-        var event = domainEvent;
-        // 이벤트가 다른 곳에서 발행되는것을 막기 위해, 외부로 내보낸 이벤트는 도메인에서 할당 해제한다.
+    public Optional<DomainEvent> pullDomainEventIfPresent() {
+        var event = Optional.ofNullable(domainEvent);
         domainEvent = null;
         return event;
+    }
+
+    public Order pay(Map<Long, String> productMapCodeById) {
+        // 이미 결제 완료된 주문은 재처리하지 않는다.
+        if (this.status == PAID) {
+            return this;
+        }
+        if (this.status != PENDING) {
+            throw new IllegalStateException("결제 대기 상태만 결제 완료 처리 가능합니다. (현재상태: %s)".formatted(status));
+        }
+        this.status = PAID;
+        this.domainEvent = OrderPaidEvent.builder()
+                .orderNumber(orderNumber)
+                .orderItems(convertToOrderItems(productMapCodeById))
+                .aggregateId(orderNumber)
+                .occurredOn(LocalDateTime.now())
+                .build();
+        return this;
+    }
+
+    private List<OrderPaidEvent.OrderItemDto> convertToOrderItems(Map<Long, String> productMapCodeById) {
+        return this.orderItems.stream()
+                .map(item -> {
+                    var productCode = getProductCode(productMapCodeById, item);
+                    return OrderPaidEvent
+                            .OrderItemDto
+                            .builder()
+                            .productCode(productCode)
+                            .quantity(item.getQuantity())
+                            .build();
+                }).toList();
+    }
+
+    private String getProductCode(Map<Long, String> productMapCodeById, OrderItem item) {
+        return productMapCodeById.get(item.getProductId());
     }
 }

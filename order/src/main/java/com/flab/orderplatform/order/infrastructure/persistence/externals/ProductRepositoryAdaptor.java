@@ -16,4 +16,9 @@ public class ProductRepositoryAdaptor implements ProductRepository {
     public List<Product> findAllByProductCodeIn(List<String> productCodes) {
         return productJpaRepository.findAllByProductCodeIn(productCodes);
     }
+
+    @Override
+    public List<Product> findAllByIdIn(List<Long> productIds) {
+        return productJpaRepository.findAllById(productIds);
+    }
 }

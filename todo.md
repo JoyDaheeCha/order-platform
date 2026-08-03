@@ -29,9 +29,9 @@
 - [x] 주문 생성 중복 요청을 방지
     - [x] 같은 멱등키 재요청은 기존 주문을 반환한다.
     - [x] 같은 키에 다른 페이로드는 409로 거부한다. 
-- [ ] backlog
-  - [ ] redis callback 패턴 추가 (order 테이블에 impotent key 저장 후 유니크 인덱스 추가)
-  - [ ] Order, Order Item 양방향으로 변경할지 검토 (업데이트 쿼리 별도로 나가는지 확인)
+- [x] backlog
+  - [x] redis callback 패턴 추가 (order 테이블에 impotent key 저장 후 유니크 인덱스 추가)
+  - [x] Order, Order Item 양방향으로 변경할지 검토 (업데이트 쿼리 별도로 나가는지 확인)
 
 ## Outbox 패턴 추가 + '주문 생성되었다' 이벤트 발행
 - [x] OrderCreated(주문이 요청되었다) 이벤트가 발행된다
@@ -41,67 +41,29 @@
 - [x] outbox 재발행 스케줄러 주가 (failed 상태 재발행)
 - [x] outbox 재발행 스케줄러 주가 (created 상태 재발행)
 - [x] outbox 테이블에서 발송완료 데이터 제거 로직 추가
-- [x] 테이블 인덱스 적용 (status, created_at) 복합키
-
-## backlog
-[x] 멱등키를 Order에 추가하라
-[x] Order, Order Item 양방향으로 변경할지 검토 (업데이트 쿼리 별도로 나가는지 확인)
+- [x] 테이블 인덱스 적용 (status, created_at) 복합키  
 
 ## Inbox 패턴 추가 + '주문 생성되었다' 이벤트 컨슈밍
+- [x] 결제 - 인박스 패턴 추가
+- [x] 결제 - 주문 생성되었다 이벤트 컨슈밍 로직 추가
 
 ## 환경 설정 & 기타
 [x] flyway 추가
 [x] docs 하위 문서 사람에게 가독성있게 간략화 (ai 전용 문서는 ./claude 하위로 옮길것)
 
-## 주문 조회 api(GET /orders/{id}) 추가
-
 ## 주문 취소 api 추가
+
+## 결재 완료 메시지 발행
+- [x] 결재 완료 메시지 발행
+- [x] 주문 도메인에서 수신, 상태값 변경
+
+## 주문 결제 완료 이벤트 발행 (OrderPaid)
+- [x] 주문 이벤트에서 발행 (결제에서 직접 발행하지 않는 이유: 결제에서는 상품 정보를 재고로 넘기지 않아야함)
+- [x] 문서 수정
 
 ## 리팩토링
 - [x] shared 로 기능 공통화
 - [x] order 인박스 패턴도 스케줄러로 일원화
-
-# Week 2 — 첫 관통 → Saga Happy Path
-
-### Day 6 — Outbox + read model → **첫 관통 완성** ⚠️ `Phase 1`
-**목표**: 주문이 요청부터 Kafka 발행·조회까지 관통한다. (Phase 1 完)
-> 📚 **완료 후 자문** ⭐: 
-> ① dual-write 문제가 정확히 무엇이고, 왜 "DB 저장 + Kafka 발행"을 트랜잭션 하나로 못 묶나? 
-> ② Outbox 패턴은 이걸 어떻게 푸나? 릴레이는 왜 별도로 도나? 
-> ③ 스키마 분리 때문에 왜 read model이 필요해지나?
-> ④ 도메인 이벤트와 통합 이벤트를 왜 나누나(C-4)? 안 나누면 뭐가 문제인가? *(D2에서 이동)*
-> ⑤ Envelope에서 payload가 메타(eventId 등)를 "모르게" 하면 뭐가 좋은가? *(D2에서 이동)*
-> > 📚 **멘토님 질문** ⭐:
-> ① 실무에서 Kafka partition key 활용하는 방법
-> ② orderId를 partition key로 사용했을 때 이점
-- [ ] **`EventEnvelope<T>` 봉투 record** (ADR-0007 §4 옵션 c) — `eventId·occurredAt·orderId·eventType·payload`. Outbox 테이블 컬럼과 1:1 일치하는지 여기서 직접 확인
-- [ ] **payload `OrderCreated` 1종** (ADR-0007 §3) + 토픽 상수 `order.events` — 금액은 `long`(KRW 정수). `Money` VO는 order의 도메인 개념이라 shared에 넣으면 안 됨(C-3 위반)
-- [ ] **Outbox 테이블 + 릴레이** — 상태변경과 이벤트 적재를 원자적으로(PI-6, dual-write 해결). 릴레이가 `EventEnvelope`로 포장해 `order.events` 발행
-- [ ] **read model** `order_saga_progress` + `GET /orders/{id}` 폴링 조회 (ADR-0004, PC-4)
-- **✅ 완료 기준**: `POST /orders` → `order.events` 토픽에 `OrderCreated` 실제로 뜸 → `GET`으로 PENDING 조회 ✨ **첫 walking skeleton 관통**
-> ⚠️ Outbox 릴레이(폴링 or `@TransactionalEventListener`)가 핵심 학습 포인트이자 리스크. 여유를 뒀다.
-> 📌 **계약은 just-in-time.** ADR-0007 §3의 payload 10종을 한 번에 내리지 않는다 — 나머지는 각자의 **발행자가 생기는 날**에 추가한다(D7 `PaymentCompleted`·`PaymentFailed` / D8 `StockDeducted`·`StockShortage` / D9 `OrderConfirmed` / D11 `PaymentRefunded` / D12 `OrderCancellationRequested`·`OrderCancelled`·`StockRestored`). 계약 설계 자체는 ADR-0007에서 이미 끝났고, 여기서 하는 건 사용처가 생긴 만큼만 옮겨 적는 일이다.
-> 📌 `eventType` 문자열↔타입 매핑은 **D7로** — 역방향(역직렬화 디스패치)이 실제로 필요해지는 첫 지점이 컨슈머다. 발행자 하나뿐인 D6에서는 정방향만 있으면 된다.
-
-### Day 7 — Payment 컨텍스트 `Phase 2`
-**목표**: 주문 이벤트를 받아 결제하고 결과를 발행한다.
-> 📚 **완료 후 자문**: ① 코레오그래피 Saga에서 "중앙 조정자가 없다"는 게 구체적으로 어떤 구조인가? ② 컨슈머가 한 토픽에 섞인 여러 이벤트를 어떻게 분기·역직렬화하나(`eventType`)? ③ 결정론적 실패 주입이 확률 기반보다 테스트에 유리한 이유는?
-- [ ] **payment Flyway 빈 + `V1__create_payments.sql`** (D4에서 예고) — payment의 첫 테이블이 오늘 생긴다. `ddl-auto`는 계속 `validate`
-- [ ] Payment 도메인 — 결제 금액 = 주문 총액 일치(PP-1), 1회·전액(PP-2)
-- [ ] `order.events` 구독 → `OrderCreated` 수신 → 결제 시도
-- [ ] **가짜 PG** — 금액 끝자리 `7`이면 `PaymentFailed`, 그 외 `PaymentCompleted`(PP-3, 결정론적)
-- [ ] Outbox로 `payment.events` 발행
-- **✅ 완료 기준**: `OrderCreated` → `PaymentCompleted` 흐름 확인 (끝자리 7 주문은 `PaymentFailed`)
-
-### Day 8 — Inventory 컨텍스트 `Phase 2`
-**목표**: 결제 완료를 받아 재고를 차감한다.
-> 📚 **완료 후 자문**: ① `WHERE qty >= n` 조건부 UPDATE는 왜 "충돌"이라는 개념이 없나? ② 왜 결제 *후*에 재고를 차감하나 — 순서를 바꾸면 보상 학습이 어떻게 달라지나(PV-2)? ③ all-or-nothing 차감(PV-3)은 왜 필요한가?
-- [ ] **inventory Flyway 빈 + `V1__create_stocks.sql`** (D4에서 예고) — inventory의 첫 테이블이 오늘 생긴다. 이로써 Flyway 3세트 완성
-- [ ] Stock 도메인 (물리 재고, 예약 개념 없음 PV-1) + **재고 시드**(셀러 없음)
-- [ ] `payment.events` 구독 → `PaymentCompleted` 수신 → 재고 차감(PV-2: 결제 후 차감)
-- [ ] all-or-nothing(PV-3), 기본 어댑터 = **원자적 조건부 UPDATE**(`WHERE qty >= n`, ADR-0002 기본 B)
-- [ ] Outbox로 `StockDeducted`/`StockShortage` 발행
-- **✅ 완료 기준**: `PaymentCompleted` → `StockDeducted` 흐름 확인
 
 ### Day 9 — Inbox + Order 상태 전이 → **Saga happy path 완성** `Phase 2`
 **목표**: 주문이 PENDING→PAID→CONFIRMED까지 이벤트로 전진한다. (Phase 2 完)
@@ -190,19 +152,5 @@
 - [ ] 단계별 타임아웃 / 워크플로 엔진(Temporal)(ADR-0003 §7)
 - [ ] 셀러·운영자 페르소나, 재고 예약 모델(product-spec §3, PV-1)
 - [ ] Schema Registry / `schemaVersion`(ADR-0007 §7)
-
----
-
-## 정책 커버리지 (완료 시 전부 ✅)
-
-| 학습 목표 | 관련 정책 | 커버 Day |
-|-----------|-----------|----------|
-| Kafka / EDA | PI-4·5·6, PT-* | 6~10·13~14 |
-| DDD (Aggregate·불변식) | §1, PS-*, PV-1 | 3·8·9 |
-| 보상 트랜잭션 | PB-*, PC-3, PV-5 | 11·12·13 |
-| 멱등성 | PI-*, PS-4, PB-2, PT-3 | 5·9·10·11 |
-| 동시성 제어 | PV-4, PC-4 | 8·13·15 |
-
----
 
 *근거는 각 항목의 정책 ID(`PI-5`)·ADR 번호로 [`docs/`](./docs) 검색. 설계 서사는 [`docs/design.md`](./docs/design.md).*
