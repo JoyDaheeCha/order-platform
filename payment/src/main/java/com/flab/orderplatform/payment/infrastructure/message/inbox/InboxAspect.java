@@ -9,8 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
@@ -60,8 +60,8 @@ public class InboxAspect {
         return new String(header.value(), StandardCharsets.UTF_8);
     }
 
-    @Before("@annotation(inbox)")
-    public void handle(ProceedingJoinPoint joinPoint, Inbox inbox) throws Throwable {
+    @Around("@annotation(inbox)")
+    public void handle(ProceedingJoinPoint joinPoint, Inbox inbox) {
 
         var consumerRecord = getConsumerRecord(joinPoint);
         var eventId = getHeaderValueByKey(consumerRecord, EVENT_ID);
