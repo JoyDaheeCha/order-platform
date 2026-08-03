@@ -92,7 +92,7 @@ class OrderTest {
         );
 
         // when
-        var order = Order.create(100L, orderItems, orderNumber);
+        var order = Order.create(100L, orderItems, orderNumber, "1111-2222-3333-4444");
 
         // then
         var event = order.pullDomainEvent();
@@ -118,7 +118,8 @@ class OrderTest {
                         .price(1_500L)
                         .quantity(3)
                         .build()
-        ), "20260730-8N4ZLC2RPD");
+        ), "20260730-8N4ZLC2RPD",
+                "1111-2222-3333-4444");
 
         // when: 첫 번째 pull 로 이벤트를 꺼낸다.
         var firstPull = order.pullDomainEvent();

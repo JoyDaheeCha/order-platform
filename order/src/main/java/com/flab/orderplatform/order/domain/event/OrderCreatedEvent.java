@@ -1,13 +1,13 @@
 package com.flab.orderplatform.order.domain.event;
 
 import com.flab.orderplatform.order.domain.DomainEvent;
-import com.flab.orderplatform.shared.event.EventContract;
-import com.flab.orderplatform.shared.event.OrderCreatedPayload;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static com.flab.orderplatform.shared.event.EventConstants.ORDER_CREATED_TOPIC;
 
 @Getter
 public class OrderCreatedEvent extends DomainEvent {
@@ -28,16 +28,15 @@ public class OrderCreatedEvent extends DomainEvent {
         this.totalAmount = totalAmount;
     }
 
+
     @Override
-    public EventContract toPayload() {
-        return new OrderCreatedPayload(
-                getAggregateId(),
-                buyerId,
-                orderItems.stream()
-                        .map(i -> new OrderCreatedPayload.OrderItem(i.productId(), i.quantity(), i.unitPrice()))
-                        .toList(),
-                totalAmount
-        );
+    public String getAction() {
+        return "OrderCreated";
+    }
+
+    @Override
+    public String getTopic() {
+        return ORDER_CREATED_TOPIC;
     }
 
     @Builder

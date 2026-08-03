@@ -1,5 +1,6 @@
 package com.flab.orderplatform.order.domain;
 
+import com.flab.orderplatform.order.domain.event.OrderCreatedEvent;
 import com.flab.orderplatform.order.domain.status.OrderStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
