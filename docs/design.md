@@ -89,10 +89,10 @@
 - **결정 C (재시도)**: **비즈니스 실패와 인프라 오류를 절대 안 섞는다.** 재고부족·결제거절 = 재시도 없이 즉시 보상(정상 분기). DB 순단 등 = 지수 백오프 → DLQ. 재고부족을 예외→재시도로 흘리면 "정상 결과가 DLQ를 오염".
 
 ### ⑤ shared 통합 이벤트 계약 — [ADR-0007](./adr/0007-integration-event-contract.md)
-- **결정**: `EventEnvelope<T>`(메타 봉투) + payload 분리. `<context>.events` 3토픽. 파티션 키 = `orderId`. 가산적 버저닝(Schema Registry 없음).
+- **결정**: `EventEnvelope<T>`(메타 봉투) + payload 분리. **이벤트 1개 = 토픽 1개**(`MSG-ORDER-CREATED` 형식, 10토픽). 파티션 키 = `orderId`. 가산적 버저닝(Schema Registry 없음).
 - **봉투가 ADR-0004 Outbox 컬럼과 1:1 일치** → 포장/역포장이 자명. payload는 메타·전송포맷을 모름(C-4 도메인 격리).
 - **보상-개시 이벤트 `OrderCancellationRequested(reason)` 신설**로 모든 실패·취소 경로를 이벤트로 닫음(공백 제거).
-- **순서 보장 학습 포인트**: 순서는 *파티션 내*에서만 성립. 한 주문 이벤트가 3토픽에 흩어지므로 **토픽 간 전역 순서는 없다** — 그런데 문제가 안 된다. 인과 순서는 **사가 흐름 자체가 강제**하니까(Inventory는 `PaymentCompleted`를 받아야만 차감).
+- **순서 보장 학습 포인트**: 순서는 *파티션 내*에서만 성립. 한 주문 이벤트가 이벤트별 토픽(최대 10개)에 흩어지므로 **토픽 간 전역 순서는 없다** — 그런데 문제가 안 된다. 인과 순서는 **사가 흐름 자체가 강제**하니까(Inventory는 `PaymentCompleted`를 받아야만 차감).
 
 ### ⑥ 인바운드 API: 202 + 폴링, 멱등키 전용 테이블 — [ADR-0006](./adr/0006-inbound-api-response-and-idempotency.md)
 - **문제**: 동기 HTTP 요청이 비동기 코레오그래피 Saga를 어떻게 응답하나? (기획서가 "즉시 PENDING 응답"과 "확정 응답"을 모순되게 적고 있었음 → 이 ADR이 정정)

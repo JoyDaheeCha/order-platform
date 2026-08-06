@@ -7,9 +7,10 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.flab.orderplatform.shared.event.EventConstants.ORDER_CREATED_TOPIC;
+
 @Getter
 public class OrderCreatedEvent extends DomainEvent {
-    private static final String TOPIC = "MSG-ORDER-CREATED";
 
     private final Long buyerId;
     private final List<OrderItemDto> orderItems;
@@ -27,6 +28,7 @@ public class OrderCreatedEvent extends DomainEvent {
         this.totalAmount = totalAmount;
     }
 
+
     @Override
     public String getAction() {
         return "OrderCreated";
@@ -34,12 +36,14 @@ public class OrderCreatedEvent extends DomainEvent {
 
     @Override
     public String getTopic() {
-        return TOPIC;
+        return ORDER_CREATED_TOPIC;
     }
 
-    public record OrderItemDto(Long productId, Integer quantity, Long unitPrice) {
-        @Builder
-        public OrderItemDto {
-        }
-        }
+    @Builder
+    public record OrderItemDto(
+            Long productId,
+            Integer quantity,
+            Long unitPrice
+    ) {
+    }
 }

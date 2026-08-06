@@ -1,5 +1,6 @@
 package com.flab.orderplatform.order.domain;
 
+import com.flab.orderplatform.shared.event.EventContract;
 import lombok.Getter;
 
 import java.io.Serializable;

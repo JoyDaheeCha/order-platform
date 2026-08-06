@@ -132,7 +132,7 @@ save(order); kafka.send(evt);   ← 사이에서 죽으면? 주문은 있는데 
 └──────────────────────────────────────────┘
               │ (비동기) 폴링 릴레이가 published_at IS NULL 행을 발행
               ▼
-          Kafka (order.events)
+          Kafka (MSG-ORDER-CREATED — 이벤트당 1토픽)
 ```
 
 > **"이벤트 발행"을 "DB 쓰기"로 바꿔** 원자성을 회복한다 (정책 PI-6).

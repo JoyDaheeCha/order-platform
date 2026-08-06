@@ -103,7 +103,7 @@ EventEnvelope: eventId   occurredAt   orderId       eventType   payload(T)
 ```
 
 - payload record(`OrderCreated` 등)는 메타·토픽·직렬화를 모른다 → C-4(도메인 격리, D1 ◎) 자연 충족. infra 어댑터가 도메인 이벤트 → payload → envelope 포장 → Outbox 적재.
-- `eventType`은 단일 토픽에 섞인 이벤트의 **구독 분기 + 역직렬화 디스패치** 키(§5와 연계).
+- `eventType`은 토픽(§5)과 정보가 겹치지만, Outbox 컬럼 정합(D2)과 **메시지 자기기술**을 위해 envelope에 남긴다 — 토픽 맥락이 사라진 로그·Inbox 레코드·DLQ에서도 이벤트 정체가 드러나야 한다.
 
 ---
 
@@ -111,14 +111,36 @@ EventEnvelope: eventId   occurredAt   orderId       eventType   payload(T)
 
 | 옵션 | 토픽 수 | 평가 |
 |------|---------|------|
-| 이벤트별 토픽(`order.placed` …) | 9+ | 토픽 폭발, 순서 단위 파편화(D4 ✗) |
-| **컨텍스트(Aggregate)별 토픽** ✅ | 3 | `order.events`·`payment.events`·`inventory.events` |
+| 컨텍스트(Aggregate)별 토픽(`order.events` …) | 3 | 구독자가 관심 없는 타입까지 수신 → 필터·디스패치 로직 필요 |
+| **이벤트별 토픽** ✅ | 10 | 토픽 = 이벤트 타입 1:1, 구독이 곧 계약 |
 
-### 결정: `<context>.events` 3토픽
+### 결정: **토픽 1개 = 이벤트 1개**, 이름은 `MSG-<EVENT-NAME>`
 
-- 한 Aggregate의 이벤트 스트림 = 한 토픽 → "한 주문의 이벤트가 한 파티션에 순서대로"가 자연스럽게 성립(§6).
-- 구독자는 envelope `eventType`으로 분기. 토픽 수 최소로 운영·구성 단순(D4 ◎).
-- 트레이드오프: 구독자가 관심 없는 타입도 수신해 필터링(미미한 비용).
+| 발행 컨텍스트 | 이벤트 | 토픽 |
+|---------------|--------|------|
+| **Order** | `OrderCreated` | `MSG-ORDER-CREATED` |
+| | `OrderConfirmed` | `MSG-ORDER-CONFIRMED` |
+| | `OrderCancellationRequested` | `MSG-ORDER-CANCELLATION-REQUESTED` |
+| | `OrderCancelled` | `MSG-ORDER-CANCELLED` |
+| **Payment** | `PaymentCompleted` | `MSG-PAYMENT-COMPLETED` |
+| | `PaymentFailed` | `MSG-PAYMENT-FAILED` |
+| | `PaymentRefunded` | `MSG-PAYMENT-REFUNDED` |
+| **Inventory** | `StockDeducted` | `MSG-STOCK-DEDUCTED` |
+| | `StockShortage` | `MSG-STOCK-SHORTAGE` |
+| | `StockRestored` | `MSG-STOCK-RESTORED` |
+
+**네이밍 규약**: `MSG-` 접두 + 이벤트명을 대문자 하이픈(SCREAMING-KEBAB)으로. 새 이벤트 추가 = 새 토픽 추가, §7의 "깨지는 변경은 새 `eventType`" 규약도 새 토픽 신설로 이어진다.
+
+**근거**
+- **구독이 곧 계약** — 구독자는 자기가 처리할 이벤트의 토픽만 구독한다(`@KafkaListener(topics = "MSG-ORDER-CREATED")`). 관심 없는 메시지를 받아 버리는 낭비와, 그 필터링 로직 자체가 사라진다.
+- **역직렬화가 단정적** — 토픽마다 payload 타입이 하나뿐이라 `eventType`으로 분기해 타입을 고르는 디스패치가 필요 없다. 리스너 시그니처에 타입을 바로 박을 수 있다.
+- **운영 단위 분리** — 컨슈머 그룹·랙·파티션 수·리텐션을 이벤트 단위로 조절할 수 있다. `OrderCreated`만 지연되는 상황을 다른 이벤트와 섞이지 않은 지표로 본다.
+- **장애 격리** — 한 이벤트의 처리 실패·재처리가 같은 토픽에 실린 다른 이벤트의 소비를 막지 않는다(컨텍스트별 단일 토픽에서는 head-of-line blocking이 생긴다).
+
+**트레이드오프**
+- 토픽이 3개 → 10개로 늘어 생성·설정 대상이 많아진다(D4 ✗). 학습 프로젝트 규모에서는 감내 가능하며, 토픽 생성은 구성으로 일괄 관리한다(`KAFKA_AUTO_CREATE_TOPICS_ENABLE: false`이므로 명시 생성 필요).
+- 한 주문의 이벤트가 10개 토픽에 흩어져 **토픽 내 순서 보장의 적용 범위가 좁아진다** → §6에서 다룬다.
+- envelope `eventType`은 토픽과 정보가 중복된다. 그래도 유지하는 이유: Outbox 컬럼(`event_type`)과 1:1이고(§4, D2), 토픽에서 분리된 뒤(로그·Inbox 적재·DLQ)에도 메시지가 자기 정체를 스스로 말할 수 있어야 한다.
 
 ---
 
@@ -127,7 +149,8 @@ EventEnvelope: eventId   occurredAt   orderId       eventType   payload(T)
 ### 결정: 파티션 키 = `orderId` (policy PI-4 확정 재확인)
 
 - 같은 주문의 이벤트는 **한 토픽 내 동일 파티션**에 적재 → 토픽 내 순서 보장.
-- **학습 포인트(명시)**: 순서 보장은 *토픽-파티션 내*에서만 성립. 한 주문의 이벤트가 3개 토픽에 흩어지므로 **토픽 간 전역 순서는 보장되지 않는다.** 이는 문제가 아니다 — 인과 순서는 **사가 흐름 자체가 강제**한다(Inventory는 `PaymentCompleted`를 받아야만 차감). 코레오그래피가 토픽 간 전역 순서에 *의존하면 안 되는* 이유의 사례.
+- **학습 포인트(명시)**: 순서 보장은 *토픽-파티션 내*에서만 성립. §5에서 토픽을 이벤트별로 쪼갰으므로 한 주문의 이벤트는 최대 10개 토픽에 흩어지고, **토픽 간 전역 순서는 보장되지 않는다.** 이는 문제가 아니다 — 인과 순서는 **사가 흐름 자체가 강제**한다(Inventory는 `PaymentCompleted`를 받아야만 차감). 코레오그래피가 토픽 간 전역 순서에 *의존하면 안 되는* 이유의 사례.
+- 이벤트별 토픽에서 `orderId` 키가 실제로 지키는 것은 **같은 이벤트 타입의 재발행 순서**다(예: 재시도로 두 번 발행된 `MSG-ORDER-CREATED`). 그 이상의 순서는 위 문단대로 사가와 Inbox 멱등(PI-5)이 책임진다.
 
 ---
 
@@ -149,8 +172,10 @@ EventEnvelope: eventId   occurredAt   orderId       eventType   payload(T)
 - envelope가 Outbox/Inbox 컬럼과 일치 → 포장/역포장이 자명(D2).
 - 보상-개시 이벤트 신설로 **모든 실패·취소 경로가 이벤트로 닫힘**(D3) — 코레오그래피의 보상 흐름 공백 제거.
 
+- 토픽 = 이벤트 1:1이라 구독자는 관심 이벤트만 구독하고, 리스너에서 필터·디스패치 없이 payload 타입을 확정한다(§5).
+
 **부정 / 주의**
-- 단일 토픽에 여러 `eventType`이 섞여 구독자가 **필터·디스패치** 로직을 가져야 한다(envelope `eventType` 의존).
+- 토픽 수가 이벤트 수만큼 늘어난다(현재 10개). 자동 생성이 꺼져 있으므로 **이벤트를 추가할 때 토픽 생성도 함께** 해야 하고, 빠뜨리면 발행 실패로 드러난다.
 - 가산 규약은 *규율*이라 컴파일러가 강제 못 함 — 호환성 위반은 리뷰로 막는다.
 - payload JSON은 스키마 강제가 약함(레지스트리 없음) — 학습 범위의 의도적 단순화.
 
@@ -163,6 +188,7 @@ EventEnvelope: eventId   occurredAt   orderId       eventType   payload(T)
 ## 9. 미해결 (이 ADR 범위 밖)
 
 - 클라이언트 멱등키 저장·인바운드 응답 모델 → **ADR-0006**(별도 세션). 멱등키는 이 계약에 포함하지 않는다(경계).
-- Inbox 키 `event_id` 단독 vs `(event_id, handler)` 복합 → ADR-0004 §7, 구독 토폴로지 확정 시. (단일 토픽·다구독 구조에서 한 컨텍스트가 같은 이벤트를 여러 핸들러로 처리하면 복합키 필요.)
-- 토픽 파티션 수·리텐션·컨슈머 그룹 구성 — 운영 튜닝(코드 착수 시).
+- Inbox 키 `event_id` 단독 vs `(event_id, handler)` 복합 → ADR-0004 §7, 구독 토폴로지 확정 시. (한 컨텍스트가 같은 토픽을 여러 핸들러로 처리하면 복합키 필요.)
+- 토픽 파티션 수·리텐션·컨슈머 그룹 구성 — 운영 튜닝(코드 착수 시). 이벤트별 토픽이므로 이벤트마다 값이 달라질 수 있다.
+- 토픽 생성 방식(구성 파일 일괄 선언 vs `NewTopic` 빈) — §5의 10개 토픽을 어디서 관리할지.
 - `schemaVersion`/레지스트리 도입 — 호환성 관리가 필요해지는 후속 학습.
