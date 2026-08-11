@@ -19,6 +19,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.sql.DataSource;
 import java.util.Map;
 
+import static com.flab.orderplatform.shared.SharedPersistenceConstant.INBOX;
+import static com.flab.orderplatform.shared.SharedPersistenceConstant.OUTBOX;
+
 /**
  * Inventory 컨텍스트의 영속화 설정
  */
@@ -49,18 +52,6 @@ public class InventoryPersistenceConfig {
         return inventoryDataSourceProperties().initializeDataSourceBuilder().build();
     }
 
-    @Bean
-    LocalContainerEntityManagerFactoryBean inventoryEntityManagerFactory(
-            @Qualifier("inventoryDataSource") DataSource dataSource) {
-        LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
-        emf.setDataSource(dataSource);
-        emf.setPackagesToScan(CONTEXT_PACKAGE);
-        emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
-        emf.setJpaPropertyMap(HIBERNATE_PROPERTIES);
-        emf.setPersistenceUnitName("inventory");
-        return emf;
-    }
-
     /**
      * Inventory 컨텍스트 전용 Flyway 마이그레이션 빈
      */
@@ -75,6 +66,18 @@ public class InventoryPersistenceConfig {
     }
 
     @DependsOn("inventoryFlyway")
+    @Bean
+    LocalContainerEntityManagerFactoryBean inventoryEntityManagerFactory(
+            @Qualifier("inventoryDataSource") DataSource dataSource) {
+        LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
+        emf.setDataSource(dataSource);
+        emf.setPackagesToScan(CONTEXT_PACKAGE, OUTBOX, INBOX);
+        emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+        emf.setJpaPropertyMap(HIBERNATE_PROPERTIES);
+        emf.setPersistenceUnitName("inventory");
+        return emf;
+    }
+
     @Bean
     PlatformTransactionManager inventoryTransactionManager(
             @Qualifier("inventoryEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
