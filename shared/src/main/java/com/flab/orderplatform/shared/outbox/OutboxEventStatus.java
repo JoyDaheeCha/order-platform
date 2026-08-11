@@ -1,4 +1,4 @@
-package com.flab.orderplatform.order.domain.status;
+package com.flab.orderplatform.shared.outbox;
 
 /**
  * 아웃박스 패턴에서 사용되는 이벤트 발행 상태
