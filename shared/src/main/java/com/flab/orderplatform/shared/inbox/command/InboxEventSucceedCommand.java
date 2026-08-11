@@ -1,6 +1,6 @@
-package com.flab.orderplatform.payment.application.command;
+package com.flab.orderplatform.shared.inbox.command;
 
-import com.flab.orderplatform.payment.domain.InboxEvent;
+import com.flab.orderplatform.shared.inbox.InboxEvent;
 import lombok.Builder;
 
 @Builder

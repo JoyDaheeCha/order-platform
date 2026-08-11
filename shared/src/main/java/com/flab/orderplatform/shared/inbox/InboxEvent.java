@@ -1,13 +1,13 @@
-package com.flab.orderplatform.payment.domain;
+package com.flab.orderplatform.shared.inbox;
 
-import com.flab.orderplatform.payment.domain.status.InboxEventStatus;
+import com.flab.orderplatform.shared.domain.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import static com.flab.orderplatform.payment.domain.status.InboxEventStatus.*;
+import static com.flab.orderplatform.shared.inbox.InboxEventStatus.*;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 /**
@@ -16,7 +16,11 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "inbox")
+@Table(
+        name = "inbox",
+        indexes = {
+                @Index(name = "idx_inbox_status", columnList = "status")
+        })
 public class InboxEvent extends BaseTimeEntity {
     @GeneratedValue(strategy = IDENTITY)
     @Id
@@ -70,6 +74,7 @@ public class InboxEvent extends BaseTimeEntity {
         this.status = PROCESSED;
         return this;
     }
+
     public InboxEvent fail() {
         this.status = FAILED;
         return this;

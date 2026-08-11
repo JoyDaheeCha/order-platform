@@ -1,13 +1,13 @@
-package com.flab.orderplatform.payment.infrastructure.persistence;
+package com.flab.orderplatform.shared.inbox;
 
-import com.flab.orderplatform.payment.domain.InboxEvent;
-import com.flab.orderplatform.payment.domain.status.InboxEventStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.NoRepositoryBean;
 
 import java.util.List;
 import java.util.Optional;
 
+@NoRepositoryBean
 public interface InboxEventJpaRepository extends JpaRepository<InboxEvent, Long> {
     Optional<InboxEvent> findByEventId(String eventId);
 

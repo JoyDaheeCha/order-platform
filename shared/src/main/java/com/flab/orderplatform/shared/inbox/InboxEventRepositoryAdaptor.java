@@ -1,16 +1,11 @@
-package com.flab.orderplatform.payment.infrastructure.persistence;
+package com.flab.orderplatform.shared.inbox;
 
-import com.flab.orderplatform.payment.application.port.out.InboxEventRepository;
-import com.flab.orderplatform.payment.domain.InboxEvent;
-import com.flab.orderplatform.payment.domain.status.InboxEventStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-@Repository
 @RequiredArgsConstructor
 public class InboxEventRepositoryAdaptor implements InboxEventRepository {
 

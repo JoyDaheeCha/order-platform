@@ -1,7 +1,6 @@
-package com.flab.orderplatform.payment.application.port.out;
+package com.flab.orderplatform.shared.inbox;
 
-import com.flab.orderplatform.payment.domain.InboxEvent;
-import com.flab.orderplatform.payment.domain.status.InboxEventStatus;
+
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;

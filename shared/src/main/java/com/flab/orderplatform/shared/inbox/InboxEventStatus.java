@@ -1,4 +1,4 @@
-package com.flab.orderplatform.payment.domain.status;
+package com.flab.orderplatform.shared.inbox;
 
 import lombok.Getter;
 
