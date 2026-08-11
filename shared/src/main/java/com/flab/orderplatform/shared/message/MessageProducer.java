@@ -1,4 +1,4 @@
-package com.flab.orderplatform.order.application.port.out;
+package com.flab.orderplatform.shared.message;
 
 import org.springframework.kafka.support.SendResult;
 

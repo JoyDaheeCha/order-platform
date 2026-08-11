@@ -1,6 +1,5 @@
-package com.flab.orderplatform.order.infrastructure.message;
+package com.flab.orderplatform.shared.message;
 
-import com.flab.orderplatform.order.application.port.out.MessageProducer;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.kafka.core.KafkaTemplate;

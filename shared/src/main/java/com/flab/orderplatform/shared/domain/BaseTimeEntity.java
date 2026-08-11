@@ -1,4 +1,4 @@
-package com.flab.orderplatform.order.domain;
+package com.flab.orderplatform.shared.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

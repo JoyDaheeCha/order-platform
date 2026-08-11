@@ -1,4 +1,4 @@
-package com.flab.orderplatform.payment.common;
+package com.flab.orderplatform.shared.utils;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,10 +14,6 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * json 직렬화 유틸
- * Order와 동일. common 모듈로 빼내기엔 배포파이프라인 유지할 가치가 없어서 복제한다.
- */
 public class JsonUtils {
     private static final ObjectMapper MAPPER;
 
@@ -41,19 +37,19 @@ public class JsonUtils {
         MAPPER.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     }
 
-    public static <T> T fromJson(final String json, Class<T> valueType) {
-        try {
-            return MAPPER.readValue(json, valueType);
-        } catch (IOException e) {
-            throw new JsonDecodeException(e);
-        }
-    }
-
     public static String toJson(final Object object) {
         try {
             return MAPPER.writeValueAsString(object);
         } catch (IOException e) {
             throw new JsonEncodeException(e);
+        }
+    }
+
+    public static <T> T fromJson(final String json, Class<T> valueType) {
+        try {
+            return MAPPER.readValue(json, valueType);
+        } catch (IOException e) {
+            throw new JsonDecodeException(e);
         }
     }
 
