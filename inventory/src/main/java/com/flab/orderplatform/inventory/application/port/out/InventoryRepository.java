@@ -8,4 +8,6 @@ import java.util.Set;
 public interface InventoryRepository {
     Set<Inventory> findByProductCodeIn(Set<String> productCodes);
     Optional<Inventory> findByProductCode(String productCode);
+
+    Inventory save(Inventory decreasedStock);
 }

@@ -23,4 +23,9 @@ public class InventoryRepositoryAdaptor implements InventoryRepository {
     public Optional<Inventory> findByProductCode(String productCode) {
         return inventoryJpaRepository.findByProductCode(productCode);
     }
+
+    @Override
+    public Inventory save(Inventory inventory) {
+        return inventoryJpaRepository.save(inventory);
+    }
 }
