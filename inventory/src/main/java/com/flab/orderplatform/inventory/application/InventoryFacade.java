@@ -1,10 +1,10 @@
 package com.flab.orderplatform.inventory.application;
 
+import com.flab.orderplatform.inventory.InventoryDecreaseLockResolver;
 import com.flab.orderplatform.inventory.application.annotation.InventoryTransactional;
 import com.flab.orderplatform.inventory.application.command.InventoryDecreaseCommand;
 import com.flab.orderplatform.inventory.application.exception.DuplicatedProductException;
 import com.flab.orderplatform.inventory.application.port.out.InventoryHistoryRepository;
-import com.flab.orderplatform.inventory.application.port.out.InventoryRepository;
 import com.flab.orderplatform.inventory.domain.Inventory;
 import com.flab.orderplatform.inventory.domain.event.StockDeductedEvent;
 import com.flab.orderplatform.shared.event.OrderPaidPayload;
@@ -20,9 +20,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InventoryFacade {
 
-    private final InventoryRepository inventoryRepository;
     private final InventoryHistoryRepository inventoryHistoryRepository;
-    private final PessimisticLockInventoryDecreaseCommandHandler pessimisticLockInventoryDecreaseCommandHandler;
+    private final InventoryDecreaseLockResolver lockResolver;
     private final ApplicationEventPublisher eventPublisher;
 
     @InventoryTransactional
@@ -37,7 +36,7 @@ public class InventoryFacade {
         var orderNumber = event.orderNumber();
         var commands = getCommands(event, orderNumber);
 
-        var result = pessimisticLockInventoryDecreaseCommandHandler.handle(commands);
+        var result = lockResolver.resolve().handle(commands);
 
         var stockDeductedEvent = StockDeductedEvent.builder()
                 .orderNumber(orderNumber)
