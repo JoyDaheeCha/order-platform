@@ -3,6 +3,7 @@ package com.flab.orderplatform.inventory.application;
 import com.flab.orderplatform.inventory.application.annotation.InventoryTransactional;
 import com.flab.orderplatform.inventory.application.command.InventoryDecreaseCommand;
 import com.flab.orderplatform.inventory.application.exception.InventoryNotFoundException;
+import com.flab.orderplatform.inventory.application.port.out.InventoryDecreaseCommandHandler;
 import com.flab.orderplatform.inventory.application.port.out.InventoryRepository;
 import com.flab.orderplatform.inventory.domain.Inventory;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class InventoryCommandHandler {
+public class PessimisticLockInventoryDecreaseCommandHandler implements InventoryDecreaseCommandHandler {
     private final InventoryRepository inventoryRepository;
 
     /**
@@ -40,6 +41,7 @@ public class InventoryCommandHandler {
         return inventoryRepository.saveAll(decreasedStocks);
     }
 
+    // TODO 락 구현체와 분리하는게 나을지 고민해보기.
     /**
      * 모두 존재하는 재고인지 유효성 검증
      *
