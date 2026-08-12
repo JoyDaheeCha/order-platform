@@ -8,17 +8,58 @@ import com.flab.orderplatform.inventory.domain.Inventory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class InventoryCommandHandler {
     private final InventoryRepository inventoryRepository;
 
     @InventoryTransactional
-    public Inventory handle(InventoryDecreaseCommand command) {
-        var productCode = command.product().productCode();
-        var inventory = inventoryRepository.findByProductCodeWithLock(productCode)
-                .orElseThrow(() -> new InventoryNotFoundException(productCode));
-        var decreasedStock = command.decreaseStock(inventory);
-        return inventoryRepository.save(decreasedStock);
+    public List<Inventory> handle(List<InventoryDecreaseCommand> commands) {
+        var productCodes = getProductCodes(commands);
+        // 비관락 적용
+        var inventories = inventoryRepository.findByProductCodeInWithLock(productCodes);
+        var inventoryByProductCode = inventories.stream()
+                .collect(Collectors.toMap(Inventory::getProductCode, i -> i));
+
+        // 유효성 검증
+        validateIfAllInventoryExisting(inventoryByProductCode.keySet(), productCodes);
+
+        // TODO: 코멘드도 정렬 필요한지 확인
+        var decreasedStocks = commands.stream().map(command -> {
+                    var inventory = inventoryByProductCode.get(command.product().productCode());
+                    return command.decreaseStock(inventory);
+                })
+                .toList();
+        return inventoryRepository.saveAll(decreasedStocks);
+    }
+
+    /**
+     * 모두 존재하는 재고인지 유효성 검증
+     *
+     * @param inventoryProductCodeSet 재고 시스템 내 상품 코드 목록
+     * @param productCodes            재고 감소 요청된 상푸 코드 목록
+     */
+    private void validateIfAllInventoryExisting(Set<String> inventoryProductCodeSet, List<String> productCodes) {
+        var productCodeSet = new HashSet<>(productCodes);
+
+        if (!inventoryProductCodeSet.containsAll(productCodeSet)) {
+            var missing = productCodeSet
+                    .stream()
+                    .filter(productCode -> !inventoryProductCodeSet.contains(productCode))
+                    .toList();
+            throw new InventoryNotFoundException(missing);
+        }
+    }
+
+    private List<String> getProductCodes(List<InventoryDecreaseCommand> commands) {
+        return commands.stream()
+                .map(x -> x.product().productCode())
+                .sorted() // 상품 코드 오름 차순 정렬. 비관락 적용시 선제 조건
+                .toList();
     }
 }

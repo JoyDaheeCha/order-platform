@@ -5,6 +5,7 @@ import com.flab.orderplatform.inventory.domain.Inventory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -31,7 +32,12 @@ public class InventoryRepositoryAdaptor implements InventoryRepository {
     }
 
     @Override
-    public Optional<Inventory> findByProductCodeWithLock(String productCode) {
-        return inventoryPessimisticLockStrategy.findByProductCode(productCode);
+    public List<Inventory> findByProductCodeInWithLock(List<String> productCodes) {
+        return inventoryPessimisticLockStrategy.findByProductCodeIn(productCodes);
+    }
+
+    @Override
+    public List<Inventory> saveAll(List<Inventory> inventories) {
+        return inventoryJpaRepository.saveAll(inventories);
     }
 }
