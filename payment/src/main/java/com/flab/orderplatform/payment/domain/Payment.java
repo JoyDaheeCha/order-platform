@@ -39,7 +39,6 @@ public class Payment extends BaseTimeEntity {
     @Column(name = "amount", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '총 결제액'")
     private Long amount;
 
-    // TODO index 설정
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20, columnDefinition = "VARCHAR(10) NOT NULL COMMENT '결제 상태 REQUESTED/COMPLETED/FAILED/REFUNDED'")
     private PaymentStatus status;
