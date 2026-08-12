@@ -18,6 +18,9 @@ import java.util.stream.Collectors;
 public class InventoryCommandHandler {
     private final InventoryRepository inventoryRepository;
 
+    /**
+     * 특정 주문에 대해 재고를 일괄 감소시킨다.
+     */
     @InventoryTransactional
     public List<Inventory> handle(List<InventoryDecreaseCommand> commands) {
         var productCodes = getProductCodes(commands);
@@ -29,7 +32,6 @@ public class InventoryCommandHandler {
         // 유효성 검증
         validateIfAllInventoryExisting(inventoryByProductCode.keySet(), productCodes);
 
-        // TODO: 코멘드도 정렬 필요한지 확인
         var decreasedStocks = commands.stream().map(command -> {
                     var inventory = inventoryByProductCode.get(command.product().productCode());
                     return command.decreaseStock(inventory);

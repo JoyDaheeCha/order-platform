@@ -31,9 +31,17 @@ public class InventoryRepositoryAdaptor implements InventoryRepository {
         return inventoryJpaRepository.save(inventory);
     }
 
+    /**
+     * 비관락을 사용하여 조회.
+     * 데드락을 막기위해, 정렬하여 조회한다.
+     *
+     * @param productCodes 상품 코드 목록
+     * @return 재고 목록
+     */
     @Override
     public List<Inventory> findByProductCodeInWithLock(List<String> productCodes) {
-        return inventoryPessimisticLockStrategy.findByProductCodeIn(productCodes);
+        var sortedProductCodes = productCodes.stream().sorted().toList(); // 상품 코드 오름차순 정렬
+        return inventoryPessimisticLockStrategy.findByProductCodeIn(sortedProductCodes);
     }
 
     @Override
