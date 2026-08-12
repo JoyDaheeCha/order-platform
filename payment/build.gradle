@@ -27,4 +27,7 @@ dependencies {
     // 레디스 (Redisson 사용)
     implementation libs.redisson.spring.boot.starter
 
+    // flyway
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
 }

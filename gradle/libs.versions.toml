@@ -36,6 +36,10 @@ spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" 
 # /actuator/health 로 MySQL·Redis 연결을 실제로 확인한다.
 spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 
+# --- DB 형상관리 ---
+flyway-core = { module = "org.flywaydb:flyway-core" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql" }
+
 # --- test ---
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 spring-kafka-test = { module = "org.springframework.kafka:spring-kafka-test" }

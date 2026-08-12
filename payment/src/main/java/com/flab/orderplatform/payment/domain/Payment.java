@@ -12,7 +12,11 @@ import static com.flab.orderplatform.payment.domain.status.PaymentStatus.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "payments")
+@Table(
+        name = "payment",
+        indexes = {
+                @Index(name = "idx_payment_status", columnList = "status")
+        })
 public class Payment extends BaseTimeEntity {
 
     @Id
