@@ -22,7 +22,7 @@ public class InventoryFacade {
 
     private final InventoryRepository inventoryRepository;
     private final InventoryHistoryRepository inventoryHistoryRepository;
-    private final InventoryCommandHandler inventoryCommandHandler;
+    private final PessimisticLockInventoryDecreaseCommandHandler pessimisticLockInventoryDecreaseCommandHandler;
     private final ApplicationEventPublisher eventPublisher;
 
     @InventoryTransactional
@@ -37,7 +37,7 @@ public class InventoryFacade {
         var orderNumber = event.orderNumber();
         var commands = getCommands(event, orderNumber);
 
-        var result = inventoryCommandHandler.handle(commands);
+        var result = pessimisticLockInventoryDecreaseCommandHandler.handle(commands);
 
         var stockDeductedEvent = StockDeductedEvent.builder()
                 .orderNumber(orderNumber)
