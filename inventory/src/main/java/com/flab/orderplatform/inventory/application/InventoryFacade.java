@@ -14,6 +14,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -54,6 +55,7 @@ public class InventoryFacade {
                                 .quantityToDecrease(item.quantity())
                                 .build())
                         .build())
+                .sorted(Comparator.comparing(command -> command.product().productCode())) // 상품 코드별 정렬. 비관락 사용시 정렬 필요
                 .toList();
 
         var result = commands.stream()

@@ -13,11 +13,10 @@ import org.springframework.stereotype.Service;
 public class InventoryCommandHandler {
     private final InventoryRepository inventoryRepository;
 
-    // TODO: 동시성 방어 로직 추가
     @InventoryTransactional
     public Inventory handle(InventoryDecreaseCommand command) {
         var productCode = command.product().productCode();
-        var inventory = inventoryRepository.findByProductCode(productCode)
+        var inventory = inventoryRepository.findByProductCodeWithLock(productCode)
                 .orElseThrow(() -> new InventoryNotFoundException(productCode));
         var decreasedStock = command.decreaseStock(inventory);
         return inventoryRepository.save(decreasedStock);

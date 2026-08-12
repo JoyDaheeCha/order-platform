@@ -13,6 +13,7 @@ import java.util.Set;
 public class InventoryRepositoryAdaptor implements InventoryRepository {
 
     private final InventoryJpaRepository inventoryJpaRepository;
+    private final InventoryPessimisticLockStrategy inventoryPessimisticLockStrategy;
 
     @Override
     public Set<Inventory> findByProductCodeIn(Set<String> productCodes) {
@@ -27,5 +28,10 @@ public class InventoryRepositoryAdaptor implements InventoryRepository {
     @Override
     public Inventory save(Inventory inventory) {
         return inventoryJpaRepository.save(inventory);
+    }
+
+    @Override
+    public Optional<Inventory> findByProductCodeWithLock(String productCode) {
+        return inventoryPessimisticLockStrategy.findByProductCode(productCode);
     }
 }
