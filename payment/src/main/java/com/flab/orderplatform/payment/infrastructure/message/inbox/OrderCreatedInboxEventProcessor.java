@@ -2,9 +2,9 @@ package com.flab.orderplatform.payment.infrastructure.message.inbox;
 
 import com.flab.orderplatform.payment.application.PaymentFacade;
 import com.flab.orderplatform.payment.application.command.PaymentCreateCommand;
-import com.flab.orderplatform.payment.common.JsonUtils;
-import com.flab.orderplatform.payment.domain.InboxEvent;
 import com.flab.orderplatform.shared.event.OrderCreatedPayload;
+import com.flab.orderplatform.shared.inbox.InboxEvent;
+import com.flab.orderplatform.shared.utils.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +12,7 @@ import static com.flab.orderplatform.shared.event.EventConstants.ORDER_CREATED;
 
 @Component
 @RequiredArgsConstructor
-public class OrderCreatedInboxEventProcessor implements InboxEventProcessor {
+public class OrderCreatedInboxEventProcessor implements PaymentInboxEventProcessor {
 
     private final PaymentFacade paymentFacade;
 

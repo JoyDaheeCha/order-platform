@@ -1,6 +1,7 @@
 package com.flab.orderplatform.payment.domain;
 
 import com.flab.orderplatform.payment.domain.status.PaymentStatus;
+import com.flab.orderplatform.shared.domain.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

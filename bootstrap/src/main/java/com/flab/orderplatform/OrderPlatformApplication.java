@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
 /**
  * 데이터소스를 3개로 컨텍스트별로 분리하였으므로,
  * DataSource·EntityManagerFactory·TransactionManager 를 직접 설정합니다.
- *
+ * <p>
  * 따라서 DataSourceAutoConfiguration, HibernateJpaAutoConfiguration 는 exclude 합니다.
  */
 @SpringBootApplication(exclude = {

@@ -19,6 +19,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.sql.DataSource;
 import java.util.Map;
 
+import static com.flab.orderplatform.shared.SharedPersistenceConstant.INBOX;
+import static com.flab.orderplatform.shared.SharedPersistenceConstant.OUTBOX;
+
 /**
  * Payment 컨텍스트의 영속화 설정
  */
@@ -68,7 +71,7 @@ public class PaymentPersistenceConfig {
             @Qualifier("paymentDataSource") DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
         emf.setDataSource(dataSource);
-        emf.setPackagesToScan(CONTEXT_PACKAGE);
+        emf.setPackagesToScan(CONTEXT_PACKAGE, OUTBOX, INBOX);
         emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         emf.setJpaPropertyMap(HIBERNATE_PROPERTIES);
         emf.setPersistenceUnitName("payment");

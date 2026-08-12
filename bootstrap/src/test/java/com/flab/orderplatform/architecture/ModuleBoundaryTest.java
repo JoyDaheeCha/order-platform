@@ -16,21 +16,30 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
 /**
- * 모듈 경계 규칙(architecture.md §6, A-1~A-6)을 "코드로" 강제한다.
+ * 모듈 경계 규칙을 "코드로" 강제한다.
  *
  * <p>코드 리뷰가 아니라 테스트가 경계를 지킨다 — 잘못된 의존이 들어오면 빌드가 깨진다.
- * bootstrap 은 전 모듈을 한 클래스패스에서 보므로 이 검증의 적임지다. (architecture.md §6)
  */
 @DisplayName("모듈 경계 규칙 (ArchUnit)")
 class ModuleBoundaryTest {
 
     private static final String ROOT = "com.flab.orderplatform";
     private static final String SHARED = ROOT + ".shared..";
-    /** 도메인이 유일하게 알아도 되는 shared 하위 패키지 = 통합 이벤트 계약(C-4). */
+    /**
+     * 도메인이 유일하게 알아도 되는 shared 하위 패키지 = 통합 이벤트 계약(C-4).
+     */
     private static final String SHARED_EVENT = ROOT + ".shared.event..";
+    /**
+     * 공유 커널: 모든 컨텍스트가 상속으로 재사용하는 도메인 기반 클래스(BaseEntity/DomainEvent).
+     * */
+    private static final String SHARED_DOMAIN = ROOT + ".shared.domain..";
+    /**
+     * 도메인이 의존해도 되는 shared 화이트리스트 — 이 둘 외의 shared 는 인프라로 간주한다.
+     */
+    private static final String[] DOMAIN_ALLOWED_SHARED = { SHARED_EVENT, SHARED_DOMAIN };
 
     /**
-     * A-1: 도메인 모델을 JPA 엔티티 겸용으로 두기로 했으므로(architecture.md §2 A-1 개정 이력)
+     * 도메인 모델을 JPA 엔티티 겸용으로 두기로 했으므로
      * 도메인이 알아도 되는 Spring 은 <b>영속화 매핑·감사 애노테이션</b>뿐이다.
      */
     private static final String[] DOMAIN_ALLOWED_SPRING = {
@@ -38,7 +47,9 @@ class ModuleBoundaryTest {
             "org.springframework.data.jpa.domain.support..",
     };
 
-    /** 영속화와 무관한 인프라 — 도메인은 "어떻게 전송·호출되는지"를 알면 안 된다. */
+    /**
+     * 영속화와 무관한 인프라 — 도메인은 "어떻게 전송·호출되는지"를 알면 안 된다.
+     */
     private static final String[] DOMAIN_FORBIDDEN_INFRA = {
             "org.apache.kafka..",
             "org.redisson..",
@@ -56,8 +67,35 @@ class ModuleBoundaryTest {
                 .importPackages(ROOT);
     }
 
+    /**
+     * {@code com.flab.orderplatform.<context>..} 형태의 완전한 패키지 패턴을 만든다.
+     */
+    private static String[] contextPackages(String... contexts) {
+        String[] packages = new String[contexts.length];
+        for (int i = 0; i < contexts.length; i++) {
+            packages[i] = "%s.%s..".formatted(ROOT, contexts[i]);
+        }
+        return packages;
+    }
+
+    /**
+     * 컨텍스트는 다른 컨텍스트 패키지를 의존하지 않는다.
+     */
+    private static void assertNoCrossContextDependency(String self, String... others) {
+        String[] otherPackages = new String[others.length];
+        for (int i = 0; i < others.length; i++) {
+            otherPackages[i] = "..%s..".formatted(others[i]);
+        }
+        noClasses()
+                .that().resideInAPackage("..%s..".formatted(self))
+                .should().dependOnClassesThat().resideInAnyPackage(otherPackages)
+                .because("컨텍스트 간 통신은 shared 통합 이벤트(Kafka)로만 한다")
+                .allowEmptyShould(true)
+                .check(classes);
+    }
+
     @Test
-    @DisplayName("A-1: domain 은 영속화 매핑까지만 허용한다 (Spring DI·웹·Kafka·Jackson 금지)")
+    @DisplayName("domain 은 영속화 매핑까지만 허용한다 (Spring DI·웹·Kafka·Jackson 금지)")
     void domainShouldOnlyKnowPersistenceMapping() {
         DescribedPredicate<JavaClass> forbidden =
                 resideInAPackage("org.springframework..")
@@ -68,37 +106,37 @@ class ModuleBoundaryTest {
         noClasses()
                 .that().resideInAPackage("..domain..")
                 .should().dependOnClassesThat(forbidden)
-                .because("A-1: 도메인은 'DB에 어떻게 저장되는지'까지만 알고, '누가 호출하고 어떻게 전송되는지'는 모른다")
+                .because("도메인은 'DB에 어떻게 저장되는지'까지만 알고, '누가 호출하고 어떻게 전송되는지'는 모른다")
                 .allowEmptyShould(true)
                 .check(classes);
     }
 
     @Test
-    @DisplayName("A-2: domain 은 같은 컨텍스트의 application·infrastructure 를 의존하지 않는다")
+    @DisplayName("domain 은 같은 컨텍스트의 application·infrastructure 를 의존하지 않는다")
     void domainShouldNotDependOnOuterLayers() {
         noClasses()
                 .that().resideInAPackage("..domain..")
                 .should().dependOnClassesThat()
                 .resideInAnyPackage("..application..", "..infrastructure..")
-                .because("A-2: 의존은 안쪽(domain)으로만 향한다")
+                .because("의존은 안쪽(domain)으로만 향한다")
                 .allowEmptyShould(true)
                 .check(classes);
     }
 
     @Test
-    @DisplayName("A-3: application 은 infrastructure 를 의존하지 않는다")
+    @DisplayName("application 은 infrastructure 를 의존하지 않는다")
     void applicationShouldNotDependOnInfrastructure() {
         noClasses()
                 .that().resideInAPackage("..application..")
                 .should().dependOnClassesThat()
                 .resideInAPackage("..infrastructure..")
-                .because("A-3: 포트는 application 에 있고, 구현(어댑터)은 infrastructure 가 의존을 역전한다")
+                .because("포트는 application 에 있고, 구현(어댑터)은 infrastructure 가 의존을 역전한다")
                 .allowEmptyShould(true)
                 .check(classes);
     }
 
     @Test
-    @DisplayName("A-6: 레이어 의존 방향 infrastructure → application → domain (역방향 금지)")
+    @DisplayName("레이어 의존 방향 infrastructure → application → domain (역방향 금지)")
     void layerDependenciesShouldPointInward() {
         layeredArchitecture().consideringOnlyDependenciesInLayers()
                 // 스캐폴드 단계엔 각 레이어가 비어 있을 수 있다 → 빈 레이어 허용(코드 생기면 강제).
@@ -110,82 +148,57 @@ class ModuleBoundaryTest {
                 .whereLayer("Infrastructure").mayNotBeAccessedByAnyLayer()
                 .whereLayer("Application").mayOnlyBeAccessedByLayers("Infrastructure")
                 .whereLayer("Domain").mayOnlyBeAccessedByLayers("Application", "Infrastructure")
-                .because("A-6: 안쪽 레이어는 바깥을 모른다")
+                .because("안쪽 레이어는 바깥을 모른다")
                 .check(classes);
     }
 
     @Test
-    @DisplayName("A-4: 바운디드 컨텍스트 간 컴파일 의존 금지 (order ↔ payment ↔ inventory)")
+    @DisplayName("바운디드 컨텍스트 간 컴파일 의존 금지 (order ↔ payment ↔ inventory)")
     void contextsShouldNotDependOnEachOther() {
         assertNoCrossContextDependency("order", "payment", "inventory");
         assertNoCrossContextDependency("payment", "order", "inventory");
         assertNoCrossContextDependency("inventory", "order", "payment");
     }
 
-    /** {@code com.flab.orderplatform.<context>..} 형태의 완전한 패키지 패턴을 만든다. */
-    private static String[] contextPackages(String... contexts) {
-        String[] packages = new String[contexts.length];
-        for (int i = 0; i < contexts.length; i++) {
-            packages[i] = "%s.%s..".formatted(ROOT, contexts[i]);
-        }
-        return packages;
-    }
-
     @Test
-    @DisplayName("C-4: domain 이 의존할 수 있는 shared 는 통합 이벤트 계약(..shared.event..)뿐이다")
+    @DisplayName("domain 이 의존할 수 있는 shared 는 통합 이벤트 계약·공유 커널뿐이다")
     void domainMayOnlyDependOnSharedEventContract() {
         noClasses()
-                .that().resideInAPackage("..domain..")
+                .that().resideInAnyPackage(contextPackages("order", "payment", "inventory"))
+                .and().resideInAPackage("..domain..")
                 .should().dependOnClassesThat(
                         resideInAPackage(SHARED)
-                                .and(not(resideInAPackage(SHARED_EVENT)))
-                                .as("통합 이벤트 계약(%s)이 아닌 shared 클래스".formatted(SHARED_EVENT)))
-                .because("C-4: 도메인 이벤트는 자신의 통합 이벤트 계약만 안다. 계약 외 shared 확장이 도메인으로 새면 안 된다")
+                                .and(not(resideInAnyPackage(DOMAIN_ALLOWED_SHARED)))
+                                .as("통합 이벤트 계약·공유 커널이 아닌 shared 클래스"))
+                .because("도메인은 통합 이벤트 계약과 공유 커널만 안다. 그 외 shared(아웃박스·인박스·메시징)가 도메인으로 새면 안 된다")
                 .allowEmptyShould(true)
                 .check(classes);
     }
 
     @Test
-    @DisplayName("A-7: shared 는 어떤 바운디드 컨텍스트도 의존하지 않는다 (역방향 의존 금지)")
+    @DisplayName("shared 는 어떤 바운디드 컨텍스트도 의존하지 않는다 (역방향 의존 금지)")
     void sharedShouldNotDependOnAnyContext() {
         noClasses()
                 .that().resideInAPackage(SHARED)
                 .should().dependOnClassesThat()
                 .resideInAnyPackage(contextPackages("order", "payment", "inventory"))
-                .because("C-3: shared 는 계약만 담는다. 컨텍스트를 알기 시작하면 '분산된 모놀리스'가 된다")
+                .because("shared 는 계약만 담는다. 컨텍스트를 알기 시작하면 '분산된 모놀리스'가 된다")
                 .allowEmptyShould(true)
                 .check(classes);
     }
 
     @Test
-    @DisplayName("A-8: shared 는 프레임워크를 의존하지 않는다 (순수 계약 = 분리 배포 가능)")
+    @DisplayName("shared의 이벤트는 프레임워크를 의존하지 않는다")
     void sharedShouldBeFrameworkFree() {
         noClasses()
-                .that().resideInAPackage(SHARED)
+                .that().resideInAPackage("..shared.event..")
                 .should().dependOnClassesThat()
                 .resideInAnyPackage(
                         "org.springframework..",
                         "jakarta.persistence..",
                         "org.apache.kafka..",
                         "com.fasterxml.jackson..")
-                .because("C-3: shared 가 프레임워크를 알면 계약 라이브러리(jar)로 떼어낼 수 없다. 직렬화는 각 컨텍스트 infrastructure 책임(C-4)")
-                .allowEmptyShould(true)
-                .check(classes);
-    }
-
-    /**
-     * A-4 + A-5: {@code self} 컨텍스트는 다른 컨텍스트 패키지를 의존 MUST NOT.
-     * 컨텍스트 간 유일한 공유 통로는 {@code ..shared..}(통합 이벤트)뿐이다(A-5).
-     */
-    private static void assertNoCrossContextDependency(String self, String... others) {
-        String[] otherPackages = new String[others.length];
-        for (int i = 0; i < others.length; i++) {
-            otherPackages[i] = "..%s..".formatted(others[i]);
-        }
-        noClasses()
-                .that().resideInAPackage("..%s..".formatted(self))
-                .should().dependOnClassesThat().resideInAnyPackage(otherPackages)
-                .because("A-4/A-5: 컨텍스트 간 통신은 shared 통합 이벤트(Kafka)로만 한다")
+                .because("shared 가 프레임워크를 알면 계약 라이브러리(jar)로 떼어낼 수 없다. 직렬화는 각 컨텍스트 infrastructure 책임(C-4)")
                 .allowEmptyShould(true)
                 .check(classes);
     }

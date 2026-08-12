@@ -1,5 +1,6 @@
 package com.flab.orderplatform.order.domain;
 
+import com.flab.orderplatform.shared.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

@@ -20,6 +20,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.sql.DataSource;
 import java.util.Map;
 
+import static com.flab.orderplatform.shared.SharedPersistenceConstant.INBOX;
+import static com.flab.orderplatform.shared.SharedPersistenceConstant.OUTBOX;
+
 /**
  * Order 컨텍스트의 영속화 설정
  */
@@ -64,7 +67,7 @@ public class OrderPersistenceConfig {
             @Value("${order.jpa.hibernate.ddl-auto:validate}") String ddlAuto) {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
         emf.setDataSource(dataSource);
-        emf.setPackagesToScan(CONTEXT_PACKAGE);
+        emf.setPackagesToScan(CONTEXT_PACKAGE, INBOX, OUTBOX);
         emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         emf.setJpaPropertyMap(Map.of(
                 "hibernate.hbm2ddl.auto", ddlAuto,

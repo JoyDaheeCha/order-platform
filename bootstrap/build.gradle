@@ -16,6 +16,9 @@ dependencies {
     // 인프라 연결 확인용
     implementation libs.spring.boot.starter.actuator
 
+    // jpa audit 활성화
+    implementation libs.spring.boot.starter.data.jpa
+
     // --- 경계 강제 테스트(A-1~A-6)는 전 모듈을 한 클래스패스에서 보는 bootstrap 에서 수행 ---
     testImplementation libs.spring.boot.starter.test
     testImplementation libs.archunit.junit5

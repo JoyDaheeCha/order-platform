@@ -57,6 +57,10 @@
 
 ## 주문 취소 api 추가
 
+## 리팩토링
+- [x] shared 로 기능 공통화
+- [x] order 인박스 패턴도 스케줄러로 일원화
+
 # Week 2 — 첫 관통 → Saga Happy Path
 
 ### Day 6 — Outbox + read model → **첫 관통 완성** ⚠️ `Phase 1`

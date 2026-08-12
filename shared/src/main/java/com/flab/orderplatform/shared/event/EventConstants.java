@@ -11,6 +11,8 @@ public final class EventConstants {
     // --- Order ---
     public static final String ORDER_CREATED = "OrderCreated";
     public static final String ORDER_CREATED_TOPIC = "MSG-ORDER-CREATED";
+    public static final String ORDER_PAID = "OrderPaid";
+    public static final String ORDER_PAID_TOPIC = "MSG-ORDER-PAID";
     public static final String ORDER_CONFIRMED = "OrderConfirmed";
     public static final String ORDER_CONFIRMED_TOPIC = "MSG-ORDER-CONFIRMED";
     public static final String ORDER_CANCELLATION_REQUESTED = "OrderCancellationRequested";

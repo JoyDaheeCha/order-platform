@@ -40,6 +40,10 @@ spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-
 flyway-core = { module = "org.flywaydb:flyway-core" }
 flyway-mysql = { module = "org.flywaydb:flyway-mysql" }
 
+# --- jackson ---
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
+
 # --- test ---
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 spring-kafka-test = { module = "org.springframework.kafka:spring-kafka-test" }
