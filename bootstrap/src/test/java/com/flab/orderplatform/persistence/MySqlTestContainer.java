@@ -1,10 +1,10 @@
 package com.flab.orderplatform.persistence;
 
-import java.nio.file.Path;
-
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.utility.MountableFile;
+
+import java.nio.file.Path;
 
 /**
  * 컨텍스트 3개가 공유하는 단일 MySQL 컨테이너
@@ -52,8 +52,11 @@ public final class MySqlTestContainer {
         registry.add("datasource.%s.password".formatted(context), INSTANCE::getPassword);
     }
 
+    /**
+     * 운영 설정(application-local.yml)과 동일하게 {@code innodb_lock_wait_timeout=3}
+     */
     private static String jdbcUrl(String schema) {
-        return "jdbc:mysql://%s:%d/%s".formatted(
+        return "jdbc:mysql://%s:%d/%s?sessionVariables=innodb_lock_wait_timeout=3".formatted(
                 INSTANCE.getHost(), INSTANCE.getFirstMappedPort(), schema);
     }
 }
