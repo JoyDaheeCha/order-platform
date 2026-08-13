@@ -22,6 +22,7 @@ public class PessimisticLockInventoryDecreaseCommandHandler implements Inventory
     /**
      * 특정 주문에 대해 재고를 일괄 감소시킨다.
      */
+    @Override
     @InventoryTransactional
     public List<Inventory> handle(List<InventoryDecreaseCommand> commands) {
         var productCodes = getProductCodes(commands);
@@ -63,7 +64,6 @@ public class PessimisticLockInventoryDecreaseCommandHandler implements Inventory
     private List<String> getProductCodes(List<InventoryDecreaseCommand> commands) {
         return commands.stream()
                 .map(x -> x.product().productCode())
-                .sorted() // 상품 코드 오름 차순 정렬. 비관락 적용시 선제 조건
                 .toList();
     }
 }
