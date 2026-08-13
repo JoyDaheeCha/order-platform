@@ -46,18 +46,17 @@ public class PaymentFacade {
 
         // 결제 처리 시작
         paymentCommandHandler.handle(new PaymentStartCommand(orderNumber));
-        return integratePgService(createCommand);
+        return integratePgService(createCommand.orderNumber(), createCommand.amount());
     }
 
-    private Payment integratePgService(PaymentCreateCommand createCommand) {
-        var orderNumber = createCommand.orderNumber();
+    private Payment integratePgService(String orderNumber, Long amount) {
         // PG 연동
         PgApprovalResult pgApprovalResult;
         try {
             var pgApprovalRequest = PgApprovalRequest
                     .builder()
                     .orderNumber(orderNumber)
-                    .amount(createCommand.amount())
+                    .amount(amount)
                     .build();
             pgApprovalResult = paymentGateway.approve(pgApprovalRequest);
         } catch (PaymentException e) {
@@ -107,12 +106,7 @@ public class PaymentFacade {
             paymentCommandHandler.handle(completeCommand);
             return;
         }
-        // PG 사에서 결제 성공 기록이 없는 경우 -> 재처리
-        var paymentCreateCommand = PaymentCreateCommand.builder()
-                .orderNumber(orderNumber)
-                .buyerId(payment.getBuyerId())
-                .amount(payment.getAmount())
-                .build();
-        integratePgService(paymentCreateCommand);
+        // PG 사에서 결제 성공 기록이 없는 경우 -> 연동 재처리
+        integratePgService(orderNumber, payment.getAmount());
     }
 }
