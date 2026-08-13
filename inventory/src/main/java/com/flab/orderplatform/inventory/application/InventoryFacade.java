@@ -1,17 +1,13 @@
 package com.flab.orderplatform.inventory.application;
 
-import com.flab.orderplatform.inventory.application.annotation.InventoryTransactional;
 import com.flab.orderplatform.inventory.application.command.InventoryDecreaseCommand;
 import com.flab.orderplatform.inventory.application.exception.DuplicatedProductException;
 import com.flab.orderplatform.inventory.application.port.out.InventoryHistoryRepository;
 import com.flab.orderplatform.inventory.domain.Inventory;
-import com.flab.orderplatform.inventory.domain.event.StockDeductedEvent;
 import com.flab.orderplatform.shared.event.OrderPaidPayload;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,9 +17,7 @@ public class InventoryFacade {
 
     private final InventoryHistoryRepository inventoryHistoryRepository;
     private final InventoryDecreaseLockResolver lockResolver;
-    private final ApplicationEventPublisher eventPublisher;
 
-    @InventoryTransactional
     public List<Inventory> decreaseStock(OrderPaidPayload event) {
         // 이미 재고가 차감된 주문으로 처리하지 않는다.
         if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber())) {
@@ -35,14 +29,7 @@ public class InventoryFacade {
         var orderNumber = event.orderNumber();
         var commands = getCommands(event, orderNumber);
 
-        var result = lockResolver.resolve().handle(commands);
-
-        var stockDeductedEvent = StockDeductedEvent.builder()
-                .orderNumber(orderNumber)
-                .occurredOn(LocalDateTime.now())
-                .build();
-        eventPublisher.publishEvent(stockDeductedEvent);
-        return result;
+        return lockResolver.resolve().handle(commands);
     }
 
     private void validateDuplicatedProductCode(OrderPaidPayload event) {

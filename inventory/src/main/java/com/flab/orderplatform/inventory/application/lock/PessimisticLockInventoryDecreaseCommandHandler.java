@@ -6,9 +6,12 @@ import com.flab.orderplatform.inventory.application.exception.InventoryNotFoundE
 import com.flab.orderplatform.inventory.application.port.out.InventoryDecreaseCommandHandler;
 import com.flab.orderplatform.inventory.application.port.out.InventoryRepository;
 import com.flab.orderplatform.inventory.domain.Inventory;
+import com.flab.orderplatform.inventory.domain.event.StockDeductedEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PessimisticLockInventoryDecreaseCommandHandler implements InventoryDecreaseCommandHandler {
     private final InventoryRepository inventoryRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 특정 주문에 대해 재고를 일괄 감소시킨다.
@@ -39,7 +43,17 @@ public class PessimisticLockInventoryDecreaseCommandHandler implements Inventory
                     return command.decreaseStock(inventory);
                 })
                 .toList();
-        return inventoryRepository.saveAll(decreasedStocks);
+
+        // 재고 변경사항 저장
+        var savedInventories = inventoryRepository.saveAll(decreasedStocks);
+        // 재고 차감 완료 이벤트 발행
+        var stockDeductedEvent = StockDeductedEvent.builder()
+                .orderNumber(commands.getFirst().orderNumber())
+                .occurredOn(LocalDateTime.now())
+                .build();
+        eventPublisher.publishEvent(stockDeductedEvent);
+
+        return savedInventories;
     }
 
     /**
