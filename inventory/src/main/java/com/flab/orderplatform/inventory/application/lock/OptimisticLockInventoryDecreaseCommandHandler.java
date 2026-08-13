@@ -42,4 +42,11 @@ public class OptimisticLockInventoryDecreaseCommandHandler implements InventoryD
         log.error("동시성 충돌로 인해 재고 감소에 실패했습니다. (주문번호:{})", orderNumber, e);
         throw new InventoryDecreasementFailureByConcurrencyException(orderNumber);
     }
+
+    /** 재시도 대상이 아닌 예외(재고 부족 등)는 원본 그대로 전파한다. */
+    @SuppressWarnings("unused")
+    @Recover
+    public List<Inventory> recover(RuntimeException e, List<InventoryDecreaseCommand> commands) {
+        throw e;
+    }
 }
