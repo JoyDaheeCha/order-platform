@@ -1,17 +1,18 @@
 # 컨텍스트별 DataSource 3세트
 #   같은 인스턴스(포트 13306)를 보지만 스키마가 다르고, 각자 자기 EntityManagerFactory 를 갖는다.
 #   → 타 스키마 테이블이 EntityManager 에 아예 안 보이도록 설정
+#  -> lock 은 최대 3초 허용 (@QueryHints 는 mysql에서는 사용불가하여 yml에 설정)
 datasource:
   order:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/order_schema?characterEncoding=UTF-8&serverTimezone=UTC
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/order_schema?characterEncoding=UTF-8&serverTimezone=UTCC&sessionVariables=innodb_lock_wait_timeout=3
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
   payment:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/payment_schema?characterEncoding=UTF-8&serverTimezone=UTC
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/payment_schema?characterEncoding=UTF-8&serverTimezone=UTCC&sessionVariables=innodb_lock_wait_timeout=3
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
   inventory:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/inventory_schema?characterEncoding=UTF-8&serverTimezone=UTC
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/inventory_schema?characterEncoding=UTF-8&serverTimezone=UTCC&sessionVariables=innodb_lock_wait_timeout=3
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
 
