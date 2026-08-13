@@ -11,8 +11,8 @@ rootProject.name = "order-platform"
 
 // --- 바운디드 컨텍스트 3 + 공통(shared) + 실행(bootstrap) = 총 5개 모듈 ---
 // 헥사고날 3계층(domain·application·infrastructure)은 각 컨텍스트 모듈 *내부 패키지*로 둔다(별도 모듈 X).
-//   · 컨텍스트 간 격리(C-1): 모듈 경계가 컴파일타임에 강제 — order 는 payment/inventory 를 의존 못 함.
-//   · 레이어 규칙(A-1·A-3·A-6): ArchUnit(패키지 기준, bootstrap 테스트)이 강제.
+//   · 컨텍스트 간 격리: 모듈 경계가 컴파일타임에 강제 — order 는 payment/inventory 를 의존 못 함.
+//   · 레이어 규칙: ArchUnit(패키지 기준, bootstrap 테스트)이 강제.
 
 include(
     ":shared",

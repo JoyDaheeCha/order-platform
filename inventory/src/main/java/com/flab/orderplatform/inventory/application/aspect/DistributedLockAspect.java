@@ -17,6 +17,7 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 @Aspect
@@ -60,7 +61,8 @@ public class DistributedLockAspect {
     private List<String> convertToKey(ProceedingJoinPoint joinPoint, String keyExpression) {
         var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         var context = new StandardEvaluationContext();
-        var parameterNames = nameDiscoverer.getParameterNames(method);
+        var parameterNames = getParameterNames(method);
+
         var args = joinPoint.getArgs();
         for (int i = 0; i < parameterNames.length; i++) {
             context.setVariable(parameterNames[i], args[i]);
@@ -70,6 +72,16 @@ public class DistributedLockAspect {
             return list.stream().map(String::valueOf).toList();
         }
         return List.of(String.valueOf(value));
+    }
+
+    private String[] getParameterNames(Method method) {
+        var parameterNames = nameDiscoverer.getParameterNames(method);
+        if (parameterNames == null) {
+            throw new IllegalStateException(
+                    "%s 의 파라미터명을 읽을 수 없습니다. 컴파일 시 '-parameters' 옵션이 적용되었는지 확인하세요."
+                            .formatted(method));
+        }
+        return parameterNames;
     }
 
     private Object invokeFallbackMethod(ProceedingJoinPoint joinPoint,
