@@ -12,7 +12,7 @@ import java.util.Map;
 public class InventoryDecreaseLockResolver {
     private final Map<String, InventoryDecreaseCommandHandler> handler;
 
-    @Value("${inventory.lock-strategy:pessimistic}")
+    @Value("${inventory.lock-strategy:distributed}")
     private String strategy;
 
     public InventoryDecreaseCommandHandler resolve() {

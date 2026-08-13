@@ -10,7 +10,7 @@ idempotent:
   ttl: 1m
 
 inventory:
-  lock-strategy: pessimistic # optimistic, pessimistic, distributed 중 하나 선택
+  lock-strategy: distributed # optimistic, pessimistic, distributed 중 하나 선택
 
 management:
   endpoints:
