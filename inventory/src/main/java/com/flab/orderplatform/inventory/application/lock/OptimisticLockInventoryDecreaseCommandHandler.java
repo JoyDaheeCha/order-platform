@@ -22,13 +22,13 @@ public class OptimisticLockInventoryDecreaseCommandHandler implements InventoryD
 
     /**
      * 실패시 최대 5회 재시도
-     * 대기 시간 1초 -> 2초 -> 4초 -> 8초로 지수 증가 (최대 10초 제한)
+     * 대기 시간 0.05초 -> 0.1초 -> 0.2초 -> 0.4초 ...로 지수 증가
      */
     @Override
     @Retryable(
             maxAttempts = 5,
             retryFor = ObjectOptimisticLockingFailureException.class,
-            backoff = @Backoff(delay = 1000, multiplier = 2.0, maxDelay = 10000, random = true)
+            backoff = @Backoff(delay = 50, multiplier = 2.0, random = true)
     )
     public List<Inventory> handle(List<InventoryDecreaseCommand> commands) {
         return worker.handle(commands);
