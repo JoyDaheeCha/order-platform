@@ -42,7 +42,6 @@ public class PessimisticLockInventoryDecreaseCommandHandler implements Inventory
         return inventoryRepository.saveAll(decreasedStocks);
     }
 
-    // TODO 락 구현체와 분리하는게 나을지 고민해보기.
     /**
      * 모두 존재하는 재고인지 유효성 검증
      *
