@@ -6,7 +6,7 @@ import com.flab.orderplatform.order.application.port.out.ProductRepository;
 import com.flab.orderplatform.order.domain.Order;
 import com.flab.orderplatform.order.domain.OrderNumberGenerator;
 import com.flab.orderplatform.order.domain.external.Product;
-import com.flab.orderplatform.order.infrastructure.config.RetryConfig;
+import com.flab.orderplatform.order.infrastructure.config.OrderRetryConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -24,7 +24,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-@SpringJUnitConfig({RetryConfig.class, OrderCreateFacade.class})
+@SpringJUnitConfig({OrderRetryConfig.class, OrderCreateFacade.class})
 @DisplayName("주문 생성 facade 테스트")
 class OrderCreateFacadeRetryTest {
 
