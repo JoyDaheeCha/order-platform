@@ -38,6 +38,10 @@ public class Inventory extends BaseTimeEntity {
     @OneToMany(mappedBy = "inventory", fetch = LAZY, cascade = {PERSIST})
     private List<InventoryHistory> inventoryHistories = new ArrayList<>();
 
+    @Version
+    @Column(name = "version", nullable = false, columnDefinition = "INT NOT NULL COMMENT '버전'")
+    private Integer version;
+
     @Builder
     public Inventory(String productCode, Integer stock, List<InventoryHistory> inventoryHistories) {
         this.productCode = productCode;
