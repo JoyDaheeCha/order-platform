@@ -29,7 +29,7 @@ public class InventoryRepositoryAdaptor implements InventoryRepository {
      */
     @Override
     public Set<Inventory> findByProductCodeInWithLock(Set<String> productCodes) {
-        return inventoryPessimisticLockStrategy.findByProductCodeIn(productCodes);
+        return inventoryPessimisticLockStrategy.findByProductCodeInOrderbyProductCode(productCodes);
     }
 
     @Override

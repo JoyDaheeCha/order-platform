@@ -4,15 +4,15 @@
 #  -> lock 은 최대 3초 허용 (@QueryHints 는 mysql에서는 사용불가하여 yml에 설정)
 datasource:
   order:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/order_schema?characterEncoding=UTF-8&serverTimezone=UTCC&sessionVariables=innodb_lock_wait_timeout=3
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/order_schema?characterEncoding=UTF-8&serverTimezone=UTC&sessionVariables=innodb_lock_wait_timeout=3
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
   payment:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/payment_schema?characterEncoding=UTF-8&serverTimezone=UTCC&sessionVariables=innodb_lock_wait_timeout=3
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/payment_schema?characterEncoding=UTF-8&serverTimezone=UTC&sessionVariables=innodb_lock_wait_timeout=3
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
   inventory:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/inventory_schema?characterEncoding=UTF-8&serverTimezone=UTCC&sessionVariables=innodb_lock_wait_timeout=3
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:13306}/inventory_schema?characterEncoding=UTF-8&serverTimezone=UTC&sessionVariables=innodb_lock_wait_timeout=3
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
 
