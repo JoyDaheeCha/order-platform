@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
+import java.util.Set;
 
 public interface InventoryPessimisticLockStrategy extends JpaRepository<Inventory, Long> {
 
@@ -21,5 +21,5 @@ public interface InventoryPessimisticLockStrategy extends JpaRepository<Inventor
     })
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select i from Inventory i where i.productCode in :productCodes")
-    List<Inventory> findByProductCodeIn(@Param("productCodes") List<String> productCodes);
+    Set<Inventory> findByProductCodeIn(@Param("productCodes") Set<String> productCodes);
 }

@@ -7,7 +7,7 @@ import java.util.Set;
 
 public interface InventoryRepository {
     Set<Inventory> findByProductCodeIn(Set<String> productCodes);
-    List<Inventory> findByProductCodeInWithLock(List<String> productCodes);
+    Set<Inventory> findByProductCodeInWithLock(Set<String> productCodes);
 
     List<Inventory> saveAll(List<Inventory> decreasedStocks);
 }

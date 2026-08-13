@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -23,10 +24,21 @@ public class InventoryDecreaseTransactionalWorker {
     private final ApplicationEventPublisher eventPublisher;
 
     @InventoryTransactional
-    List<Inventory> handle(List<InventoryDecreaseCommand> commands) {
+    public List<Inventory> handle(List<InventoryDecreaseCommand> commands) {
+        return doHandle(commands, inventoryRepository::findByProductCodeIn);
+    }
+
+    @InventoryTransactional
+    public List<Inventory> handleWithPessimisticLock(List<InventoryDecreaseCommand> commands) {
+        return doHandle(commands, inventoryRepository::findByProductCodeInWithLock);
+    }
+
+    private List<Inventory> doHandle(List<InventoryDecreaseCommand> commands,
+                                     Function<Set<String>, Set<Inventory>> query) {
         var productCodes = getProductCodes(commands);
         // 변경 대상 검색
-        var inventories = inventoryRepository.findByProductCodeIn(productCodes);
+        var inventories = query.apply(productCodes);
+
         var inventoryByProductCode = inventories.stream()
                 .collect(Collectors.toMap(Inventory::getProductCode, i -> i));
 
@@ -38,7 +50,7 @@ public class InventoryDecreaseTransactionalWorker {
                     return command.decreaseStock(inventory);
                 })
                 .toList();
-        // version 필드 충돌시 낙관락 발생
+
         var savedInventories = inventoryRepository.saveAll(decreasedStocks);
 
         // 재고 차감 완료 이벤트 발행
