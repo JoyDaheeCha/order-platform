@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class OptimisticLockInventoryDecreaseTransactionalWorker {
+public class InventoryDecreaseTransactionalWorker {
     private final InventoryRepository inventoryRepository;
 
     @InventoryTransactional

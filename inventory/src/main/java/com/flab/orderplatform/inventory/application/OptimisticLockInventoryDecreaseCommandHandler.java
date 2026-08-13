@@ -18,7 +18,7 @@ import java.util.List;
 @Service("optimisticLockInventoryDecreaseCommandHandler")
 @RequiredArgsConstructor
 public class OptimisticLockInventoryDecreaseCommandHandler implements InventoryDecreaseCommandHandler {
-    private final OptimisticLockInventoryDecreaseTransactionalWorker worker;
+    private final InventoryDecreaseTransactionalWorker worker;
 
     /**
      * 실패시 최대 5회 재시도
