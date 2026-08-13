@@ -28,7 +28,7 @@ public class OptimisticLockInventoryDecreaseCommandHandler implements InventoryD
     @Retryable(
             maxAttempts = 5,
             retryFor = ObjectOptimisticLockingFailureException.class,
-            backoff = @Backoff(delay = 1000, multiplier = 2.0, maxDelay = 1000)
+            backoff = @Backoff(delay = 1000, multiplier = 2.0, maxDelay = 10000, random = true)
     )
     public List<Inventory> handle(List<InventoryDecreaseCommand> commands) {
         return worker.handle(commands);
