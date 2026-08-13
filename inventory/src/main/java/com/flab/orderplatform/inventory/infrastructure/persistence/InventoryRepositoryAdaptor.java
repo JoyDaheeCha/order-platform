@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -19,16 +18,6 @@ public class InventoryRepositoryAdaptor implements InventoryRepository {
     @Override
     public Set<Inventory> findByProductCodeIn(Set<String> productCodes) {
         return inventoryJpaRepository.findByProductCodeIn(productCodes);
-    }
-
-    @Override
-    public Optional<Inventory> findByProductCode(String productCode) {
-        return inventoryJpaRepository.findByProductCode(productCode);
-    }
-
-    @Override
-    public Inventory save(Inventory inventory) {
-        return inventoryJpaRepository.save(inventory);
     }
 
     /**
