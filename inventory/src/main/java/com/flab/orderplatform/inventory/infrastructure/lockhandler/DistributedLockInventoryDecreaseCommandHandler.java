@@ -1,4 +1,4 @@
-package com.flab.orderplatform.inventory.application;
+package com.flab.orderplatform.inventory.infrastructure.lockhandler;
 
 import com.flab.orderplatform.inventory.application.annotation.DistributedLock;
 import com.flab.orderplatform.inventory.application.command.InventoryDecreaseCommand;

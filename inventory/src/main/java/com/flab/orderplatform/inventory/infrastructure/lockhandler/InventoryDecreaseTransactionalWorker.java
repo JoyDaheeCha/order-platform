@@ -1,33 +1,28 @@
-package com.flab.orderplatform.inventory.application;
+package com.flab.orderplatform.inventory.infrastructure.lockhandler;
 
 import com.flab.orderplatform.inventory.application.annotation.InventoryTransactional;
 import com.flab.orderplatform.inventory.application.command.InventoryDecreaseCommand;
 import com.flab.orderplatform.inventory.application.exception.InventoryNotFoundException;
-import com.flab.orderplatform.inventory.application.port.out.InventoryDecreaseCommandHandler;
 import com.flab.orderplatform.inventory.application.port.out.InventoryRepository;
 import com.flab.orderplatform.inventory.domain.Inventory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Service("pessimisticLockInventoryDecreaseCommandHandler")
+@Component
 @RequiredArgsConstructor
-public class PessimisticLockInventoryDecreaseCommandHandler implements InventoryDecreaseCommandHandler {
+public class InventoryDecreaseTransactionalWorker {
     private final InventoryRepository inventoryRepository;
 
-    /**
-     * 특정 주문에 대해 재고를 일괄 감소시킨다.
-     */
-    @Override
     @InventoryTransactional
-    public List<Inventory> handle(List<InventoryDecreaseCommand> commands) {
+    List<Inventory> handle(List<InventoryDecreaseCommand> commands) {
         var productCodes = getProductCodes(commands);
-        // 비관락 적용
-        var inventories = inventoryRepository.findByProductCodeInWithLock(productCodes);
+        // 변경 대상 검색
+        var inventories = inventoryRepository.findByProductCodeIn(productCodes);
         var inventoryByProductCode = inventories.stream()
                 .collect(Collectors.toMap(Inventory::getProductCode, i -> i));
 
@@ -39,6 +34,7 @@ public class PessimisticLockInventoryDecreaseCommandHandler implements Inventory
                     return command.decreaseStock(inventory);
                 })
                 .toList();
+        // version 필드 충돌시 낙관락 발생
         return inventoryRepository.saveAll(decreasedStocks);
     }
 
@@ -49,7 +45,7 @@ public class PessimisticLockInventoryDecreaseCommandHandler implements Inventory
      * @param inventoryProductCodeSet 재고 시스템 내 상품 코드 목록
      * @param productCodes            재고 감소 요청된 상푸 코드 목록
      */
-    private void validateIfAllInventoryExisting(Set<String> inventoryProductCodeSet, List<String> productCodes) {
+    private void validateIfAllInventoryExisting(Set<String> inventoryProductCodeSet, Set<String> productCodes) {
         var productCodeSet = new HashSet<>(productCodes);
 
         if (!inventoryProductCodeSet.containsAll(productCodeSet)) {
@@ -61,9 +57,9 @@ public class PessimisticLockInventoryDecreaseCommandHandler implements Inventory
         }
     }
 
-    private List<String> getProductCodes(List<InventoryDecreaseCommand> commands) {
+    private Set<String> getProductCodes(List<InventoryDecreaseCommand> commands) {
         return commands.stream()
                 .map(x -> x.product().productCode())
-                .toList();
+                .collect(Collectors.toSet());
     }
 }

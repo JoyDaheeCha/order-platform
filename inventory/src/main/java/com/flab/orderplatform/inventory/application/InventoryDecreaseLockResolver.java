@@ -1,4 +1,4 @@
-package com.flab.orderplatform.inventory;
+package com.flab.orderplatform.inventory.application;
 
 import com.flab.orderplatform.inventory.application.port.out.InventoryDecreaseCommandHandler;
 import lombok.RequiredArgsConstructor;

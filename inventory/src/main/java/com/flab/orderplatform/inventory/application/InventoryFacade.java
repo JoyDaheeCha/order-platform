@@ -1,6 +1,5 @@
 package com.flab.orderplatform.inventory.application;
 
-import com.flab.orderplatform.inventory.InventoryDecreaseLockResolver;
 import com.flab.orderplatform.inventory.application.annotation.InventoryTransactional;
 import com.flab.orderplatform.inventory.application.command.InventoryDecreaseCommand;
 import com.flab.orderplatform.inventory.application.exception.DuplicatedProductException;
