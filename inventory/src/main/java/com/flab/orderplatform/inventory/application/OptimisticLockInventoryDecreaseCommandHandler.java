@@ -39,7 +39,7 @@ public class OptimisticLockInventoryDecreaseCommandHandler implements InventoryD
     @Recover
     public List<Inventory> recover(ObjectOptimisticLockingFailureException e, List<InventoryDecreaseCommand> commands) {
         var orderNumber = commands.getFirst().orderNumber();
-        log.error("동시성 충돌로 인해 재고 감소에 실패했습니다. (주문번호:{}", orderNumber, e);
+        log.error("동시성 충돌로 인해 재고 감소에 실패했습니다. (주문번호:{})", orderNumber, e);
         throw new InventoryDecreasementFailureByConcurrencyException(orderNumber);
     }
 }
