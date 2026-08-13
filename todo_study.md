@@ -8,6 +8,9 @@ PR에서 언급된 내용으로, 학습이 필요합니다.
 - [ ] 카프카 이벤트 통신
   - [ ] 실무에서 Kafka partition key 활용하는 방법
   - [ ] orderId를 partition key로 사용했을 때 이점
+- [ ] 재고 동시성
+  - [ ] ① DB의 isolation level 별로 어떤 이상 현상이 발생할 수 있는지?
+  - [ ] ② isolation level 은 DB단에서 실제로 어떻게 구현이 되는지 ?
 
 ## 나 ##
 - [ ] 환경 세팅 
@@ -35,4 +38,7 @@ PR에서 언급된 내용으로, 학습이 필요합니다.
 - [ ] 재고
   - ① `WHERE qty >= n` 조건부 UPDATE는 왜 "충돌"이라는 개념이 없나?
   - ② 왜 결제 *후*에 재고를 차감하나 — 순서를 바꾸면 보상 학습이 어떻게 달라지나
-  - ③ all-or-nothing 차감은 왜 필요한가?
+  - ③ all-or-nothing 차감은 왜 필요한가? 
+- [ ] 재고 동시성
+  - ① race condition은 어떻게 오버셀을 만드나(read-modify-write)?
+  - ② 비관락, 낙관적 락· 분산락 각각의 트레이드오프는?
