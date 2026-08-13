@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
+import static jakarta.persistence.CascadeType.MERGE;
 import static jakarta.persistence.CascadeType.PERSIST;
 import static jakarta.persistence.FetchType.LAZY;
 
@@ -35,7 +36,7 @@ public class Inventory extends BaseTimeEntity {
     @Column(name = "stock", nullable = false, columnDefinition = "INT NOT NULL COMMENT '재고 수량'")
     private Integer stock;
 
-    @OneToMany(mappedBy = "inventory", fetch = LAZY, cascade = {PERSIST})
+    @OneToMany(mappedBy = "inventory", fetch = LAZY, cascade = {PERSIST, MERGE})
     private List<InventoryHistory> inventoryHistories = new ArrayList<>();
 
     @Version
