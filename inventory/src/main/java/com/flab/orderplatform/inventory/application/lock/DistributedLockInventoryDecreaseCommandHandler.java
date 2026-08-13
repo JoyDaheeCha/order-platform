@@ -33,7 +33,7 @@ public class DistributedLockInventoryDecreaseCommandHandler implements Inventory
      * 분산락 획득 실패시 실행되는 fallback 메서드
      */
     @SuppressWarnings("unused")
-    public String handleFallback(List<InventoryDecreaseCommand> commands) {
+    public List<Inventory> handleFallback(List<InventoryDecreaseCommand> commands) {
         var orderNumber = commands.getFirst().orderNumber();
         log.error("동시성 충돌로 인해 재고 감소에 실패했습니다. (주문번호:{})", orderNumber);
         throw new InventoryDecreasementFailureByConcurrencyException(orderNumber);
