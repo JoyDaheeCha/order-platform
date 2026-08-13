@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 @Repository
 @RequiredArgsConstructor
@@ -30,8 +29,7 @@ public class InventoryRepositoryAdaptor implements InventoryRepository {
      */
     @Override
     public Set<Inventory> findByProductCodeInWithLock(Set<String> productCodes) {
-        var sortedProductCodes = new TreeSet<>(productCodes); // 상품 코드 오름차순 정렬
-        return inventoryPessimisticLockStrategy.findByProductCodeIn(sortedProductCodes);
+        return inventoryPessimisticLockStrategy.findByProductCodeIn(productCodes);
     }
 
     @Override

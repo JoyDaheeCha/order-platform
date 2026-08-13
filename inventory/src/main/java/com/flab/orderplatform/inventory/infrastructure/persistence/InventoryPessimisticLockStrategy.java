@@ -20,6 +20,6 @@ public interface InventoryPessimisticLockStrategy extends JpaRepository<Inventor
             @QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")
     })
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select i from Inventory i where i.productCode in :productCodes")
-    Set<Inventory> findByProductCodeIn(@Param("productCodes") Set<String> productCodes);
+    @Query("select i from Inventory i where i.productCode in :productCodes order by i.productCode")
+    Set<Inventory> findByProductCodeInOrderbyProductCode(@Param("productCodes") Set<String> productCodes);
 }
