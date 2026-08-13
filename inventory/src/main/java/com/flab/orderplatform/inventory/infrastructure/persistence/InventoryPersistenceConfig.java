@@ -78,7 +78,6 @@ public class InventoryPersistenceConfig {
         return emf;
     }
 
-    @DependsOn("inventoryFlyway")
     @Bean
     PlatformTransactionManager inventoryTransactionManager(
             @Qualifier("inventoryEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
