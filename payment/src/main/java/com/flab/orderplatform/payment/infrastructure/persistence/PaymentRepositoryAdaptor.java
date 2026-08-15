@@ -4,8 +4,10 @@ import com.flab.orderplatform.payment.application.port.out.PaymentRepository;
 import com.flab.orderplatform.payment.domain.Payment;
 import com.flab.orderplatform.payment.domain.status.PaymentStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,5 +29,10 @@ public class PaymentRepositoryAdaptor implements PaymentRepository {
     @Override
     public Optional<Payment> findByOrderNumberAndStatusIn(String orderNumber, List<PaymentStatus> paymentStatuses) {
         return paymentJpaRepository.findByOrderNumberAndStatusIn(orderNumber, paymentStatuses);
+    }
+
+    @Override
+    public List<Payment> findByStatusAndPgRequestedAtBefore(PaymentStatus status, LocalDateTime threshold, Pageable pageable) {
+        return paymentJpaRepository.findByStatusAndPgRequestedAtBefore(status, threshold, pageable);
     }
 }
