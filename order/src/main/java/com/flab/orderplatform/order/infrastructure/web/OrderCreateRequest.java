@@ -2,6 +2,7 @@ package com.flab.orderplatform.order.infrastructure.web;
 
 import com.flab.orderplatform.order.application.command.OrderCreateCommand;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Builder;
@@ -20,7 +21,7 @@ public record OrderCreateRequest(
         Long customerId,
 
         @Valid
-        @NotNull(message = "주문상품 정보 목록은 필수입니다.")
+        @NotEmpty(message = "주문상품 정보 목록은 필수입니다.")
         List<OrderItemDto> orderItemDtos
 ) {
     /**
