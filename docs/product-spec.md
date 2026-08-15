@@ -28,9 +28,10 @@
 1. 구매자가 상품·수량을 골라 **주문 생성** 요청 (멱등키 동반)
 2. 주문이 `PENDING` 상태로 생성되고 → **`OrderCreated`** 이벤트 발행 → 구매자에게 **즉시 `202 Accepted {orderId}` 응답**
 3. 결제 컨텍스트가 구독 → 결제 시도 → 성공 시 **`PaymentCompleted`**
-4. 재고 컨텍스트가 구독 → 재고 차감 → 성공 시 **`StockDeducted`**
-5. 주문이 `CONFIRMED`로 전이 → **`OrderConfirmed`** 발행
-6. 구매자는 **주문 상태 조회하여 `CONFIRMED` 확인
+4. 주문 컨텍스트가 구독 -> 결제완료로 상태 변경 -> **`OrderPaid`**
+5. 재고 컨텍스트가 구독 → 재고 차감 → 성공 시 **`StockDeducted`**
+6. 주문이 `CONFIRMED`로 전이 → **`OrderConfirmed`** 발행
+7. 구매자는 **주문 상태 조회하여 `CONFIRMED` 확인
 
 ---
 

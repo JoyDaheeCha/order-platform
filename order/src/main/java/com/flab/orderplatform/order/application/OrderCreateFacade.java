@@ -62,12 +62,11 @@ public class OrderCreateFacade {
                 .collect(Collectors.toMap(Product::getProductCode, p -> p));
 
         // 모든 상품코드가 유효하면 정상
-        if (productCodes.size() == productsByProductCodeMap.size()) {
-            return productsByProductCodeMap;
-        }
-
         var notFound = new LinkedHashSet<>(productCodes);
         notFound.removeAll(productsByProductCodeMap.keySet());
-        throw new ProductNotFoundException(notFound);
+        if (!notFound.isEmpty()) {
+            throw new ProductNotFoundException(notFound);
+        }
+        return productsByProductCodeMap;
     }
 }

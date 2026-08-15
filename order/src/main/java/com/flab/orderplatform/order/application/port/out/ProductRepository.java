@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface ProductRepository {
     List<Product> findAllByProductCodeIn(List<String> productCodes);
+
+    List<Product> findAllByIdIn(List<Long> productIds);
 }

@@ -13,12 +13,12 @@
 ```
 order-platform/
 ├── bootstrap/                  ← Spring Boot 실행 모듈 (main, 전 컨텍스트 조립·설정)
-├── shared/                     ← 통합 이벤트 계약 (Kafka 메시지 스키마)
+├── shared/                     ← 통합 이벤트 계약 (Kafka 메시지 스키마), Outbox/Inbox
 ├── order/                      ← Order 컨텍스트 (단일 모듈)
 │   └── src/main/java/…/order/
 │       ├── domain/             ← 순수 도메인
 │       ├── application/        ← 유스케이스, 포트(interface)
-│       └── infrastructure/     ← 어댑터: JPA · Kafka · REST · Outbox/Inbox
+│       └── infrastructure/     ← 어댑터: JPA · Kafka · REST 
 ├── payment/                    ← Payment 컨텍스트
 └── inventory/                  ← Inventory 컨텍스트
 ```
@@ -56,8 +56,9 @@ domain ──▶ (아무것도 의존하지 않음)
 
 ---
 ## 4. shared 모듈
-- 바운디드 컨텍스트간 이벤트 인터페이스만 포함한다.
+- 바운디드 컨텍스트간 이벤트 인터페이스를 포함한다
   - 메시지 메타(`eventId`·`eventType`·`aggregateType`·`occuuredAt`)는 **Kafka 헤더**로 싣고, body 는 순수 payload 만 담는다.
+- 횡단 기술 관심사 (예. 아웃박스,인박스 구현체) 를 담는다. 
 
 ---
 ## 5. 빌드 (Gradle 멀티모듈)
