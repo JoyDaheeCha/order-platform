@@ -76,8 +76,6 @@ public class Inventory extends BaseTimeEntity {
         return this;
     }
 
-    // TODO: 가용재고수량 줄이는 로직 추가. 테스트 추가
-
     /**
      * 가용 재고 감소<br>
      * 선점된 재고만 감소하며, 가용재고는 재고선점시 감소된 상태라 그대로 유지한다.
