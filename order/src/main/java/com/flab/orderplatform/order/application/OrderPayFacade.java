@@ -1,5 +1,6 @@
 package com.flab.orderplatform.order.application;
 
+import com.flab.orderplatform.order.application.command.OrderFailByInventoryShortageCommand;
 import com.flab.orderplatform.order.application.command.OrderPayCommand;
 import com.flab.orderplatform.order.application.command.OrderPreparePaymentCommand;
 import com.flab.orderplatform.order.application.exception.OrderNotFoundException;
@@ -57,10 +58,21 @@ public class OrderPayFacade {
      * 재고 선점 & 결제 준비 완료
      *
      * @param orderNumber 주문번호
+     * @return 주문
      */
     public Order preparePayment(String orderNumber) {
         // TODO 재고 선점 스케줄러 데이터 등록
         var command = new OrderPreparePaymentCommand(orderNumber);
         return orderCommandHandler.handle(command);
+    }
+
+    /**
+     * 재고 부족으로 인한 주문 실패 처리
+     *
+     * @param orderNumber 주문번호
+     * @return 주문
+     */
+    public Order failOrderByInventoryShortage(String orderNumber) {
+        return orderCommandHandler.handle(new OrderFailByInventoryShortageCommand(orderNumber));
     }
 }

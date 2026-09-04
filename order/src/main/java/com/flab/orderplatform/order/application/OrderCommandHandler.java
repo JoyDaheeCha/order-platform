@@ -2,6 +2,7 @@ package com.flab.orderplatform.order.application;
 
 import com.flab.orderplatform.order.application.annotation.OrderTransactional;
 import com.flab.orderplatform.order.application.command.OrderCreateCommand;
+import com.flab.orderplatform.order.application.command.OrderFailByInventoryShortageCommand;
 import com.flab.orderplatform.order.application.command.OrderPayCommand;
 import com.flab.orderplatform.order.application.command.OrderPreparePaymentCommand;
 import com.flab.orderplatform.order.application.exception.DuplicatedProductException;
@@ -77,7 +78,7 @@ public class OrderCommandHandler {
      * 주문 결제
      *
      * @param command 주문 결제 명령
-     * O98
+     *                O98
      */
     @OrderTransactional
     public Order handle(OrderPayCommand command) {
@@ -95,8 +96,9 @@ public class OrderCommandHandler {
 
     /**
      * 주문 결제 준비
-     * @param command 주문 결제 준비 명령
      *
+     * @param command 주문 결제 준비 명령
+     * @return 주문
      */
     @OrderTransactional
     public Order handle(OrderPreparePaymentCommand command) {
@@ -104,6 +106,19 @@ public class OrderCommandHandler {
         var result = command.preparePayment(order);
         result.pullDomainEventIfPresent()
                 .ifPresent(eventPublisher::publishEvent);
+        return orderRepository.save(result);
+    }
+
+    /**
+     * 재고 부족으로 인한 주문 실패 처리
+     *
+     * @param command 주문 실패 명령
+     * @return 주문
+     */
+    @OrderTransactional
+    public Order handle(OrderFailByInventoryShortageCommand command) {
+        var order = getOrder(command.orderNumber());
+        var result = command.fail(order);
         return orderRepository.save(result);
     }
 }

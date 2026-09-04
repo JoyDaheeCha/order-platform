@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.flab.orderplatform.order.domain.status.OrderFailedReasonType.INVENTORY_SHORTAGE;
 import static com.flab.orderplatform.order.domain.status.OrderStatus.*;
 import static jakarta.persistence.CascadeType.*;
 import static jakarta.persistence.FetchType.LAZY;
@@ -64,6 +65,10 @@ public class Order extends BaseEntity {
 
     @Transient
     private DomainEvent domainEvent;
+
+    @OneToOne(fetch = LAZY, cascade = {PERSIST, REMOVE, MERGE}, orphanRemoval = true)
+    @JoinColumn(name = "order_failed_reason_id")
+    private OrderFailedReason orderFailedReason;
 
     @Builder
     public Order(String orderNumber, Long totalAmount, LocalDateTime orderedAt, OrderStatus status,
@@ -165,6 +170,12 @@ public class Order extends BaseEntity {
                 .aggregateId(orderNumber)
                 .occurredOn(LocalDateTime.now())
                 .build();
+        return this;
+    }
+
+    public Order failByInventoryShortage() {
+        this.status = ORDER_FAILED;
+        this.orderFailedReason = OrderFailedReason.create(INVENTORY_SHORTAGE);
         return this;
     }
 }
