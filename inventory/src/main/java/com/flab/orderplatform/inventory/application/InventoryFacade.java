@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.DECREASE;
+import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.RESERVE;
+
 @Component
 @RequiredArgsConstructor
 public class InventoryFacade {
@@ -29,11 +32,16 @@ public class InventoryFacade {
     private final InventoryCommandHandler inventoryCommandHandler;
     private final ApplicationEventPublisher eventPublisher;
 
+    /**
+     * 재고 차감
+     *
+     * @param event 주문이 결제되었다 이벤트
+     * @return 재고 목록
+     */
     @InventoryTransactional
     public List<Inventory> decreaseStock(OrderPaidPayload event) {
-        // TODO: 재고 히스토리의 요청 유형을 DECREASE 로 추가
         // 이미 재고가 차감된 주문으로 처리하지 않는다.
-        if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber())) {
+        if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber(), DECREASE)) {
             return List.of();
         }
         // 재고 감소 요청된 모든 상품이 존재하는지 유효성 검증
@@ -90,9 +98,18 @@ public class InventoryFacade {
         }
     }
 
+    /**
+     * 재고 선점
+     *
+     * @param event 주문이 생성되었다 이벤트
+     * @return 재고 리스트
+     */
     @InventoryTransactional
     public List<Inventory> reserveInventory(OrderCreatedPayload event) {
-        // TODO 이미 선점 완료된 재고일 경우에 대해 유효성 검증 추가
+        // 이미 재고가 차감된 주문으로 처리하지 않는다.
+        if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber(), RESERVE)) {
+            return List.of();
+        }
 
         // 재고 선점 요청된 모든 상품이 존재하는지 검증
         var productCodes = event.orderItems()

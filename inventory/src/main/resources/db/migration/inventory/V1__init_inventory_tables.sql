@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS inventory_history
     inventory_id        BIGINT       NOT NULL COMMENT '재고 pk',
     order_number        VARCHAR(36)  NOT NULL COMMENT '주문번호 (대외 노출용 비즈니스 키)',
     quantity            INT          NOT NULL COMMENT '변경 수량',
+    request_type        VARCHAR(10)  NOT NULL COMMENT '재고 변경 유형 RESERVE/DECREASE',
     created_at          DATETIME(6)  NOT NULL COMMENT '생성일',
     updated_at          DATETIME(6)  NOT NULL COMMENT '수정일',
     PRIMARY KEY (id),

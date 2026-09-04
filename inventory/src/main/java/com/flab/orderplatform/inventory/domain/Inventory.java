@@ -45,8 +45,7 @@ public class Inventory extends BaseTimeEntity {
     public Inventory(String productCode,
                      Integer stock,
                      Integer reservedStock,
-                     List<InventoryHistory>
-                                 inventoryHistories) {
+                     List<InventoryHistory> inventoryHistories) {
         this.productCode = productCode;
         this.stock = stock;
         this.reservedStock = reservedStock;
@@ -57,7 +56,7 @@ public class Inventory extends BaseTimeEntity {
      * 재고를 선점한다.
      *
      * @param orderNumber 주문번호
-     * @param quantity 재고 선점 요청 수량
+     * @param quantity    재고 선점 요청 수량
      * @return 재고
      */
     public Inventory reserveInventory(String orderNumber, int quantity) {
@@ -70,11 +69,23 @@ public class Inventory extends BaseTimeEntity {
         this.stock -= quantity;
         this.reservedStock += quantity;
 
-        // TODO 히스토리 추가
+        var history = InventoryHistory.createReserveHistory(orderNumber, quantity);
+        history.setInventory(this);
+        this.inventoryHistories.add(history);
+
         return this;
     }
 
-    // TODO: 가용재고수량 줄이는 로직 추가
+    // TODO: 가용재고수량 줄이는 로직 추가. 테스트 추가
+
+    /**
+     * 가용 재고 감소<br>
+     * 선점된 재고만 감소하며, 가용재고는 재고선점시 감소된 상태라 그대로 유지한다.
+     *
+     * @param orderNumber        주문 번호
+     * @param quantityToDecrease 재고 감소 수량
+     * @return 재고
+     */
     public Inventory decreaseStock(String orderNumber, int quantityToDecrease) {
         if (quantityToDecrease <= 0) {
             throw new InvalidInventoryChangeException("재고 할당시, 요청 수량은 양수만 가능합니다. (요청 수량: %d)".formatted(quantityToDecrease));
@@ -82,19 +93,13 @@ public class Inventory extends BaseTimeEntity {
         if (this.stock < quantityToDecrease) {
             throw new InventoryShortageException(stock, quantityToDecrease);
         }
-        this.stock -= quantityToDecrease;
+        this.reservedStock -= quantityToDecrease;
 
-        var history = InventoryHistory.builder()
-                .orderNumber(orderNumber)
-                .quantity(quantityToDecrease)
-                .build();
+        var history = InventoryHistory.createDecreaseHistory(orderNumber, quantityToDecrease);
+        history.setInventory(this);
+        this.inventoryHistories.add(history);
 
-        addInventoryHistory(history);
         return this;
     }
 
-    private void addInventoryHistory(InventoryHistory history) {
-        history.setInventory(this);
-        this.inventoryHistories.add(history);
-    }
 }
