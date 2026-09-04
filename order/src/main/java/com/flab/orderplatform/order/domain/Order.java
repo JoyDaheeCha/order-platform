@@ -17,8 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.flab.orderplatform.order.domain.status.OrderStatus.PAID;
-import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING;
+import static com.flab.orderplatform.order.domain.status.OrderStatus.*;
 import static jakarta.persistence.CascadeType.*;
 import static jakarta.persistence.FetchType.LAZY;
 
@@ -46,7 +45,7 @@ public class Order extends BaseEntity {
     private LocalDateTime orderedAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false, columnDefinition = "VARCHAR(20)  NOT NULL COMMENT '주문 상태 (PENDING/PAID/CONFIRMED/CANCELLED)'")
+    @Column(length = 20, nullable = false, columnDefinition = "VARCHAR(20)  NOT NULL COMMENT '주문 상태 (RESERVING_INVENTORY/PENDING/PAID/CONFIRMED/CANCELLED)'")
     private OrderStatus status;
 
     @OneToMany(mappedBy = "order", fetch = LAZY, cascade = {PERSIST, REMOVE, MERGE})
@@ -82,17 +81,12 @@ public class Order extends BaseEntity {
                                String orderNumber,
                                String idempotentKey) {
 
-        var totalAmount = orderItems.stream()
-                .mapToLong(OrderItem::calculateAmount)
-                .sum();
-
         var orderItemDtos = orderItems
                 .stream()
                 .map(item -> OrderCreatedEvent.OrderItemDto
                         .builder()
-                        .productId(item.getProductId())
+                        .productCode(item.getProductCode())
                         .quantity(item.getQuantity())
-                        .unitPrice(item.getPrice())
                         .build())
                 .toList();
 
@@ -101,18 +95,14 @@ public class Order extends BaseEntity {
                 .orderNumber(orderNumber)
                 .orderItems(orderItems)
                 .orderedAt(LocalDateTime.now())
-                .status(PENDING)
-                .totalAmount(totalAmount)
+                .status(RESERVING_INVENTORY)
                 .idempotentKey(idempotentKey)
                 .build();
 
         order.addOrderItems(orderItems);
         order.domainEvent = OrderCreatedEvent.builder()
                 .orderNumber(orderNumber)
-                .buyerId(customerId)
-                .orderItems(
-                        orderItemDtos
-                ).totalAmount(totalAmount)
+                .orderItems(orderItemDtos)
                 .aggregateId(orderNumber)
                 .occurredOn(LocalDateTime.now())
                 .build();

@@ -29,6 +29,10 @@ public class OrderItem extends BaseEntity {
     @Column(name = "product_id", nullable = false, columnDefinition = "BIGINT NOT NULL COMMENT '상품 ID'")
     private Long productId;
 
+    @Column(length = 36, unique = true, nullable = false,
+            columnDefinition = "VARCHAR(36) NOT NULL COMMENT '상품코드 (예. GD10001)'")
+    private String productCode;
+
     @Column(name = "name", nullable = false, columnDefinition = "VARCHAR(100) NOT NULL COMMENT '상품명'")
     private String name;
 
@@ -39,8 +43,9 @@ public class OrderItem extends BaseEntity {
     private Integer quantity;
 
     @Builder
-    public OrderItem(Long productId, String name, Long price, Integer quantity) {
+    public OrderItem(Long productId, String productCode, String name, Long price, Integer quantity) {
         this.productId = productId;
+        this.productCode = productCode;
         this.name = name;
         this.price = price;
         this.quantity = quantity;

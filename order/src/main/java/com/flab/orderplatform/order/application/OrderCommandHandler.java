@@ -52,6 +52,7 @@ public class OrderCommandHandler {
                             .quantity(item.quantity())
                             .name(item.name())
                             .productId(product.getId())
+                            .productCode(product.getProductCode())
                             .price(product.getPrice())
                             .build();
                 })

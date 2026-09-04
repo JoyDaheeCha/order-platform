@@ -34,6 +34,7 @@ class OrderTest {
         var orderItems = List.of(
                 OrderItem.builder()
                         .productId(1L)
+                        .productCode("GD10001")
                         .name("뽀로로 주스")
                         .price(1_500L)
                         .quantity(3)
@@ -174,10 +175,8 @@ class OrderTest {
             softly.assertThat(event).isNotNull();
             softly.assertThat(event.getAggregateId()).isEqualTo(orderNumber);
             softly.assertThat(event.getEventId()).isNotBlank();
-            softly.assertThat(event.getBuyerId()).isEqualTo(100L);
-            softly.assertThat(event.getTotalAmount()).isEqualTo(4_500L);
             softly.assertThat(event.getOrderItems())
-                    .containsExactly(new OrderCreatedEvent.OrderItemDto(1L, 3, 1_500L));
+                    .containsExactly(new OrderCreatedEvent.OrderItemDto("GD10001", 3));
         });
     }
 
@@ -188,6 +187,7 @@ class OrderTest {
         var order = Order.create(100L, List.of(
                 OrderItem.builder()
                         .productId(1L)
+                        .productCode("GD10001")
                         .name("뽀로로 주스")
                         .price(1_500L)
                         .quantity(3)
