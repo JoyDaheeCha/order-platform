@@ -1,6 +1,5 @@
 package com.flab.orderplatform.inventory.domain.event;
 
-import com.flab.orderplatform.shared.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -12,7 +11,7 @@ import static com.flab.orderplatform.shared.event.EventConstants.*;
  * 재고를 선점하였다
  */
 @Getter
-public class InventoryReservedEvent extends DomainEvent {
+public class InventoryReservedEvent extends InventoryOutboxEvent {
     private final String orderNumber;
 
     @Builder
