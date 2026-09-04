@@ -2,6 +2,7 @@ package com.flab.orderplatform.order.domain;
 
 import com.flab.orderplatform.order.domain.event.OrderCreatedEvent;
 import com.flab.orderplatform.order.domain.event.OrderPaidEvent;
+import com.flab.orderplatform.order.domain.event.OrderPaymentPreparedEvent;
 import com.flab.orderplatform.order.domain.status.OrderStatus;
 import com.flab.orderplatform.shared.domain.BaseEntity;
 import com.flab.orderplatform.shared.domain.DomainEvent;
@@ -155,5 +156,15 @@ public class Order extends BaseEntity {
 
     private String getProductCode(Map<Long, String> productMapCodeById, OrderItem item) {
         return productMapCodeById.get(item.getProductId());
+    }
+
+    public Order preparePayment() {
+        this.status = PENDING;
+        this.domainEvent = OrderPaymentPreparedEvent.builder()
+                .orderNumber(orderNumber)
+                .aggregateId(orderNumber)
+                .occurredOn(LocalDateTime.now())
+                .build();
+        return this;
     }
 }

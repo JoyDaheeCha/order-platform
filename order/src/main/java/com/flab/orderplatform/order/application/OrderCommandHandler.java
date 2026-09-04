@@ -3,6 +3,7 @@ package com.flab.orderplatform.order.application;
 import com.flab.orderplatform.order.application.annotation.OrderTransactional;
 import com.flab.orderplatform.order.application.command.OrderCreateCommand;
 import com.flab.orderplatform.order.application.command.OrderPayCommand;
+import com.flab.orderplatform.order.application.command.OrderPreparePaymentCommand;
 import com.flab.orderplatform.order.application.exception.DuplicatedProductException;
 import com.flab.orderplatform.order.application.exception.OrderNotFoundException;
 import com.flab.orderplatform.order.application.exception.ProductNotFoundException;
@@ -10,6 +11,7 @@ import com.flab.orderplatform.order.application.port.out.OrderRepository;
 import com.flab.orderplatform.order.domain.Order;
 import com.flab.orderplatform.order.domain.OrderItem;
 import com.flab.orderplatform.order.domain.external.Product;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,14 @@ public class OrderCommandHandler {
         }
     }
 
+    /**
+     * 주문 생성
+     *
+     * @param orderNumber 주문번호
+     * @param productMap  상품 코드별 상품 정보
+     * @param command     주문 생성 명령
+     * @return 주문
+     */
     @OrderTransactional
     public Order handle(String orderNumber, Map<String, Product> productMap, OrderCreateCommand command) {
         // 유효성 검증 : 주문 내 상품정보는 중복 금지
@@ -63,12 +73,36 @@ public class OrderCommandHandler {
         return order;
     }
 
+    /**
+     * 주문 결제
+     *
+     * @param command 주문 결제 명령
+     * O98
+     */
     @OrderTransactional
     public Order handle(OrderPayCommand command) {
-        var order = orderRepository.findWithOrderItemsByOrderNumber(command.orderNumber())
-                .orElseThrow(() -> new OrderNotFoundException(command.orderNumber()));
+        var order = getOrder(command.orderNumber());
         var result = command.pay(order);
-        order.pullDomainEventIfPresent()
+        result.pullDomainEventIfPresent()
+                .ifPresent(eventPublisher::publishEvent);
+        return orderRepository.save(result);
+    }
+
+    private @NonNull Order getOrder(String orderNumber) {
+        return orderRepository.findWithOrderItemsByOrderNumber(orderNumber)
+                .orElseThrow(() -> new OrderNotFoundException(orderNumber));
+    }
+
+    /**
+     * 주문 결제 준비
+     * @param command 주문 결제 준비 명령
+     *
+     */
+    @OrderTransactional
+    public Order handle(OrderPreparePaymentCommand command) {
+        var order = getOrder(command.orderNumber());
+        var result = command.preparePayment(order);
+        result.pullDomainEventIfPresent()
                 .ifPresent(eventPublisher::publishEvent);
         return orderRepository.save(result);
     }
