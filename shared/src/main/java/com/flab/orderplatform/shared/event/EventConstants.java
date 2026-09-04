@@ -32,7 +32,7 @@ public final class EventConstants {
     public static final String INVENTORY_RESERVED = "InventoryReserved";
     public static final String INVENTORY_RESERVED_TOPIC = "MSG-INVENTORY-RESERVED";
     public static final String INVENTORY_RESERVATION_FAILED = "InventoryReservationFailed";
-    public static final String INVENTORY_RESERVATION_FAILED_TOPIC = "MSG-INVENTORY-RESERVATION_FAILED";
+    public static final String INVENTORY_RESERVATION_FAILED_TOPIC = "MSG-INVENTORY-RESERVATION-FAILED";
     public static final String STOCK_DEDUCTED = "StockDeducted";
     public static final String STOCK_DEDUCTED_TOPIC = "MSG-STOCK-DEDUCTED";
     public static final String STOCK_SHORTAGE = "StockShortage";
