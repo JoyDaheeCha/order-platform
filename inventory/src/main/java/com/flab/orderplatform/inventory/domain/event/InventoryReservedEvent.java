@@ -21,10 +21,12 @@ public class InventoryReservedEvent extends DomainEvent {
         this.orderNumber = orderNumber;
     }
 
+    @Override
     public String getAction() {
         return INVENTORY_RESERVED;
     }
 
+    @Override
     public String getTopic() {
         return INVENTORY_RESERVED_TOPIC;
     }

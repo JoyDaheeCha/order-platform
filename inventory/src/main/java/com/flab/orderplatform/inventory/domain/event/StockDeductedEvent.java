@@ -18,10 +18,12 @@ public class StockDeductedEvent extends DomainEvent {
         this.orderNumber = orderNumber;
     }
 
+    @Override
     public String getAction() {
         return STOCK_DEDUCTED;
     }
 
+    @Override
     public String getTopic() {
         return STOCK_DEDUCTED_TOPIC;
     }

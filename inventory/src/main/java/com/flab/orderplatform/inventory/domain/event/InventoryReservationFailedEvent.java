@@ -21,10 +21,12 @@ public class InventoryReservationFailedEvent extends DomainEvent {
         this.orderNumber = orderNumber;
     }
 
+    @Override
     public String getAction() {
         return INVENTORY_RESERVATION_FAILED;
     }
 
+    @Override
     public String getTopic() {
         return INVENTORY_RESERVATION_FAILED_TOPIC;
     }
