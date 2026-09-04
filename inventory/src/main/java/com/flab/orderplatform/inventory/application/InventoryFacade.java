@@ -109,7 +109,7 @@ public class InventoryFacade {
      */
     @InventoryTransactional
     public List<Inventory> reserveInventory(OrderCreatedPayload event) {
-        // 이미 재고가 차감된 주문으로 처리하지 않는다.
+        // 이미 재고가 선점된 주문으로 처리하지 않는다.
         if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber(), RESERVE)) {
             return List.of();
         }
