@@ -32,19 +32,46 @@ public class Inventory extends BaseTimeEntity {
             columnDefinition = "VARCHAR(36) NOT NULL COMMENT '상품코드 (예. GD10001)'")
     private String productCode;
 
-    @Column(name = "stock", nullable = false, columnDefinition = "INT NOT NULL COMMENT '재고 수량'")
+    @Column(name = "stock", nullable = false, columnDefinition = "INT NOT NULL COMMENT '가용 재고 수량'")
     private Integer stock;
+
+    @Column(name = "reserved_stock", nullable = false, columnDefinition = "INT NOT NULL COMMENT '선점된 재고 수량'")
+    private Integer reservedStock;
 
     @OneToMany(mappedBy = "inventory", fetch = LAZY, cascade = {PERSIST})
     private List<InventoryHistory> inventoryHistories = new ArrayList<>();
 
     @Builder
-    public Inventory(String productCode, Integer stock, List<InventoryHistory> inventoryHistories) {
+    public Inventory(String productCode,
+                     Integer stock,
+                     Integer reservedStock,
+                     List<InventoryHistory>
+                                 inventoryHistories) {
         this.productCode = productCode;
         this.stock = stock;
+        this.reservedStock = reservedStock;
         this.inventoryHistories = inventoryHistories;
     }
 
+    /**
+     * 재고를 선점한다.
+     *
+     * @param quantity 재고 선점 요청 수량
+     * @return 재고
+     */
+    public Inventory reserveInventory(int quantity) {
+        if (quantity <= 0) {
+            throw new InvalidInventoryChangeException("재고 할당시, 요청 수량은 양수만 가능합니다. (요청 수량: %d)".formatted(quantity));
+        }
+        if (this.stock < quantity) {
+            throw new InventoryShortageException(stock, quantity);
+        }
+        this.stock -= quantity;
+        this.reservedStock += quantity;
+        return this;
+    }
+
+    // TODO: 가용재고수량 줄이는 로직 추가
     public Inventory decreaseStock(String orderNumber, int quantityToDecrease) {
         if (quantityToDecrease <= 0) {
             throw new InvalidInventoryChangeException("재고 할당시, 요청 수량은 양수만 가능합니다. (요청 수량: %d)".formatted(quantityToDecrease));
