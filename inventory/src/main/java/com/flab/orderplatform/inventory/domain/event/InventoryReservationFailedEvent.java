@@ -9,24 +9,24 @@ import java.time.LocalDateTime;
 import static com.flab.orderplatform.shared.event.EventConstants.*;
 
 /**
- * 재고를 선점하였다
+ * 재고 선점에 실패하였다
  */
 @Getter
-public class InventoryReservedEvent extends DomainEvent {
+public class InventoryReservationFailedEvent extends DomainEvent {
     private final String orderNumber;
 
     @Builder
-    protected InventoryReservedEvent(String orderNumber, LocalDateTime occurredOn) {
+    protected InventoryReservationFailedEvent(String orderNumber, LocalDateTime occurredOn) {
         super(orderNumber, occurredOn);
         this.orderNumber = orderNumber;
     }
 
     public String getAction() {
-        return INVENTORY_RESERVED;
+        return INVENTORY_RESERVATION_FAILED;
     }
 
     public String getTopic() {
-        return INVENTORY_RESERVED_TOPIC;
+        return INVENTORY_RESERVATION_FAILED_TOPIC;
     }
 
     @Override
