@@ -119,7 +119,14 @@ public class InventoryFacade {
                 .stream()
                 .map(OrderCreatedPayload.OrderItem::productCode)
                 .collect(Collectors.toSet());
+
+        // 재고 조정시 상품 정보를 중복하여 넣을 수 없다.
+        if (event.orderItems().size() != productCodes.size()) {
+            throw new DuplicatedProductException(productCodes);
+        }
         validateIfAllProductsExisting(productCodes);
+
+
 
         var commands = event.orderItems().stream().map(item -> InventoryReserveCommand.builder()
                         .orderNumber(event.orderNumber())
