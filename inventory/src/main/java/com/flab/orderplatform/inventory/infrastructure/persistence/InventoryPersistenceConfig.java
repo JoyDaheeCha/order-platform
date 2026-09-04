@@ -78,19 +78,6 @@ public class InventoryPersistenceConfig {
         return emf;
     }
 
-    /**
-     * Inventory 컨텍스트 전용 Flyway 마이그레이션 빈
-     */
-    @Bean(initMethod = "migrate")
-    public Flyway inventoryFlyway(@Qualifier("inventoryDataSource") DataSource dataSource) {
-        return Flyway.configure()
-                .dataSource(dataSource)
-                .defaultSchema("inventory_schema")
-                .locations("classpath:db/migration/inventory")
-                .baselineOnMigrate(true)
-                .load();
-    }
-
     @DependsOn("inventoryFlyway")
     @Bean
     PlatformTransactionManager inventoryTransactionManager(
