@@ -90,7 +90,7 @@ public class Inventory extends BaseTimeEntity {
             throw new InvalidInventoryChangeException("재고 할당시, 요청 수량은 양수만 가능합니다. (요청 수량: %d)".formatted(quantityToDecrease));
         }
         if (this.reservedStock < quantityToDecrease) {
-            throw new ReservedInventoryShortageException(stock, quantityToDecrease);
+            throw new ReservedInventoryShortageException(reservedStock, quantityToDecrease);
         }
         this.reservedStock -= quantityToDecrease;
 
