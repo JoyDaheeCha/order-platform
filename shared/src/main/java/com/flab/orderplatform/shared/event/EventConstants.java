@@ -13,6 +13,8 @@ public final class EventConstants {
     public static final String ORDER_CREATED_TOPIC = "MSG-ORDER-CREATED";
     public static final String ORDER_PAID = "OrderPaid";
     public static final String ORDER_PAID_TOPIC = "MSG-ORDER-PAID";
+    public static final String ORDER_PAYMENT_PREPARED = "OrderPaymentPrepared"; // TODO 이벤트 추가
+    public static final String ORDER_PAYMENT_PREPARED_TOPIC = "MSG-ORDER-PAYMENT-PREPARED";
     public static final String ORDER_CONFIRMED = "OrderConfirmed";
     public static final String ORDER_CONFIRMED_TOPIC = "MSG-ORDER-CONFIRMED";
     public static final String ORDER_CANCELLATION_REQUESTED = "OrderCancellationRequested";

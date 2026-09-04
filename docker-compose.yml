@@ -124,6 +124,7 @@ services:
         set -e
         for TOPIC in \
           MSG-ORDER-CREATED \
+          MSG-ORDER-PAYMENT-PREPARED \
           MSG-ORDER-PAID \
           MSG-ORDER-CONFIRMED \
           MSG-ORDER-CANCELLATION-REQUESTED \
@@ -131,6 +132,8 @@ services:
           MSG-PAYMENT-COMPLETED \
           MSG-PAYMENT-FAILED \
           MSG-PAYMENT-REFUNDED \
+          MSG-INVENTORY-RESERVED \
+          MSG-INVENTORY-RESERVATION_FAILED \
           MSG-STOCK-DEDUCTED \
           MSG-STOCK-SHORTAGE \
           MSG-STOCK-RESTORED ; do
