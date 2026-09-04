@@ -73,6 +73,7 @@ class InventoryTest {
         var inventory = Inventory.builder()
                 .productCode("GD10001")
                 .stock(100)
+                .reservedStock(0)
                 .inventoryHistories(new ArrayList<>())
                 .build();
         var invalidQuantity = -1;  // 재고 선점 요청 수량이 음수
@@ -89,6 +90,7 @@ class InventoryTest {
         var inventory = Inventory.builder()
                 .productCode("GD10001")
                 .stock(10)
+                .reservedStock(0)
                 .inventoryHistories(new ArrayList<>())
                 .build();
         var invalidQuantity = 20;
