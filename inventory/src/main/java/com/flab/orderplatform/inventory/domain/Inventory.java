@@ -2,6 +2,7 @@ package com.flab.orderplatform.inventory.domain;
 
 import com.flab.orderplatform.inventory.domain.exception.InvalidInventoryChangeException;
 import com.flab.orderplatform.inventory.domain.exception.InventoryShortageException;
+import com.flab.orderplatform.inventory.domain.exception.ReservedInventoryShortageException;
 import com.flab.orderplatform.shared.domain.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -88,8 +89,8 @@ public class Inventory extends BaseTimeEntity {
         if (quantityToDecrease <= 0) {
             throw new InvalidInventoryChangeException("재고 할당시, 요청 수량은 양수만 가능합니다. (요청 수량: %d)".formatted(quantityToDecrease));
         }
-        if (this.stock < quantityToDecrease) {
-            throw new InventoryShortageException(stock, quantityToDecrease);
+        if (this.reservedStock < quantityToDecrease) {
+            throw new ReservedInventoryShortageException(stock, quantityToDecrease);
         }
         this.reservedStock -= quantityToDecrease;
 
