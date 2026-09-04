@@ -2,12 +2,14 @@ package com.flab.orderplatform.inventory.application;
 
 import com.flab.orderplatform.inventory.application.annotation.InventoryTransactional;
 import com.flab.orderplatform.inventory.application.command.InventoryDecreaseCommand;
+import com.flab.orderplatform.inventory.application.command.InventoryReserveCommand;
 import com.flab.orderplatform.inventory.application.exception.DuplicatedProductException;
 import com.flab.orderplatform.inventory.application.exception.InventoryNotFoundException;
 import com.flab.orderplatform.inventory.application.port.out.InventoryHistoryRepository;
 import com.flab.orderplatform.inventory.application.port.out.InventoryRepository;
 import com.flab.orderplatform.inventory.domain.Inventory;
 import com.flab.orderplatform.inventory.domain.event.StockDeductedEvent;
+import com.flab.orderplatform.shared.event.OrderCreatedPayload;
 import com.flab.orderplatform.shared.event.OrderPaidPayload;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -29,6 +31,7 @@ public class InventoryFacade {
 
     @InventoryTransactional
     public List<Inventory> decreaseStock(OrderPaidPayload event) {
+        // TODO: 재고 히스토리의 요청 유형을 DECREASE 로 추가
         // 이미 재고가 차감된 주문으로 처리하지 않는다.
         if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber())) {
             return List.of();
@@ -87,5 +90,38 @@ public class InventoryFacade {
         }
     }
 
+    @InventoryTransactional
+    public List<Inventory> reserveInventory(OrderCreatedPayload event) {
+        // TODO 이미 선점 완료된 재고일 경우에 대해 유효성 검증 추가
 
+        // 재고 선점 요청된 모든 상품이 존재하는지 검증
+        var productCodes = event.orderItems()
+                .stream()
+                .map(OrderCreatedPayload.OrderItem::productCode)
+                .collect(Collectors.toSet());
+        validateIfAllProductsExisting(productCodes);
+
+        var commands = event.orderItems().stream().map(item -> InventoryReserveCommand.builder()
+                        .orderNumber(event.orderNumber())
+                        .product(
+                                InventoryReserveCommand.ProductDto
+                                        .builder()
+                                        .productCode(item.productCode())
+                                        .quantity(item.quantity())
+                                        .build())
+                        .build())
+                .toList();
+
+        var result = commands.stream()
+                .map(inventoryCommandHandler::handle)
+                .toList();
+
+        var inventoryReservedEvent = StockDeductedEvent.builder()
+                .orderNumber(event.orderNumber())
+                .occurredOn(LocalDateTime.now())
+                .build();
+        eventPublisher.publishEvent(inventoryReservedEvent);
+
+        return result;
+    }
 }

@@ -56,10 +56,11 @@ public class Inventory extends BaseTimeEntity {
     /**
      * 재고를 선점한다.
      *
+     * @param orderNumber 주문번호
      * @param quantity 재고 선점 요청 수량
      * @return 재고
      */
-    public Inventory reserveInventory(int quantity) {
+    public Inventory reserveInventory(String orderNumber, int quantity) {
         if (quantity <= 0) {
             throw new InvalidInventoryChangeException("재고 할당시, 요청 수량은 양수만 가능합니다. (요청 수량: %d)".formatted(quantity));
         }
@@ -68,6 +69,8 @@ public class Inventory extends BaseTimeEntity {
         }
         this.stock -= quantity;
         this.reservedStock += quantity;
+
+        // TODO 히스토리 추가
         return this;
     }
 
