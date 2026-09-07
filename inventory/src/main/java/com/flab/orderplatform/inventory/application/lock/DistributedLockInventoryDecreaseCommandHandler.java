@@ -1,10 +1,10 @@
 package com.flab.orderplatform.inventory.application.lock;
 
-import com.flab.orderplatform.inventory.application.annotation.DistributedLock;
 import com.flab.orderplatform.inventory.application.command.InventoryDecreaseCommand;
 import com.flab.orderplatform.inventory.application.exception.InventoryDecreasementFailureByConcurrencyException;
 import com.flab.orderplatform.inventory.application.port.out.InventoryDecreaseCommandHandler;
 import com.flab.orderplatform.inventory.domain.Inventory;
+import com.flab.orderplatform.shared.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

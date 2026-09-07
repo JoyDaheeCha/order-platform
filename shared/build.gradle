@@ -8,4 +8,7 @@ dependencies {
     // JSON 직렬화(JsonUtils)
     implementation libs.jackson.databind
     implementation libs.jackson.datatype.jsr310
+
+    // 레디스 (Redisson 사용)
+    implementation libs.redisson.spring.boot.starter
 }

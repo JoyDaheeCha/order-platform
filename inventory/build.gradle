@@ -22,9 +22,6 @@ dependencies {
     // Retry
     implementation "org.springframework.retry:spring-retry"
 
-    // 재고 차감 동시성 제어(분산 락 등) 후보 — ADR-0002 에서 기법 확정 예정.
-    implementation libs.redisson.spring.boot.starter
-
     // shedlock
     implementation libs.shedlock.spring
 

@@ -1,6 +1,5 @@
-package com.flab.orderplatform.inventory.application.aspect;
+package com.flab.orderplatform.shared.lock;
 
-import com.flab.orderplatform.inventory.application.annotation.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -10,7 +9,9 @@ import org.redisson.RedissonMultiLock;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.core.DefaultParameterNameDiscoverer;
+import org.springframework.core.Ordered;
 import org.springframework.core.ParameterNameDiscoverer;
+import org.springframework.core.annotation.Order;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
@@ -22,19 +23,20 @@ import java.util.List;
 
 @Aspect
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RequiredArgsConstructor
 public class DistributedLockAspect {
-    private static final String KEY_FORMAT = "inventory:lock:%s";
+    private static final String KEY_FORMAT = "lock:%s:%s";
     private final RedissonClient redissonClient;
     private final ExpressionParser parser = new SpelExpressionParser();
     private final ParameterNameDiscoverer nameDiscoverer = new DefaultParameterNameDiscoverer();
 
-    @Around("execution(* com.flab.orderplatform.inventory.application..*(..)) && @annotation(distributedLock)")
+    @Around("@annotation(distributedLock)")
     public Object applyDistributedLock(ProceedingJoinPoint joinPoint, DistributedLock distributedLock) throws Throwable {
         var keys = convertToKey(joinPoint, distributedLock.key());
         var locks = keys.stream()
                 .sorted()
-                .map(key -> redissonClient.getLock(KEY_FORMAT.formatted(key)))
+                .map(key -> redissonClient.getLock(KEY_FORMAT.formatted(distributedLock.prefix(), key)))
                 .toArray(RLock[]::new);
         var multiLock = new RedissonMultiLock(locks);
 
