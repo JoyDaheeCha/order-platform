@@ -24,7 +24,7 @@ public class DistributedLockInventoryDecreaseCommandHandler implements Inventory
      * 상품 코드를 기반으로 분산락 키 생성
      */
     @Override
-    @DistributedLock(key = "#commands.![product.productCode]", fallback = "handleFallback")
+    @DistributedLock(prefix = "inventory", key = "#commands.![product.productCode]", fallback = "handleFallback")
     public List<Inventory> handle(List<InventoryDecreaseCommand> commands) {
         return worker.handle(commands);
     }
