@@ -90,12 +90,17 @@ public class Order extends BaseEntity {
                         .build())
                 .toList();
 
+        var totalAmount = orderItems.stream()
+                .mapToLong(OrderItem::calculateAmount)
+                .sum();
+
         var order = Order.builder()
                 .customerId(customerId)
                 .orderNumber(orderNumber)
                 .orderItems(orderItems)
                 .orderedAt(LocalDateTime.now())
                 .status(RESERVING_INVENTORY)
+                .totalAmount(totalAmount)
                 .idempotentKey(idempotentKey)
                 .build();
 

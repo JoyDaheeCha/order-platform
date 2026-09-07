@@ -103,7 +103,13 @@ class OrderTest {
     @Test
     void payTransitionsToPaidAndRegistersEvent() {
         // given: 생성 시점의 OrderCreatedEvent 는 이미 발행되었다고 보고 비워둔다.
-        var order = Order.create(100L, List.of(orderItem()), "20260730-5T1QWE9BXK", "1111-2222-3333-4444");
+        var  order  = Order.builder()
+                .customerId(100L)
+                .orderItems(List.of(orderItem()))
+                .status(PENDING)
+                .orderNumber("20260730-5T1QWE9BXK")
+                .idempotentKey("1111-2222-3333-4444")
+                .build();
         order.pullDomainEventIfPresent();
 
         // when
