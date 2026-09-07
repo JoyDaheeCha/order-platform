@@ -23,6 +23,6 @@ public class InventoryReservedInboxEventProcessor implements OrderInboxEventProc
     @Override
     public void process(InboxEvent inboxEvent) {
         var event = JsonUtils.fromJson(inboxEvent.getPayload(), InventoryReservedPayload.class);
-        orderPayFacade.preparePayment(event.orderNumber());
+        orderPayFacade.preparePayment(event.orderNumber(), event.reservedAt());
     }
 }

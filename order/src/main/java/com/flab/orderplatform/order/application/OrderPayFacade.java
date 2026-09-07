@@ -12,6 +12,7 @@ import com.flab.orderplatform.order.domain.external.Product;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 /**
@@ -60,9 +61,8 @@ public class OrderPayFacade {
      * @param orderNumber 주문번호
      * @return 주문
      */
-    public Order preparePayment(String orderNumber) {
-        // TODO 재고 선점 스케줄러 데이터 등록
-        var command = new OrderPreparePaymentCommand(orderNumber);
+    public Order preparePayment(String orderNumber, LocalDateTime reservedAt) {
+        var command = new OrderPreparePaymentCommand(orderNumber, reservedAt);
         return orderCommandHandler.handle(command);
     }
 

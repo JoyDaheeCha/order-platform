@@ -1,10 +1,13 @@
 package com.flab.orderplatform.shared.event;
 
+import java.time.LocalDateTime;
+
 import static com.flab.orderplatform.shared.event.EventConstants.INVENTORY_RESERVED;
 import static com.flab.orderplatform.shared.event.EventConstants.INVENTORY_RESERVED_TOPIC;
 
 public record InventoryReservedPayload(
-        String orderNumber
+        String orderNumber,
+        LocalDateTime reservedAt
 ) implements EventContract{
     @Override
     public String eventType() {

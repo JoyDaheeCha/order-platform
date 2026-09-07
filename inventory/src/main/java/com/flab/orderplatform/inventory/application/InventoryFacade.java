@@ -147,6 +147,7 @@ public class InventoryFacade {
             var inventoryReservedEvent = InventoryReservedEvent.builder()
                     .orderNumber(event.orderNumber())
                     .occurredOn(LocalDateTime.now())
+                    .reservedAt(LocalDateTime.now())
                     .build();
             eventPublisher.publishEvent(inventoryReservedEvent);
             return result;

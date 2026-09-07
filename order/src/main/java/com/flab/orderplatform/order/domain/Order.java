@@ -70,6 +70,10 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "order_failed_reason_id")
     private OrderFailedReason orderFailedReason;
 
+    @OneToOne(fetch = LAZY, cascade = {PERSIST, REMOVE, MERGE}, orphanRemoval = true)
+    @JoinColumn(name = "order_inventory_reservation_id")
+    private OrderInventoryReservation inventoryReservation;
+
     @Builder
     public Order(String orderNumber, Long totalAmount, LocalDateTime orderedAt, OrderStatus status,
                  List<OrderItem> orderItems, Long customerId, String idempotentKey) {
@@ -163,7 +167,8 @@ public class Order extends BaseEntity {
         return productMapCodeById.get(item.getProductId());
     }
 
-    public Order preparePayment() {
+    public Order preparePayment(LocalDateTime reservedAt) {
+        this.inventoryReservation = OrderInventoryReservation.create(orderNumber, reservedAt);
         this.status = PENDING_PAYMENT;
         this.domainEvent = OrderPaymentPreparedEvent.builder()
                 .orderNumber(orderNumber)

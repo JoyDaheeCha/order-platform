@@ -13,11 +13,13 @@ import static com.flab.orderplatform.shared.event.EventConstants.*;
 @Getter
 public class InventoryReservedEvent extends InventoryOutboxEvent {
     private final String orderNumber;
+    private final LocalDateTime reservedAt;
 
     @Builder
-    protected InventoryReservedEvent(String orderNumber, LocalDateTime occurredOn) {
+    protected InventoryReservedEvent(String orderNumber, LocalDateTime occurredOn, LocalDateTime reservedAt) {
         super(orderNumber, occurredOn);
         this.orderNumber = orderNumber;
+        this.reservedAt = reservedAt;
     }
 
     @Override
