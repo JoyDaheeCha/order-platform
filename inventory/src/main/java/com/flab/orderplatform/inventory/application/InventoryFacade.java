@@ -7,7 +7,6 @@ import com.flab.orderplatform.inventory.application.exception.DuplicatedProductE
 import com.flab.orderplatform.inventory.application.exception.InventoryNotFoundException;
 import com.flab.orderplatform.inventory.application.port.out.InventoryHistoryRepository;
 import com.flab.orderplatform.inventory.application.port.out.InventoryRepository;
-import com.flab.orderplatform.inventory.common.BusinessException;
 import com.flab.orderplatform.inventory.domain.Inventory;
 import com.flab.orderplatform.inventory.domain.event.InventoryReservationFailedEvent;
 import com.flab.orderplatform.inventory.domain.event.InventoryReservedEvent;
@@ -127,7 +126,6 @@ public class InventoryFacade {
         validateIfAllProductsExisting(productCodes);
 
 
-
         var commands = event.orderItems().stream().map(item -> InventoryReserveCommand.builder()
                         .orderNumber(event.orderNumber())
                         .product(
@@ -139,27 +137,24 @@ public class InventoryFacade {
                         .build())
                 .toList();
 
-        try {
-            var result = commands.stream()
-                    .map(inventoryCommandHandler::handle)
-                    .toList();
+        var result = commands.stream()
+                .map(inventoryCommandHandler::handle)
+                .toList();
 
-            var inventoryReservedEvent = InventoryReservedEvent.builder()
-                    .orderNumber(event.orderNumber())
-                    .occurredOn(LocalDateTime.now())
-                    .build();
-            eventPublisher.publishEvent(inventoryReservedEvent);
-            return result;
+        var inventoryReservedEvent = InventoryReservedEvent.builder()
+                .orderNumber(event.orderNumber())
+                .occurredOn(LocalDateTime.now())
+                .build();
+        eventPublisher.publishEvent(inventoryReservedEvent);
+        return result;
+    }
 
-        } catch (BusinessException e) {
-            // 재고 선점 하나라도 실패하면, 주문 하위 모든 상품에 대해 재고 선점 실패 처리한다.
-            var inventoryReservationFailedEvent = InventoryReservationFailedEvent.builder()
-                    .orderNumber(event.orderNumber())
-                    .occurredOn(LocalDateTime.now())
-                    .build();
-            eventPublisher.publishEvent(inventoryReservationFailedEvent);
-            return null;
-        }
-
+    @InventoryTransactional
+    public void publishReservationFailed(String orderNumber) {
+        var inventoryReservationFailedEvent = InventoryReservationFailedEvent.builder()
+                .orderNumber(orderNumber)
+                .occurredOn(LocalDateTime.now())
+                .build();
+        eventPublisher.publishEvent(inventoryReservationFailedEvent);
     }
 }
