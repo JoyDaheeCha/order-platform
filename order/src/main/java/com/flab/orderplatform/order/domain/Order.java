@@ -133,7 +133,7 @@ public class Order extends BaseEntity {
         if (this.status == PAID) {
             return this;
         }
-        if (this.status != PENDING) {
+        if (this.status != PENDING_PAYMENT) {
             throw new IllegalStateException("결제 대기 상태만 결제 완료 처리 가능합니다. (현재상태: %s)".formatted(status));
         }
         this.status = PAID;
@@ -164,7 +164,7 @@ public class Order extends BaseEntity {
     }
 
     public Order preparePayment() {
-        this.status = PENDING;
+        this.status = PENDING_PAYMENT;
         this.domainEvent = OrderPaymentPreparedEvent.builder()
                 .orderNumber(orderNumber)
                 .aggregateId(orderNumber)

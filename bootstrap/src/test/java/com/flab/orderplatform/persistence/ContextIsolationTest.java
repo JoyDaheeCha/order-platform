@@ -14,7 +14,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING;
+import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING_PAYMENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -47,7 +47,7 @@ class ContextIsolationTest {
         var entity = Order.builder().orderNumber("order-1")
                 .totalAmount(12_000L)
                 .orderedAt(LocalDateTime.now())
-                .status(PENDING)
+                .status(PENDING_PAYMENT)
                 .orderItems(List.of())
                 .customerId(100L)
                 .idempotentKey("111-111-111-111")

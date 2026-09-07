@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.flab.orderplatform.order.domain.status.OrderStatus.PAID;
-import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING;
+import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING_PAYMENT;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.mockito.ArgumentMatchers.any;
@@ -200,7 +200,7 @@ class OrderCommandHandlerTest {
         @DisplayName("[성공] 결제 완료 처리시 주문이 결제완료로 바뀌고 결제완료 이벤트가 발행된다.")
         void marksOrderAsPaidAndPublishesEvent() {
             // given
-            var order = orderWith(PENDING);
+            var order = orderWith(PENDING_PAYMENT);
             given(orderRepository.findWithOrderItemsByOrderNumber(ORDER_NUMBER))
                     .willReturn(Optional.of(order));
             givenSaveReturnsGivenOrder();

@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.flab.orderplatform.order.domain.status.OrderStatus.PAID;
-import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING;
+import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING_PAYMENT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
@@ -51,7 +51,7 @@ class OrderTest {
         // then
         assertSoftly(softly -> {
             softly.assertThat(order.getOrderedAt()).isEqualTo(fixedNow);
-            softly.assertThat(order.getStatus()).isEqualTo(PENDING);
+            softly.assertThat(order.getStatus()).isEqualTo(PENDING_PAYMENT);
         });
     }
 
@@ -210,7 +210,7 @@ class OrderTest {
     @Test
     void pullDomainEventReturnsEmptyWhenNothingRegistered() {
         // given: DB 에서 조회해 온 주문처럼 domainEvent 가 비어 있는 상태 (@Transient 라 영속화되지 않는다)
-        var order = orderWith(PENDING);
+        var order = orderWith(PENDING_PAYMENT);
 
         // when & then
         assertThat(order.pullDomainEventIfPresent()).isEmpty();
