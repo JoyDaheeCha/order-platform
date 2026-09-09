@@ -14,8 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.flab.orderplatform.order.domain.status.OrderStatus.PAID;
-import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING;
+import static com.flab.orderplatform.order.domain.status.OrderStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
@@ -25,7 +24,7 @@ import static org.mockito.Mockito.mockStatic;
 @DisplayName("주문 단위테스트")
 class OrderTest {
 
-    @DisplayName("[성공] 주문 생성시 주문일자는 현재로 세팅되고, 주문 상태는 결제대기중으로 초기화된다.")
+    @DisplayName("[성공] 주문 생성시 주문일자는 현재로 세팅되고, 주문 상태는 '재고 선점중'으로 초기화된다.")
     @Test
     void create() {
         // given
@@ -34,6 +33,7 @@ class OrderTest {
         var orderItems = List.of(
                 OrderItem.builder()
                         .productId(1L)
+                        .productCode("GD10001")
                         .name("뽀로로 주스")
                         .price(1_500L)
                         .quantity(3)
@@ -50,7 +50,7 @@ class OrderTest {
         // then
         assertSoftly(softly -> {
             softly.assertThat(order.getOrderedAt()).isEqualTo(fixedNow);
-            softly.assertThat(order.getStatus()).isEqualTo(PENDING);
+            softly.assertThat(order.getStatus()).isEqualTo(RESERVING_INVENTORY);
         });
     }
 
@@ -102,7 +102,13 @@ class OrderTest {
     @Test
     void payTransitionsToPaidAndRegistersEvent() {
         // given: 생성 시점의 OrderCreatedEvent 는 이미 발행되었다고 보고 비워둔다.
-        var order = Order.create(100L, List.of(orderItem()), "20260730-5T1QWE9BXK", "1111-2222-3333-4444");
+        var  order  = Order.builder()
+                .customerId(100L)
+                .orderItems(List.of(orderItem()))
+                .status(PENDING)
+                .orderNumber("20260730-5T1QWE9BXK")
+                .idempotentKey("1111-2222-3333-4444")
+                .build();
         order.pullDomainEventIfPresent();
 
         // when
@@ -160,6 +166,7 @@ class OrderTest {
                 OrderItem.builder()
                         .productId(1L)
                         .name("뽀로로 주스")
+                        .productCode("GD10001")
                         .price(1_500L)
                         .quantity(3)
                         .build()
@@ -174,10 +181,8 @@ class OrderTest {
             softly.assertThat(event).isNotNull();
             softly.assertThat(event.getAggregateId()).isEqualTo(orderNumber);
             softly.assertThat(event.getEventId()).isNotBlank();
-            softly.assertThat(event.getBuyerId()).isEqualTo(100L);
-            softly.assertThat(event.getTotalAmount()).isEqualTo(4_500L);
             softly.assertThat(event.getOrderItems())
-                    .containsExactly(new OrderCreatedEvent.OrderItemDto(1L, 3, 1_500L));
+                    .containsExactly(new OrderCreatedEvent.OrderItemDto("GD10001", 3));
         });
     }
 
@@ -188,6 +193,7 @@ class OrderTest {
         var order = Order.create(100L, List.of(
                 OrderItem.builder()
                         .productId(1L)
+                        .productCode("GD10001")
                         .name("뽀로로 주스")
                         .price(1_500L)
                         .quantity(3)

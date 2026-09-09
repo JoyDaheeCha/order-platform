@@ -1,5 +1,6 @@
 package com.flab.orderplatform.inventory.domain;
 
+import com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType;
 import com.flab.orderplatform.shared.domain.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -7,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.DECREASE;
+import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.RESERVE;
 import static jakarta.persistence.FetchType.LAZY;
 
 /***
@@ -37,14 +40,51 @@ public class InventoryHistory extends BaseTimeEntity {
     @Column(name = "quantity", nullable = false, columnDefinition = "INT NOT NULL COMMENT '변경수량'")
     private Integer quantity;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "request_type", nullable = false, length = 10, columnDefinition = "VARCHAR(10) NOT NULL COMMENT '재고 변경 유형 RESERVE/DECREASE'")
+    private InventoryUpdateRequestType requestType;
+
     @Builder
-    public InventoryHistory(String orderNumber, Integer quantity) {
+    public InventoryHistory(String orderNumber,
+                            Integer quantity,
+                            InventoryUpdateRequestType requestType) {
         this.orderNumber = orderNumber;
         this.quantity = quantity;
+        this.requestType = requestType;
     }
 
     public InventoryHistory setInventory(Inventory inventory) {
         this.inventory = inventory;
         return this;
+    }
+
+    /**
+     * 재고 차감 이력 생성
+     *
+     * @param orderNumber 주문번호
+     * @param quantity    실물 재고 차감 수량
+     * @return 재고
+     */
+    public static InventoryHistory createDecreaseHistory(String orderNumber, int quantity) {
+        return InventoryHistory.builder()
+                .orderNumber(orderNumber)
+                .quantity(quantity)
+                .requestType(DECREASE)
+                .build();
+    }
+
+    /**
+     * 재고 선점 이력
+     *
+     * @param orderNumber 주문 번호
+     * @param quantity    재고 선점 수량
+     * @return 재고
+     */
+    public static InventoryHistory createReserveHistory(String orderNumber, int quantity) {
+        return InventoryHistory.builder()
+                .orderNumber(orderNumber)
+                .quantity(quantity)
+                .requestType(RESERVE)
+                .build();
     }
 }

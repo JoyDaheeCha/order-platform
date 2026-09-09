@@ -5,11 +5,12 @@ import java.util.List;
 import static com.flab.orderplatform.shared.event.EventConstants.ORDER_CREATED;
 import static com.flab.orderplatform.shared.event.EventConstants.ORDER_CREATED_TOPIC;
 
+/**
+ * 주문이 생성되었다 이벤트 페이로드
+ */
 public record OrderCreatedPayload(
         String orderNumber,
-        Long buyerId,
-        List<OrderItem> orderItems,
-        Long totalAmount
+        List<OrderItem> orderItems
 ) implements EventContract {
 
     @Override
@@ -23,9 +24,8 @@ public record OrderCreatedPayload(
     }
 
     public record OrderItem(
-            Long productId,
-            Integer quantity,
-            Long unitPrice
+            String productCode,
+            Integer quantity
     ) {
     }
 }

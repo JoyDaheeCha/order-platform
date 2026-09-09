@@ -7,14 +7,14 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 import static com.flab.orderplatform.shared.event.EventConstants.AGGREGATE_PAYMENT;
-import static com.flab.orderplatform.shared.event.EventConstants.ORDER_CREATED_TOPIC;
+import static com.flab.orderplatform.shared.event.EventConstants.ORDER_PAYMENT_PREPARED_TOPIC;
 
 @Slf4j
 @Component
 public class PaymentDomainEventListener {
 
     @Inbox(AGGREGATE_PAYMENT)
-    @KafkaListener(topics = ORDER_CREATED_TOPIC, groupId = "payment")
+    @KafkaListener(topics = {ORDER_PAYMENT_PREPARED_TOPIC}, groupId = "payment")
     public void handle(ConsumerRecord<String, String> payload) {
         log.debug("[OrderCreatedEvent] payload: {}", payload.value());
         // InboxAspect 가 인박스 저장 담당. 로직처리는 PaymentInboxEventScheduler 에 있다.

@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS inventory
 (
     id                  BIGINT       NOT NULL AUTO_INCREMENT,
     product_code        VARCHAR(36)  NOT NULL COMMENT '상품코드',
-    stock               INT          NOT NULL COMMENT '재고 수량',
+    stock               INT          NOT NULL COMMENT '가용 재고 수량',
+    reserved_stock      INT          NOT NULL COMMENT '선점된 재고 수량',
     created_at          DATETIME(6)  NOT NULL COMMENT '생성일',
     updated_at          DATETIME(6)  NOT NULL COMMENT '수정일',
     PRIMARY KEY (id),
@@ -19,6 +20,7 @@ CREATE TABLE IF NOT EXISTS inventory_history
     inventory_id        BIGINT       NOT NULL COMMENT '재고 pk',
     order_number        VARCHAR(36)  NOT NULL COMMENT '주문번호 (대외 노출용 비즈니스 키)',
     quantity            INT          NOT NULL COMMENT '변경 수량',
+    request_type        VARCHAR(10)  NOT NULL COMMENT '재고 변경 유형 RESERVE/DECREASE',
     created_at          DATETIME(6)  NOT NULL COMMENT '생성일',
     updated_at          DATETIME(6)  NOT NULL COMMENT '수정일',
     PRIMARY KEY (id),

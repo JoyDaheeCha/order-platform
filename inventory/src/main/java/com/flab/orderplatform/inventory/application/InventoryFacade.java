@@ -2,12 +2,16 @@ package com.flab.orderplatform.inventory.application;
 
 import com.flab.orderplatform.inventory.application.annotation.InventoryTransactional;
 import com.flab.orderplatform.inventory.application.command.InventoryDecreaseCommand;
+import com.flab.orderplatform.inventory.application.command.InventoryReserveCommand;
 import com.flab.orderplatform.inventory.application.exception.DuplicatedProductException;
 import com.flab.orderplatform.inventory.application.exception.InventoryNotFoundException;
 import com.flab.orderplatform.inventory.application.port.out.InventoryHistoryRepository;
 import com.flab.orderplatform.inventory.application.port.out.InventoryRepository;
 import com.flab.orderplatform.inventory.domain.Inventory;
+import com.flab.orderplatform.inventory.domain.event.InventoryReservationFailedEvent;
+import com.flab.orderplatform.inventory.domain.event.InventoryReservedEvent;
 import com.flab.orderplatform.inventory.domain.event.StockDeductedEvent;
+import com.flab.orderplatform.shared.event.OrderCreatedPayload;
 import com.flab.orderplatform.shared.event.OrderPaidPayload;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -18,6 +22,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.DECREASE;
+import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.RESERVE;
+
 @Component
 @RequiredArgsConstructor
 public class InventoryFacade {
@@ -27,10 +34,16 @@ public class InventoryFacade {
     private final InventoryCommandHandler inventoryCommandHandler;
     private final ApplicationEventPublisher eventPublisher;
 
+    /**
+     * 재고 차감
+     *
+     * @param event 주문이 결제되었다 이벤트
+     * @return 재고 목록
+     */
     @InventoryTransactional
     public List<Inventory> decreaseStock(OrderPaidPayload event) {
         // 이미 재고가 차감된 주문으로 처리하지 않는다.
-        if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber())) {
+        if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber(), DECREASE)) {
             return List.of();
         }
         // 재고 감소 요청된 모든 상품이 존재하는지 유효성 검증
@@ -87,5 +100,61 @@ public class InventoryFacade {
         }
     }
 
+    /**
+     * 재고 선점
+     *
+     * @param event 주문이 생성되었다 이벤트
+     * @return 재고 리스트
+     */
+    @InventoryTransactional
+    public List<Inventory> reserveInventory(OrderCreatedPayload event) {
+        // 이미 재고가 선점된 주문으로 처리하지 않는다.
+        if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber(), RESERVE)) {
+            return List.of();
+        }
 
+        // 재고 선점 요청된 모든 상품이 존재하는지 검증
+        var productCodes = event.orderItems()
+                .stream()
+                .map(OrderCreatedPayload.OrderItem::productCode)
+                .collect(Collectors.toSet());
+
+        // 재고 조정시 상품 정보를 중복하여 넣을 수 없다.
+        if (event.orderItems().size() != productCodes.size()) {
+            throw new DuplicatedProductException(productCodes);
+        }
+        validateIfAllProductsExisting(productCodes);
+
+
+        var commands = event.orderItems().stream().map(item -> InventoryReserveCommand.builder()
+                        .orderNumber(event.orderNumber())
+                        .product(
+                                InventoryReserveCommand.ProductDto
+                                        .builder()
+                                        .productCode(item.productCode())
+                                        .quantity(item.quantity())
+                                        .build())
+                        .build())
+                .toList();
+
+        var result = commands.stream()
+                .map(inventoryCommandHandler::handle)
+                .toList();
+
+        var inventoryReservedEvent = InventoryReservedEvent.builder()
+                .orderNumber(event.orderNumber())
+                .occurredOn(LocalDateTime.now())
+                .build();
+        eventPublisher.publishEvent(inventoryReservedEvent);
+        return result;
+    }
+
+    @InventoryTransactional
+    public void publishReservationFailed(String orderNumber) {
+        var inventoryReservationFailedEvent = InventoryReservationFailedEvent.builder()
+                .orderNumber(orderNumber)
+                .occurredOn(LocalDateTime.now())
+                .build();
+        eventPublisher.publishEvent(inventoryReservationFailedEvent);
+    }
 }

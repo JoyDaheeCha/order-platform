@@ -45,7 +45,7 @@
 
 ### 3. 재고 : 재고 선점
 3.1 `OrderCreated` 구독  
-3.2 재고 선점 (Inventory 테이블에서 reservation_count 증가, stock 감소)  
+3.2 재고 선점 (Inventory 테이블에서 reservation_count 증가, stock 감소)
 3.3 선점 성공/실패 처리  
 3.3.1 선점 성공시 `InventoryReserved` 이벤트 발행   
 3.3.2 선점 실패시 `InventoryReservationFailed` 이벤트 발행  

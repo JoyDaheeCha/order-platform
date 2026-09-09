@@ -13,6 +13,8 @@ public final class EventConstants {
     public static final String ORDER_CREATED_TOPIC = "MSG-ORDER-CREATED";
     public static final String ORDER_PAID = "OrderPaid";
     public static final String ORDER_PAID_TOPIC = "MSG-ORDER-PAID";
+    public static final String ORDER_PAYMENT_PREPARED = "OrderPaymentPrepared"; // TODO 이벤트 추가
+    public static final String ORDER_PAYMENT_PREPARED_TOPIC = "MSG-ORDER-PAYMENT-PREPARED";
     public static final String ORDER_CONFIRMED = "OrderConfirmed";
     public static final String ORDER_CONFIRMED_TOPIC = "MSG-ORDER-CONFIRMED";
     public static final String ORDER_CANCELLATION_REQUESTED = "OrderCancellationRequested";
@@ -27,6 +29,10 @@ public final class EventConstants {
     public static final String PAYMENT_REFUNDED = "PaymentRefunded";
     public static final String PAYMENT_REFUNDED_TOPIC = "MSG-PAYMENT-REFUNDED";
     // --- Inventory ---
+    public static final String INVENTORY_RESERVED = "InventoryReserved";
+    public static final String INVENTORY_RESERVED_TOPIC = "MSG-INVENTORY-RESERVED";
+    public static final String INVENTORY_RESERVATION_FAILED = "InventoryReservationFailed";
+    public static final String INVENTORY_RESERVATION_FAILED_TOPIC = "MSG-INVENTORY-RESERVATION-FAILED";
     public static final String STOCK_DEDUCTED = "StockDeducted";
     public static final String STOCK_DEDUCTED_TOPIC = "MSG-STOCK-DEDUCTED";
     public static final String STOCK_SHORTAGE = "StockShortage";

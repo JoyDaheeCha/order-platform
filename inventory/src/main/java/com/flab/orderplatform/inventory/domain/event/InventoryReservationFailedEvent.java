@@ -7,24 +7,27 @@ import java.time.LocalDateTime;
 
 import static com.flab.orderplatform.shared.event.EventConstants.*;
 
+/**
+ * 재고 선점에 실패하였다
+ */
 @Getter
-public class StockDeductedEvent extends InventoryOutboxEvent {
+public class InventoryReservationFailedEvent extends InventoryOutboxEvent {
     private final String orderNumber;
 
     @Builder
-    protected StockDeductedEvent(String orderNumber, LocalDateTime occurredOn) {
+    protected InventoryReservationFailedEvent(String orderNumber, LocalDateTime occurredOn) {
         super(orderNumber, occurredOn);
         this.orderNumber = orderNumber;
     }
 
     @Override
     public String getAction() {
-        return STOCK_DEDUCTED;
+        return INVENTORY_RESERVATION_FAILED;
     }
 
     @Override
     public String getTopic() {
-        return STOCK_DEDUCTED_TOPIC;
+        return INVENTORY_RESERVATION_FAILED_TOPIC;
     }
 
     @Override

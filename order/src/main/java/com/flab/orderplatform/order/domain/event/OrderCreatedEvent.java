@@ -8,26 +8,23 @@ import java.util.List;
 
 import static com.flab.orderplatform.shared.event.EventConstants.*;
 
+/**
+ * 주문이 생성되었다 이벤트
+ */
 @Getter
 public class OrderCreatedEvent extends OrderOutboxEvent {
 
     private final String orderNumber;
-    private final Long buyerId;
     private final List<OrderItemDto> orderItems;
-    private final Long totalAmount;
 
     @Builder
     protected OrderCreatedEvent(String aggregateId,
                                 LocalDateTime occurredOn,
                                 String orderNumber,
-                                Long buyerId,
-                                List<OrderItemDto> orderItems,
-                                Long totalAmount) {
+                                List<OrderItemDto> orderItems) {
         super(aggregateId, occurredOn);
         this.orderNumber = orderNumber;
-        this.buyerId = buyerId;
         this.orderItems = orderItems;
-        this.totalAmount = totalAmount;
     }
 
 
@@ -48,9 +45,8 @@ public class OrderCreatedEvent extends OrderOutboxEvent {
 
     @Builder
     public record OrderItemDto(
-            Long productId,
-            Integer quantity,
-            Long unitPrice
+            String productCode,
+            Integer quantity
     ) {
     }
 }

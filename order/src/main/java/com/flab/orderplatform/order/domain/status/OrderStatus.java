@@ -4,6 +4,7 @@ package com.flab.orderplatform.order.domain.status;
  * 주문 상태
  */
 public enum OrderStatus {
+    RESERVING_INVENTORY("재고 선점 중"),
     PENDING("결제 대기중"),
     PAID("결제 완료"),
     CONFIRMED("주문 확인 완료"),
