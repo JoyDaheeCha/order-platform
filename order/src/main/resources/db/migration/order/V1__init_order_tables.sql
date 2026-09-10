@@ -1,13 +1,15 @@
 CREATE TABLE IF NOT EXISTS orders
 (
-    id                              BIGINT     NOT NULL AUTO_INCREMENT,
+    id                              BIGINT      NOT NULL AUTO_INCREMENT,
     order_number                    VARCHAR(36) NOT NULL COMMENT '주문번호 (대외 노출용 비즈니스 키)',
     total_amount                    BIGINT      NOT NULL COMMENT '총 구매 금액',
     ordered_at                      DATETIME(6) NOT NULL COMMENT '주문일자',
     status                          VARCHAR(20) NOT NULL COMMENT '주문 상태 (RESERVING_INVENTORY/PENDING/PAID/CONFIRMED/CANCELLED)',
     customer_id                     BIGINT      NOT NULL COMMENT '구매자 ID',
     idempotent_key                  VARCHAR(36) NOT NULL COMMENT '주문 생성 멱등키',
-    order_inventory_reservation_id  BIGINT      NULL COMMENT '재고 선점 이력',
+    order_failed_reason             VARCHAR(30)          COMMENT '주문 실패 사유'
+    reserved_at                     DATETIME(6) NOT NULL COMMENT '재고 선점 일시',
+    is_released                     TINYINT     NOT NULL DEFAULT 0 COMMENT '재고 선점 해제 여부',
     created_at                      DATETIME(6) NOT NULL COMMENT '생성일',
     updated_at                      DATETIME(6) NOT NULL COMMENT '수정일',
     created_by                      VARCHAR(20) NOT NULL COMMENT '생성자',

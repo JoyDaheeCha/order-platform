@@ -16,10 +16,9 @@ public interface OrderJpaRepository extends JpaRepository<Order, Long> {
 
     // TODO: 쿼리 똑바로 나가는지 보기
     @Query("""
-            select oir from Order o
-                        INNER JOIN OrderInventoryReservation oir on o.inventoryReservation = oir
-            WHERE oir.isReleased = false
-            and oir.reservedAt < :reservedAtThreshold
+            select o from Order o
+            WHERE o.inventoryReservation.isReleased = false
+            and o.inventoryReservation.reservedAt < :reservedAtThreshold
             """)
     List<Order> findReleaseTarget(@Param("reservedAtThreshold") LocalDateTime reservedAtThreshold);
 

@@ -33,10 +33,7 @@ import static java.time.LocalDateTime.now;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "orders",
-        indexes = {
-                @Index(name = "idx_order_order_inventory_reservation_id", columnList = "order_inventory_reservation_id")
-        })
+@Table(name = "orders")
 public class Order extends BaseEntity {
 
     @Id
@@ -54,7 +51,7 @@ public class Order extends BaseEntity {
     private LocalDateTime orderedAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false, columnDefinition = "VARCHAR(20)  NOT NULL COMMENT '주문 상태 (RESERVING_INVENTORY/PENDING/PAID/CONFIRMED/CANCELLED)'")
+    @Column(name = "status", length = 20, nullable = false, columnDefinition = "VARCHAR(20)  NOT NULL COMMENT '주문 상태 (RESERVING_INVENTORY/PENDING/PAID/CONFIRMED/CANCELLED)'")
     private OrderStatus status;
 
     @OneToMany(mappedBy = "order", fetch = LAZY, cascade = {PERSIST, REMOVE, MERGE})
@@ -74,12 +71,10 @@ public class Order extends BaseEntity {
     private DomainEvent domainEvent;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 50, nullable = false, columnDefinition = "VARCHAR(50)  NOT NULL COMMENT '주문 실패 사유 (INVENTORY_SHORTAGE/PAYMENT_FAILED)'")
+    @Column(name = "order_failed_reason", length = 30, columnDefinition = "VARCHAR(30) COMMENT '주문 실패 사유'")
     private OrderFailedReasonType reason;
 
-    // TODO: 별개 테이블로 분리한 이유 PR에서 언급할것
-    @OneToOne(fetch = LAZY, cascade = {PERSIST, REMOVE, MERGE}, orphanRemoval = true)
-    @JoinColumn(name = "order_inventory_reservation_id")
+    @Embedded
     private OrderInventoryReservation inventoryReservation;
 
     @Builder
@@ -176,7 +171,7 @@ public class Order extends BaseEntity {
 
     // TODO 재고 선점 데이터 저장되는지 확인하는 테스트 추가
     public Order preparePayment(LocalDateTime reservedAt) {
-        this.inventoryReservation = OrderInventoryReservation.create(orderNumber, reservedAt);
+        this.inventoryReservation = OrderInventoryReservation.create(reservedAt);
         this.status = PENDING_PAYMENT;
         this.domainEvent = OrderPaymentPreparedEvent.builder()
                 .orderNumber(orderNumber)
