@@ -90,6 +90,7 @@ public class OrderCommandHandler {
                 .orElseThrow(() -> new OrderNotFoundException(orderNumber));
     }
 
+    // TODO: 이벤트 발행 테스트 추가
     /**
      * 주문 결제 준비
      *
@@ -98,7 +99,7 @@ public class OrderCommandHandler {
      */
     @OrderTransactional
     public Order handle(OrderPreparePaymentCommand command) {
-        var order = getOrder(command.orderNumber());
+        var order = getOrderByOrderNumber(command.orderNumber());
         var result = command.preparePayment(order);
         result.pullDomainEventIfPresent()
                 .ifPresent(eventPublisher::publishEvent);
@@ -113,20 +114,24 @@ public class OrderCommandHandler {
      */
     @OrderTransactional
     public Order handle(OrderFailByInventoryShortageCommand command) {
-        var order = getOrder(command.orderNumber());
+        var order = getOrderByOrderNumber(command.orderNumber());
         var result = command.fail(order);
         return orderRepository.save(result);
     }
 
+    // TODO: 이벤트 발행 테스트 추가
     @OrderTransactional
     public Order handle(OrderFailByPaymentTimeoutCommand command) {
-        var orderNumber = command.orderNumber();
-        var order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new OrderNotFoundException(orderNumber));
+        var order = getOrderByOrderNumber(command.orderNumber());
 
         var result = command.fail(order);
         result.pullDomainEventIfPresent()
                 .ifPresent(eventPublisher::publishEvent);
         return result;
+    }
+
+    private Order getOrderByOrderNumber(String orderNumber) {
+        return orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new OrderNotFoundException(orderNumber));
     }
 }
