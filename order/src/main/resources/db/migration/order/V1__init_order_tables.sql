@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS orders
     customer_id                     BIGINT      NOT NULL COMMENT '구매자 ID',
     idempotent_key                  VARCHAR(36) NOT NULL COMMENT '주문 생성 멱등키',
     order_failed_reason             VARCHAR(30)          COMMENT '주문 실패 사유'
-    reserved_at                     DATETIME(6) NOT NULL COMMENT '재고 선점 일시',
-    is_released                     TINYINT     NOT NULL DEFAULT 0 COMMENT '재고 선점 해제 여부',
+    reserved_at                     DATETIME(6)          COMMENT '재고 선점 일시',
+    is_released                     TINYINT    DEFAULT 0 COMMENT '재고 선점 해제 여부',
     created_at                      DATETIME(6) NOT NULL COMMENT '생성일',
     updated_at                      DATETIME(6) NOT NULL COMMENT '수정일',
     created_by                      VARCHAR(20) NOT NULL COMMENT '생성자',
