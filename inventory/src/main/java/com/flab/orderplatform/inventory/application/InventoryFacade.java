@@ -7,7 +7,6 @@ import com.flab.orderplatform.inventory.application.exception.DuplicatedProductE
 import com.flab.orderplatform.inventory.application.exception.InventoryNotFoundException;
 import com.flab.orderplatform.inventory.application.port.out.InventoryHistoryRepository;
 import com.flab.orderplatform.inventory.application.port.out.InventoryRepository;
-import com.flab.orderplatform.inventory.common.BusinessException;
 import com.flab.orderplatform.inventory.domain.Inventory;
 import com.flab.orderplatform.inventory.domain.event.InventoryReservationFailedEvent;
 import com.flab.orderplatform.inventory.domain.event.InventoryReservedEvent;
@@ -145,6 +144,7 @@ public class InventoryFacade {
         var inventoryReservedEvent = InventoryReservedEvent.builder()
                 .orderNumber(event.orderNumber())
                 .occurredOn(LocalDateTime.now())
+                .reservedAt(LocalDateTime.now())
                 .build();
         eventPublisher.publishEvent(inventoryReservedEvent);
         return result;

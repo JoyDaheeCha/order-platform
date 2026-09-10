@@ -18,8 +18,8 @@ public class OrderInventoryReservation {
     @Column(name = "reserved_at", columnDefinition = "DATETIME(6) NOT NULL COMMENT '재고 선점 일시'")
     private LocalDateTime reservedAt;
 
-    @Column(name = "is_released", columnDefinition = "TINYINT NOT NULL DEFAULT 0 COMMENT '재고 선점 해제 여부'")
-    private boolean isReleased;
+    @Column(name = "is_released", columnDefinition = "TINYINT(1) COMMENT '재고 선점 해제 여부'")
+    private Boolean isReleased;
 
     @Builder
     public OrderInventoryReservation(LocalDateTime reservedAt, boolean isReleased) {
