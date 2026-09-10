@@ -54,17 +54,17 @@
 4.1 선점에 성공하여 결제 요청 진행  
 4.1.1 `InventoryReserved` 이벤트를 컨슈밍  
 4.1.2 `PENDING_PAYMENT`(결제 대기중) 로 주문 상태 변경  
-4.1.3 재고가 선점된 주문(OrderInventoryReservation) 테이블에 주문 데이터 적재  
+4.1.3 재고 선점 기록 추가 (order 테이블 내 reserved_at, is_released)
 4.1.4 `OrderPaymentPrepared` 이벤트 발행  
 
 4.2 선점에 실패하여 주문 실패처리  
 4.2.1 `InventoryReservationFailed` 이벤트를 컨슈밍  
 4.2.2 `ORDER_FAILED`로 상태 변경  
-4.2.3 `ORDER_FAIL_HISTORY` 테이블에 주문 id, 실패 사유 적재 (실패 사유: INVENTORY_SHORTAGE(재고부족))  
+4.2.3 `orders.order_failed_reason` 실패 사유 적재
 
 4.3 재고 선점 타임아웃 처리  
 3.3.1 스케줄러에서 `OrderInventoryReservation` 테이블을 1분마다 체크  
-4.3.2 주문시각으로부터 10분이 경과했으나, 결제가 이뤄지지 않은 경우, 선점 해제 선점 해제(isReleased = true, reason = PAYMENT_TIMEOUT) 처리  
+4.3.2 재고 선점 시간으로부터 10분이 경과했으나, 결제가 이뤄지지 않은 경우, 선점 해제 선점 해제(isReleased = true, reason = TIMEOUT) 처리  
 4.3.3 `OrderFailed` 발행
 
 ### 5. 결제  
