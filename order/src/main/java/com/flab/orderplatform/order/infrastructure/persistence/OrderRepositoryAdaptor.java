@@ -2,6 +2,7 @@ package com.flab.orderplatform.order.infrastructure.persistence;
 
 import com.flab.orderplatform.order.application.port.out.OrderRepository;
 import com.flab.orderplatform.order.domain.Order;
+import com.flab.orderplatform.order.domain.status.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -25,8 +26,8 @@ public class OrderRepositoryAdaptor implements OrderRepository {
     }
 
     @Override
-    public List<Order> findReleaseTarget(LocalDateTime reservedAtThreshold) {
-        return orderJpaRepository.findReleaseTarget(reservedAtThreshold);
+    public List<Order> findReleaseTarget(LocalDateTime reservedAtThreshold, OrderStatus orderStatus) {
+        return orderJpaRepository.findReleaseTarget(reservedAtThreshold, orderStatus);
     }
 
     @Override

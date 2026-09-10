@@ -14,8 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.flab.orderplatform.order.domain.status.OrderStatus.PAID;
-import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING_PAYMENT;
+import static com.flab.orderplatform.order.domain.status.OrderStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
@@ -42,7 +41,7 @@ class OrderTest {
         );
         Order order;
         var fixedNow = LocalDateTime.of(2026, 7, 21, 14, 30, 0);
-        try (MockedStatic<LocalDateTime> mocked = mockStatic(LocalDateTime.class, CALLS_REAL_METHODS)){
+        try (MockedStatic<LocalDateTime> mocked = mockStatic(LocalDateTime.class, CALLS_REAL_METHODS)) {
             mocked.when(LocalDateTime::now).thenReturn(fixedNow);
             // when
             order = Order.create(customerId, orderItems, orderNumber, UUID.randomUUID().toString());
@@ -103,13 +102,14 @@ class OrderTest {
     @Test
     void payTransitionsToPaidAndRegistersEvent() {
         // given: 생성 시점의 OrderCreatedEvent 는 이미 발행되었다고 보고 비워둔다.
-        var  order  = Order.builder()
+        var  createdOrder  = Order.builder()
                 .customerId(100L)
                 .orderItems(List.of(orderItem()))
-                .status(PENDING)
+                .status(PENDING_PAYMENT)
                 .orderNumber("20260730-5T1QWE9BXK")
                 .idempotentKey("1111-2222-3333-4444")
                 .build();
+        var order = createdOrder.preparePayment(LocalDateTime.now());
         order.pullDomainEventIfPresent();
 
         // when
@@ -192,14 +192,14 @@ class OrderTest {
     void pullDomainEventDrainsTheEventIfPresent() {
         // given
         var order = Order.create(100L, List.of(
-                OrderItem.builder()
-                        .productId(1L)
-                        .productCode("GD10001")
-                        .name("뽀로로 주스")
-                        .price(1_500L)
-                        .quantity(3)
-                        .build()
-        ), "20260730-8N4ZLC2RPD",
+                        OrderItem.builder()
+                                .productId(1L)
+                                .productCode("GD10001")
+                                .name("뽀로로 주스")
+                                .price(1_500L)
+                                .quantity(3)
+                                .build()
+                ), "20260730-8N4ZLC2RPD",
                 "1111-2222-3333-4444");
 
         // when: 첫 번째 pull 로 이벤트를 꺼낸다.
@@ -232,7 +232,9 @@ class OrderTest {
                 .build();
     }
 
-    /** 팩토리(create)를 거치지 않고 특정 상태의 주문을 만든다. 조회해 온 주문을 흉내내는 용도. */
+    /**
+     * 팩토리(create)를 거치지 않고 특정 상태의 주문을 만든다. 조회해 온 주문을 흉내내는 용도.
+     */
     private Order orderWith(OrderStatus status) {
         var orderItems = List.of(orderItem());
         var order = Order.builder()
@@ -246,5 +248,23 @@ class OrderTest {
                 .build();
         orderItems.forEach(item -> item.setOrder(order));
         return order;
+    }
+
+    @DisplayName("결제 대기시, 재고가 선점되고 '결제대기' 상태로 변경된다.")
+    @Test
+    void preparePayment() {
+        // given
+        var order = orderWith(RESERVING_INVENTORY);
+        var reservedAt = LocalDateTime.of(2026, 7, 21, 14, 30, 0);
+
+        // when
+        order.preparePayment(reservedAt);
+
+        assertSoftly(softly -> {
+                    softly.assertThat(order.getInventoryReservation().getReservedAt()).isEqualTo(reservedAt);
+                    softly.assertThat(order.getInventoryReservation().getIsReleased()).isFalse();
+                    softly.assertThat(order.getStatus()).isEqualTo(PENDING_PAYMENT);
+                }
+        );
     }
 }

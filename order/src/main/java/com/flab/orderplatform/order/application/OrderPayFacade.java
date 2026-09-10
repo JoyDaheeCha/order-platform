@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
+import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING_PAYMENT;
 import static java.time.LocalDateTime.now;
 
 /**
@@ -83,7 +84,7 @@ public class OrderPayFacade {
      * 재고 선점된지 10분이 지난 데이터 일괄 해제
      */
     public void releaseReservation() {
-        var orderNumbers = orderRepository.findReleaseTarget(now().minusMinutes(10))
+        var orderNumbers = orderRepository.findReleaseTarget(now().minusMinutes(10), PENDING_PAYMENT)
                 .stream().map(Order::getOrderNumber)
                 .toList();
 

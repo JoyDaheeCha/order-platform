@@ -1,7 +1,9 @@
 package com.flab.orderplatform.order.application;
 
 import com.flab.orderplatform.order.application.command.OrderCreateCommand;
+import com.flab.orderplatform.order.application.command.OrderFailByPaymentTimeoutCommand;
 import com.flab.orderplatform.order.application.command.OrderPayCommand;
+import com.flab.orderplatform.order.application.command.OrderPreparePaymentCommand;
 import com.flab.orderplatform.order.application.exception.DuplicatedProductException;
 import com.flab.orderplatform.order.application.exception.OrderNotFoundException;
 import com.flab.orderplatform.order.application.exception.ProductNotFoundException;
@@ -9,7 +11,9 @@ import com.flab.orderplatform.order.application.port.out.OrderRepository;
 import com.flab.orderplatform.order.domain.Order;
 import com.flab.orderplatform.order.domain.OrderItem;
 import com.flab.orderplatform.order.domain.event.OrderCreatedEvent;
+import com.flab.orderplatform.order.domain.event.OrderFailedEvent;
 import com.flab.orderplatform.order.domain.event.OrderPaidEvent;
+import com.flab.orderplatform.order.domain.event.OrderPaymentPreparedEvent;
 import com.flab.orderplatform.order.domain.external.Product;
 import com.flab.orderplatform.order.domain.status.OrderStatus;
 import org.junit.jupiter.api.DisplayName;
@@ -27,8 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.flab.orderplatform.order.domain.status.OrderStatus.PAID;
-import static com.flab.orderplatform.order.domain.status.OrderStatus.PENDING_PAYMENT;
+import static com.flab.orderplatform.order.domain.status.OrderStatus.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.mockito.ArgumentMatchers.any;
@@ -259,5 +262,41 @@ class OrderCommandHandlerTest {
                     .productMapCodeById(Map.of(1L, "GD10001"))
                     .build();
         }
+    }
+
+    @DisplayName("결제 준비시, '결제 준비완료' 메시지가 발행된다.")
+    @Test
+    void preparePayment() {
+        // given
+        var order = orderWith(RESERVING_INVENTORY);
+        var command = new OrderPreparePaymentCommand(ORDER_NUMBER, LocalDateTime.now());
+        given(orderRepository.findByOrderNumber(ORDER_NUMBER))
+                .willReturn(Optional.of(order));
+
+        // when
+        orderCommandHandler.handle(command);
+
+        // then
+        var captor = ArgumentCaptor.forClass(OrderPaymentPreparedEvent.class);
+        verify(eventPublisher, times(1)).publishEvent(captor.capture());
+    }
+
+    @DisplayName("타임아웃으로 주문실패시, '주문 실패' 메시지가 발행된다.")
+    @Test
+    void failByPaymentTimeout() {
+        // given
+        var order = orderWith(RESERVING_INVENTORY)
+                .preparePayment(LocalDateTime.now());
+
+        var command = new OrderFailByPaymentTimeoutCommand(ORDER_NUMBER);
+        given(orderRepository.findByOrderNumber(ORDER_NUMBER))
+                .willReturn(Optional.of(order));
+
+        // when
+        orderCommandHandler.handle(command);
+
+        // then
+        var captor = ArgumentCaptor.forClass(OrderFailedEvent.class);
+        verify(eventPublisher, times(1)).publishEvent(captor.capture());
     }
 }

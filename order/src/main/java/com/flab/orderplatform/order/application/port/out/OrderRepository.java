@@ -1,6 +1,7 @@
 package com.flab.orderplatform.order.application.port.out;
 
 import com.flab.orderplatform.order.domain.Order;
+import com.flab.orderplatform.order.domain.status.OrderStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,7 +12,7 @@ public interface OrderRepository {
 
     Optional<Order> findWithOrderItemsByOrderNumber(String orderNumber);
 
-    List<Order> findReleaseTarget(LocalDateTime reservedAtThreshold);
+    List<Order> findReleaseTarget(LocalDateTime reservedAtThreshold, OrderStatus orderStatus);
 
     Optional<Order> findByOrderNumber(String orderNumber);
 }

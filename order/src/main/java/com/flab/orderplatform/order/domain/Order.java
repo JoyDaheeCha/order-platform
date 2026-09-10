@@ -207,6 +207,10 @@ public class Order extends BaseEntity {
      * 재고 선점후 일정 시간 내 결제가 이뤄지지 않아 주문 실패 처리
      */
     public Order failByTimeout() {
+        // 이미 결제 완료/실패한 주문은 무시
+        if (this.status != PENDING_PAYMENT) {
+            return this;
+        }
         this.status = ORDER_FAILED;
         this.reason = TIMEOUT;
         this.inventoryReservation = inventoryReservation.release();
