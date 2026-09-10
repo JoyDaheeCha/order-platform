@@ -74,7 +74,6 @@ public class OrderCommandHandler {
      * 주문 결제
      *
      * @param command 주문 결제 명령
-     *                O98
      */
     @OrderTransactional
     public Order handle(OrderPayCommand command) {
