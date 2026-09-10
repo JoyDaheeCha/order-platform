@@ -169,7 +169,11 @@ public class Order extends BaseEntity {
         return productMapCodeById.get(item.getProductId());
     }
 
-    // TODO 재고 선점 데이터 저장되는지 확인하는 테스트 추가
+    /**
+     * 주문에서 재고 선점
+     *
+     * @param reservedAt 재고 선점일시
+     */
     public Order preparePayment(LocalDateTime reservedAt) {
         this.inventoryReservation = OrderInventoryReservation.create(reservedAt);
         this.status = PENDING_PAYMENT;
