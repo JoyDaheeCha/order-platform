@@ -90,7 +90,6 @@ public class OrderCommandHandler {
                 .orElseThrow(() -> new OrderNotFoundException(orderNumber));
     }
 
-    // TODO: 이벤트 발행 테스트 추가
     /**
      * 주문 결제 준비
      *
@@ -119,7 +118,6 @@ public class OrderCommandHandler {
         return orderRepository.save(result);
     }
 
-    // TODO: 이벤트 발행 테스트 추가
     @OrderTransactional
     public Order handle(OrderFailByPaymentTimeoutCommand command) {
         var order = getOrderByOrderNumber(command.orderNumber());
@@ -127,7 +125,7 @@ public class OrderCommandHandler {
         var result = command.fail(order);
         result.pullDomainEventIfPresent()
                 .ifPresent(eventPublisher::publishEvent);
-        return result;
+        return orderRepository.save(result);
     }
 
     private Order getOrderByOrderNumber(String orderNumber) {
