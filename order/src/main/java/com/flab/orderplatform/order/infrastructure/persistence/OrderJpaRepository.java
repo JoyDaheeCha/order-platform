@@ -15,7 +15,6 @@ public interface OrderJpaRepository extends JpaRepository<Order, Long> {
     @EntityGraph(attributePaths = {"orderItems"})
     Optional<Order> findWithOrderItemsByOrderNumber(String orderNumber);
 
-    // TODO: 쿼리 똑바로 나가는지 보기
     @Query("""
             select o from Order o
             WHERE o.inventoryReservation.isReleased = false
