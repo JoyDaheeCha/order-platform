@@ -5,6 +5,7 @@ import com.flab.orderplatform.order.domain.event.OrderFailedEvent;
 import com.flab.orderplatform.order.domain.event.OrderPaidEvent;
 import com.flab.orderplatform.order.domain.event.OrderPaymentPreparedEvent;
 import com.flab.orderplatform.order.domain.status.OrderFailedReasonType;
+import com.flab.orderplatform.order.domain.status.OrderInventoryReservationReleaseReason;
 import com.flab.orderplatform.order.domain.status.OrderStatus;
 import com.flab.orderplatform.shared.domain.BaseEntity;
 import com.flab.orderplatform.shared.domain.DomainEvent;
@@ -21,7 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.flab.orderplatform.order.domain.status.OrderFailedReasonType.INVENTORY_SHORTAGE;
-import static com.flab.orderplatform.order.domain.status.OrderFailedReasonType.TIMEOUT;
 import static com.flab.orderplatform.order.domain.status.OrderStatus.*;
 import static jakarta.persistence.CascadeType.*;
 import static jakarta.persistence.FetchType.LAZY;
@@ -221,8 +221,8 @@ public class Order extends BaseEntity {
             return this;
         }
         this.status = ORDER_FAILED;
-        this.reason = TIMEOUT;
-        this.inventoryReservation = inventoryReservation.release();
+        this.reason = OrderFailedReasonType.TIMEOUT;
+        this.inventoryReservation = inventoryReservation.release(OrderInventoryReservationReleaseReason.TIMEOUT);
 
         this.domainEvent = OrderFailedEvent.builder()
                 .orderNumber(orderNumber)

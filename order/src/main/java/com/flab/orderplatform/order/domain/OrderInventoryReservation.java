@@ -1,7 +1,10 @@
 package com.flab.orderplatform.order.domain;
 
+import com.flab.orderplatform.order.domain.status.OrderInventoryReservationReleaseReason;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +24,10 @@ public class OrderInventoryReservation {
     @Column(name = "is_released", columnDefinition = "TINYINT(1) COMMENT '재고 선점 해제 여부'")
     private Boolean isReleased;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reservation_release_reason", length = 30, columnDefinition = "VARCHAR(30) COMMENT '재고 선점 해제 사유'")
+    private OrderInventoryReservationReleaseReason releaseReason;
+
     @Builder
     public OrderInventoryReservation(LocalDateTime reservedAt, boolean isReleased) {
         this.reservedAt = reservedAt;
@@ -34,8 +41,9 @@ public class OrderInventoryReservation {
                 .build();
     }
 
-    public OrderInventoryReservation release() {
+    public OrderInventoryReservation release(OrderInventoryReservationReleaseReason reason) {
         this.isReleased = true;
+        this.releaseReason = reason;
         return this;
     }
 }
