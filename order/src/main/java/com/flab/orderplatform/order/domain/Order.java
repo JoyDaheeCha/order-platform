@@ -70,13 +70,6 @@ public class Order extends BaseEntity {
     @Transient
     private DomainEvent domainEvent;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "order_failed_reason", length = 30, columnDefinition = "VARCHAR(30) COMMENT '주문 실패 사유'")
-    private OrderFailedReasonType reason;
-
-    @Embedded
-    private OrderInventoryReservation inventoryReservation;
-
     @Builder
     public Order(String orderNumber, Long totalAmount, LocalDateTime orderedAt, OrderStatus status,
                  List<OrderItem> orderItems, Long customerId, String idempotentKey) {
@@ -103,12 +96,17 @@ public class Order extends BaseEntity {
                         .build())
                 .toList();
 
+        var totalAmount = orderItems.stream()
+                .mapToLong(OrderItem::calculateAmount)
+                .sum();
+
         var order = Order.builder()
                 .customerId(customerId)
                 .orderNumber(orderNumber)
                 .orderItems(orderItems)
-                .orderedAt(now())
+                .orderedAt(LocalDateTime.now())
                 .status(RESERVING_INVENTORY)
+                .totalAmount(totalAmount)
                 .idempotentKey(idempotentKey)
                 .build();
 

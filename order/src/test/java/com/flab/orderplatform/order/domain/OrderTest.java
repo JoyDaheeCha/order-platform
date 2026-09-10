@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mockStatic;
 @DisplayName("주문 단위테스트")
 class OrderTest {
 
-    @DisplayName("[성공] 주문 생성시 주문일자는 현재로 세팅되고, 주문 상태는 결제대기중으로 초기화된다.")
+    @DisplayName("[성공] 주문 생성시 주문일자는 현재로 세팅되고, 주문 상태는 '재고 선점중'으로 초기화된다.")
     @Test
     void create() {
         // given
@@ -51,7 +51,7 @@ class OrderTest {
         // then
         assertSoftly(softly -> {
             softly.assertThat(order.getOrderedAt()).isEqualTo(fixedNow);
-            softly.assertThat(order.getStatus()).isEqualTo(PENDING_PAYMENT);
+            softly.assertThat(order.getStatus()).isEqualTo(RESERVING_INVENTORY);
         });
     }
 
@@ -103,7 +103,13 @@ class OrderTest {
     @Test
     void payTransitionsToPaidAndRegistersEvent() {
         // given: 생성 시점의 OrderCreatedEvent 는 이미 발행되었다고 보고 비워둔다.
-        var order = Order.create(100L, List.of(orderItem()), "20260730-5T1QWE9BXK", "1111-2222-3333-4444");
+        var  order  = Order.builder()
+                .customerId(100L)
+                .orderItems(List.of(orderItem()))
+                .status(PENDING)
+                .orderNumber("20260730-5T1QWE9BXK")
+                .idempotentKey("1111-2222-3333-4444")
+                .build();
         order.pullDomainEventIfPresent();
 
         // when
@@ -161,6 +167,7 @@ class OrderTest {
                 OrderItem.builder()
                         .productId(1L)
                         .name("뽀로로 주스")
+                        .productCode("GD10001")
                         .price(1_500L)
                         .quantity(3)
                         .build()
