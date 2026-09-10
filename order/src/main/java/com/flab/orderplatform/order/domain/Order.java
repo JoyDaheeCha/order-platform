@@ -178,11 +178,16 @@ public class Order extends BaseEntity {
     }
 
     /**
-     * 주문에서 재고 선점
+     * 결제 대기<br>
+     * 주문에서 재고 선점 완료후, 결제 대기로 넘어간다
      *
      * @param reservedAt 재고 선점일시
      */
     public Order preparePayment(LocalDateTime reservedAt) {
+        // 재고 선점중일때만 처리
+        if (status != RESERVING_INVENTORY) {
+            return this;
+        }
         this.inventoryReservation = OrderInventoryReservation.create(reservedAt);
         this.status = PENDING_PAYMENT;
         this.domainEvent = OrderPaymentPreparedEvent.builder()
@@ -198,6 +203,10 @@ public class Order extends BaseEntity {
      * 재고 선점에 실패하였으므로, 별도 이벤트 발행 없음
      */
     public Order failByInventoryShortage() {
+        // 재고 선점중일때만 처리
+        if (this.status != RESERVING_INVENTORY) {
+            return this;
+        }
         this.status = ORDER_FAILED;
         this.reason = INVENTORY_SHORTAGE;
         return this;
