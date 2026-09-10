@@ -78,14 +78,14 @@ public class OrderCommandHandler {
      */
     @OrderTransactional
     public Order handle(OrderPayCommand command) {
-        var order = getOrder(command.orderNumber());
+        var order = getOrderWithOrderItems(command.orderNumber());
         var result = command.pay(order);
         result.pullDomainEventIfPresent()
                 .ifPresent(eventPublisher::publishEvent);
         return orderRepository.save(result);
     }
 
-    private Order getOrder(String orderNumber) {
+    private Order getOrderWithOrderItems(String orderNumber) {
         return orderRepository.findWithOrderItemsByOrderNumber(orderNumber)
                 .orElseThrow(() -> new OrderNotFoundException(orderNumber));
     }
@@ -120,7 +120,7 @@ public class OrderCommandHandler {
 
     @OrderTransactional
     public Order handle(OrderFailByPaymentTimeoutCommand command) {
-        var order = getOrderByOrderNumber(command.orderNumber());
+        var order = getOrderWithOrderItems(command.orderNumber());
 
         var result = command.fail(order);
         result.pullDomainEventIfPresent()

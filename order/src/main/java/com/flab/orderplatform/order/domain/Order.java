@@ -228,6 +228,7 @@ public class Order extends BaseEntity {
                 .orderNumber(orderNumber)
                 .aggregateId(orderNumber)
                 .occurredOn(now())
+                .orderItems(orderItems)
                 .build();
         return this;
     }
