@@ -29,7 +29,7 @@ public class OrderPaymentPreparedEvent extends OrderOutboxEvent {
 
     @Override
     public String getTopic() {
-        return PAYMENT_COMPLETED_TOPIC;
+        return ORDER_PAYMENT_PREPARED_TOPIC;
     }
 
     @Override
