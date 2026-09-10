@@ -4,6 +4,7 @@ import com.flab.orderplatform.order.domain.event.OrderCreatedEvent;
 import com.flab.orderplatform.order.domain.event.OrderFailedEvent;
 import com.flab.orderplatform.order.domain.event.OrderPaidEvent;
 import com.flab.orderplatform.order.domain.event.OrderPaymentPreparedEvent;
+import com.flab.orderplatform.order.domain.status.OrderFailedReasonType;
 import com.flab.orderplatform.order.domain.status.OrderStatus;
 import com.flab.orderplatform.shared.domain.BaseEntity;
 import com.flab.orderplatform.shared.domain.DomainEvent;
@@ -72,10 +73,9 @@ public class Order extends BaseEntity {
     @Transient
     private DomainEvent domainEvent;
 
-    // TODO 별개의 애그리거트로 분리 (라이프 사이클 다름)
-    @OneToOne(fetch = LAZY, cascade = {PERSIST, REMOVE, MERGE}, orphanRemoval = true)
-    @JoinColumn(name = "order_failed_reason_id")
-    private OrderFailedReason orderFailedReason;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50, nullable = false, columnDefinition = "VARCHAR(50)  NOT NULL COMMENT '주문 실패 사유 (INVENTORY_SHORTAGE/PAYMENT_FAILED)'")
+    private OrderFailedReasonType reason;
 
     // TODO: 별개 테이블로 분리한 이유 PR에서 언급할것
     @OneToOne(fetch = LAZY, cascade = {PERSIST, REMOVE, MERGE}, orphanRemoval = true)
@@ -192,7 +192,7 @@ public class Order extends BaseEntity {
      */
     public Order failByInventoryShortage() {
         this.status = ORDER_FAILED;
-        this.orderFailedReason = OrderFailedReason.create(INVENTORY_SHORTAGE);
+        this.reason = INVENTORY_SHORTAGE;
         return this;
     }
 
@@ -201,7 +201,7 @@ public class Order extends BaseEntity {
      */
     public Order failByTimeout() {
         this.status = ORDER_FAILED;
-        this.orderFailedReason = OrderFailedReason.create(TIMEOUT);
+        this.reason = TIMEOUT;
         this.inventoryReservation = inventoryReservation.release();
 
         this.domainEvent = OrderFailedEvent.builder()

@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS orders
     status                          VARCHAR(20) NOT NULL COMMENT '주문 상태 (RESERVING_INVENTORY/PENDING/PAID/CONFIRMED/CANCELLED)',
     customer_id                     BIGINT      NOT NULL COMMENT '구매자 ID',
     idempotent_key                  VARCHAR(36) NOT NULL COMMENT '주문 생성 멱등키',
-    order_failed_reason_id          BIGINT      NULL COMMENT '주문 실패 사유 id',
     order_inventory_reservation_id  BIGINT      NULL COMMENT '재고 선점 이력',
     created_at                      DATETIME(6) NOT NULL COMMENT '생성일',
     updated_at                      DATETIME(6) NOT NULL COMMENT '수정일',
@@ -89,11 +88,4 @@ CREATE TABLE IF NOT EXISTS outbox
     ) ENGINE = InnoDB
     DEFAULT CHARSET = utf8mb4
     COLLATE = utf8mb4_0900_ai_ci;
-
-CREATE TABLE IF NOT EXISTS order_failed_reason
-(
-    id            BIGINT      NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    reason        VARCHAR(50) NOT NULL COMMENT '주문 실패 사유'
-)
-    comment '주문 실패 사유';
 
