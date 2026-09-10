@@ -3,12 +3,14 @@ package com.flab.orderplatform.order.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 import static lombok.AccessLevel.PROTECTED;
 
+@Getter
 @Embeddable
 @NoArgsConstructor(access = PROTECTED)
 public class OrderInventoryReservation {
