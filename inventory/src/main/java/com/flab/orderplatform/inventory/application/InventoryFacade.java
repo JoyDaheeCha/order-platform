@@ -141,10 +141,11 @@ public class InventoryFacade {
                 .map(inventoryCommandHandler::handle)
                 .toList();
 
+        var now = LocalDateTime.now();
         var inventoryReservedEvent = InventoryReservedEvent.builder()
                 .orderNumber(event.orderNumber())
-                .occurredOn(LocalDateTime.now())
-                .reservedAt(LocalDateTime.now())
+                .occurredOn(now)
+                .reservedAt(now)
                 .build();
         eventPublisher.publishEvent(inventoryReservedEvent);
         return result;

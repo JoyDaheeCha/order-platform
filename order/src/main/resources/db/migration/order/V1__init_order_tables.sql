@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS orders
     order_failed_reason             VARCHAR(30)          COMMENT '주문 실패 사유',
     reserved_at                     DATETIME(6)          COMMENT '재고 선점 일시',
     is_released                     TINYINT(1)           COMMENT '재고 선점 해제 여부',
-    reservation_realease_reason     VARCHAR(30)          COMMENT '재고 선점 해제 사유',
+    reservation_release_reason      VARCHAR(30)          COMMENT '재고 선점 해제 사유',
     created_at                      DATETIME(6) NOT NULL COMMENT '생성일',
     updated_at                      DATETIME(6) NOT NULL COMMENT '수정일',
     created_by                      VARCHAR(20) NOT NULL COMMENT '생성자',

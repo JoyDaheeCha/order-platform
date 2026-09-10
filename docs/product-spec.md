@@ -63,7 +63,7 @@
 4.2.3 `orders.order_failed_reason` 실패 사유 적재
 
 4.3 재고 선점 타임아웃 처리  
-3.3.1 스케줄러에서 `OrderInventoryReservation` 테이블을 1분마다 체크  
+4.3.1 스케줄러에서 `OrderInventoryReservation` 테이블을 1분마다 체크  
 4.3.2 재고 선점 시간으로부터 10분이 경과했으나, 결제가 이뤄지지 않은 경우, 선점 해제 선점 해제(isReleased = true, reason = TIMEOUT) 처리  
 4.3.3 `OrderFailed` 발행
 

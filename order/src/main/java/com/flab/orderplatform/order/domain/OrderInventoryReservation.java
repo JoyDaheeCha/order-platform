@@ -18,7 +18,7 @@ import static lombok.AccessLevel.PROTECTED;
 @NoArgsConstructor(access = PROTECTED)
 public class OrderInventoryReservation {
 
-    @Column(name = "reserved_at", columnDefinition = "DATETIME(6) NOT NULL COMMENT '재고 선점 일시'")
+    @Column(name = "reserved_at", columnDefinition = "DATETIME(6) COMMENT '재고 선점 일시'")
     private LocalDateTime reservedAt;
 
     @Column(name = "is_released", columnDefinition = "TINYINT(1) COMMENT '재고 선점 해제 여부'")
@@ -29,9 +29,12 @@ public class OrderInventoryReservation {
     private OrderInventoryReservationReleaseReason releaseReason;
 
     @Builder
-    public OrderInventoryReservation(LocalDateTime reservedAt, boolean isReleased) {
+    public OrderInventoryReservation(LocalDateTime reservedAt,
+                                     boolean isReleased,
+                                     OrderInventoryReservationReleaseReason releaseReason) {
         this.reservedAt = reservedAt;
         this.isReleased = isReleased;
+        this.releaseReason = releaseReason;
     }
 
     public static OrderInventoryReservation create(LocalDateTime reservedAt) {

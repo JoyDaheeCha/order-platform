@@ -1,7 +1,7 @@
 package com.flab.orderplatform.order.domain.status;
 
 /**
- * 주문 실패 사유
+ * 재고 선점 해제 사유
  */
 public enum OrderInventoryReservationReleaseReason {
     TIMEOUT("재고 선점후 시간초과"),
