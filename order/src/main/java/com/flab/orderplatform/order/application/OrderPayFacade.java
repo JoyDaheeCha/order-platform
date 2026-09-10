@@ -1,6 +1,7 @@
 package com.flab.orderplatform.order.application;
 
 import com.flab.orderplatform.order.application.command.OrderFailByInventoryShortageCommand;
+import com.flab.orderplatform.order.application.command.OrderFailByPaymentTimeoutCommand;
 import com.flab.orderplatform.order.application.command.OrderPayCommand;
 import com.flab.orderplatform.order.application.command.OrderPreparePaymentCommand;
 import com.flab.orderplatform.order.application.exception.OrderNotFoundException;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
+
+import static java.time.LocalDateTime.now;
 
 /**
  * 주문 결제 로직 관련 use case Facade
@@ -74,5 +77,17 @@ public class OrderPayFacade {
      */
     public Order failOrderByInventoryShortage(String orderNumber) {
         return orderCommandHandler.handle(new OrderFailByInventoryShortageCommand(orderNumber));
+    }
+
+    /**
+     * 재고 선점된지 10분이 지난 데이터 일괄 해제
+     */
+    public void releaseReservation() {
+        var orderNumbers = orderRepository.findReleaseTarget(now().minusMinutes(10))
+                .stream().map(Order::getOrderNumber)
+                .toList();
+
+        orderNumbers
+                .forEach(orderNumber -> orderCommandHandler.handle(new OrderFailByPaymentTimeoutCommand(orderNumber)));
     }
 }

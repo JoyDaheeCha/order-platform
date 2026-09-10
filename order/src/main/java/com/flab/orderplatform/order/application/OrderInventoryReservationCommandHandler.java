@@ -1,7 +1,10 @@
 package com.flab.orderplatform.order.application;
 
 import com.flab.orderplatform.order.application.annotation.OrderTransactional;
-import com.flab.orderplatform.order.application.command.*;
+import com.flab.orderplatform.order.application.command.OrderCreateCommand;
+import com.flab.orderplatform.order.application.command.OrderFailByInventoryShortageCommand;
+import com.flab.orderplatform.order.application.command.OrderPayCommand;
+import com.flab.orderplatform.order.application.command.OrderPreparePaymentCommand;
 import com.flab.orderplatform.order.application.exception.DuplicatedProductException;
 import com.flab.orderplatform.order.application.exception.OrderNotFoundException;
 import com.flab.orderplatform.order.application.exception.ProductNotFoundException;
@@ -9,6 +12,7 @@ import com.flab.orderplatform.order.application.port.out.OrderRepository;
 import com.flab.orderplatform.order.domain.Order;
 import com.flab.orderplatform.order.domain.OrderItem;
 import com.flab.orderplatform.order.domain.external.Product;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -20,7 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class OrderCommandHandler {
+public class OrderInventoryReservationCommandHandler {
     private final OrderRepository orderRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -85,7 +89,7 @@ public class OrderCommandHandler {
         return orderRepository.save(result);
     }
 
-    private Order getOrder(String orderNumber) {
+    private @NonNull Order getOrder(String orderNumber) {
         return orderRepository.findWithOrderItemsByOrderNumber(orderNumber)
                 .orElseThrow(() -> new OrderNotFoundException(orderNumber));
     }
@@ -116,17 +120,5 @@ public class OrderCommandHandler {
         var order = getOrder(command.orderNumber());
         var result = command.fail(order);
         return orderRepository.save(result);
-    }
-
-    @OrderTransactional
-    public Order handle(OrderFailByPaymentTimeoutCommand command) {
-        var orderNumber = command.orderNumber();
-        var order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new OrderNotFoundException(orderNumber));
-
-        var result = command.fail(order);
-        result.pullDomainEventIfPresent()
-                .ifPresent(eventPublisher::publishEvent);
-        return result;
     }
 }

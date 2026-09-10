@@ -5,6 +5,8 @@ import com.flab.orderplatform.order.domain.Order;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -20,5 +22,15 @@ public class OrderRepositoryAdaptor implements OrderRepository {
     @Override
     public Optional<Order> findWithOrderItemsByOrderNumber(String orderNumber) {
         return orderJpaRepository.findWithOrderItemsByOrderNumber(orderNumber);
+    }
+
+    @Override
+    public List<Order> findReleaseTarget(LocalDateTime reservedAtThreshold) {
+        return orderJpaRepository.findReleaseTarget(reservedAtThreshold);
+    }
+
+    @Override
+    public Optional<Order> findByOrderNumber(String orderNumber) {
+        return orderJpaRepository.findByOrderNumber(orderNumber);
     }
 }

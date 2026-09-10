@@ -29,7 +29,7 @@ public class OrderInventoryReservation extends BaseEntity {
     @Column(name = "reserved_at", nullable = false, columnDefinition = "DATETIME(6) NOT NULL COMMENT '재고 선점 일시'")
     private LocalDateTime reservedAt;
 
-    @Column(name = "is_released", nullable = false, columnDefinition = "TINYINT NOT NULL COMMENT '재고 선점 해제 여부'")
+    @Column(name = "is_released", nullable = false, columnDefinition = "TINYINT NOT NULL DEFAULT 0 COMMENT '재고 선점 해제 여부'")
     private boolean isReleased;
 
     @Builder
@@ -45,5 +45,10 @@ public class OrderInventoryReservation extends BaseEntity {
                 .reservedAt(reservedAt)
                 .isReleased(false)
                 .build();
+    }
+
+    public OrderInventoryReservation release() {
+        this.isReleased = true;
+        return this;
     }
 }

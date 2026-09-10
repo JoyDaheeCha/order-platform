@@ -62,6 +62,11 @@
 4.2.2 `ORDER_FAILED`로 상태 변경  
 4.2.3 `ORDER_FAIL_HISTORY` 테이블에 주문 id, 실패 사유 적재 (실패 사유: INVENTORY_SHORTAGE(재고부족))  
 
+4.3 재고 선점 타임아웃 처리  
+3.3.1 스케줄러에서 `OrderInventoryReservation` 테이블을 1분마다 체크  
+4.3.2 주문시각으로부터 10분이 경과했으나, 결제가 이뤄지지 않은 경우, 선점 해제 선점 해제(isReleased = true, reason = PAYMENT_TIMEOUT) 처리  
+4.3.3 `OrderFailed` 발행
+
 ### 5. 결제  
 5.1 `InventoryReserved` 이벤트 컨슈밍  
 5.2 결제시도  
@@ -87,12 +92,7 @@
 6.2.1 `PaymentFailed` 컨슘  
 6.2.2 `ORDER_FAILED` 로 주문 상태 변경  
 6.2.3 `OrderInventoryReservation` 에서 선점 해제(isReleased = true, reason = PAYMENT_FAILED) 처리  
-6.2.4 `OrderFailed` 발행  
-
-6.3 재고 선점 타임아웃 처리  
-6.3.1 스케줄러에서 `OrderInventoryReservation` 테이블을 1분마다 체크  
-6.3.2 주문시각으로부터 10분이 경과했으나, 결제가 이뤄지지 않은 경우, 선점 해제 선점 해제(isReleased = true, reason = PAYMENT_TIMEOUT) 처리  
-6.3.3 `OrderFailed` 발행  
+6.2.4 `OrderFailed` 발행
 
 ### 7. 재고:  원복 or 차감
 7.1 재고 차감  

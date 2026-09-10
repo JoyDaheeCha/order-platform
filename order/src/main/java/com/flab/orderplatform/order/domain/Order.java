@@ -1,6 +1,7 @@
 package com.flab.orderplatform.order.domain;
 
 import com.flab.orderplatform.order.domain.event.OrderCreatedEvent;
+import com.flab.orderplatform.order.domain.event.OrderFailedEvent;
 import com.flab.orderplatform.order.domain.event.OrderPaidEvent;
 import com.flab.orderplatform.order.domain.event.OrderPaymentPreparedEvent;
 import com.flab.orderplatform.order.domain.status.OrderStatus;
@@ -19,9 +20,11 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.flab.orderplatform.order.domain.status.OrderFailedReasonType.INVENTORY_SHORTAGE;
+import static com.flab.orderplatform.order.domain.status.OrderFailedReasonType.TIMEOUT;
 import static com.flab.orderplatform.order.domain.status.OrderStatus.*;
 import static jakarta.persistence.CascadeType.*;
 import static jakarta.persistence.FetchType.LAZY;
+import static java.time.LocalDateTime.now;
 
 /**
  * Order 컨텍스트의 영속화 모델
@@ -29,7 +32,10 @@ import static jakarta.persistence.FetchType.LAZY;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "orders")
+@Table(name = "orders",
+        indexes = {
+                @Index(name = "idx_order_order_inventory_reservation_id", columnList = "order_inventory_reservation_id")
+        })
 public class Order extends BaseEntity {
 
     @Id
@@ -66,10 +72,12 @@ public class Order extends BaseEntity {
     @Transient
     private DomainEvent domainEvent;
 
+    // TODO 별개의 애그리거트로 분리 (라이프 사이클 다름)
     @OneToOne(fetch = LAZY, cascade = {PERSIST, REMOVE, MERGE}, orphanRemoval = true)
     @JoinColumn(name = "order_failed_reason_id")
     private OrderFailedReason orderFailedReason;
 
+    // TODO: 별개 테이블로 분리한 이유 PR에서 언급할것
     @OneToOne(fetch = LAZY, cascade = {PERSIST, REMOVE, MERGE}, orphanRemoval = true)
     @JoinColumn(name = "order_inventory_reservation_id")
     private OrderInventoryReservation inventoryReservation;
@@ -104,7 +112,7 @@ public class Order extends BaseEntity {
                 .customerId(customerId)
                 .orderNumber(orderNumber)
                 .orderItems(orderItems)
-                .orderedAt(LocalDateTime.now())
+                .orderedAt(now())
                 .status(RESERVING_INVENTORY)
                 .idempotentKey(idempotentKey)
                 .build();
@@ -114,11 +122,10 @@ public class Order extends BaseEntity {
                 .orderNumber(orderNumber)
                 .orderItems(orderItemDtos)
                 .aggregateId(orderNumber)
-                .occurredOn(LocalDateTime.now())
+                .occurredOn(now())
                 .build();
         return order;
     }
-
 
 
     private void addOrderItems(List<OrderItem> items) {
@@ -145,7 +152,7 @@ public class Order extends BaseEntity {
                 .orderNumber(orderNumber)
                 .orderItems(convertToOrderItems(productMapCodeById))
                 .aggregateId(orderNumber)
-                .occurredOn(LocalDateTime.now())
+                .occurredOn(now())
                 .build();
         return this;
     }
@@ -167,20 +174,41 @@ public class Order extends BaseEntity {
         return productMapCodeById.get(item.getProductId());
     }
 
+    // TODO 재고 선점 데이터 저장되는지 확인하는 테스트 추가
     public Order preparePayment(LocalDateTime reservedAt) {
         this.inventoryReservation = OrderInventoryReservation.create(orderNumber, reservedAt);
         this.status = PENDING_PAYMENT;
         this.domainEvent = OrderPaymentPreparedEvent.builder()
                 .orderNumber(orderNumber)
                 .aggregateId(orderNumber)
-                .occurredOn(LocalDateTime.now())
+                .occurredOn(now())
                 .build();
         return this;
     }
 
+    /**
+     * 재고 부족으로 인한 주문 실패 처리<br>
+     * 재고 선점에 실패하였으므로, 별도 이벤트 발행 없음
+     */
     public Order failByInventoryShortage() {
         this.status = ORDER_FAILED;
         this.orderFailedReason = OrderFailedReason.create(INVENTORY_SHORTAGE);
+        return this;
+    }
+
+    /**
+     * 재고 선점후 일정 시간 내 결제가 이뤄지지 않아 주문 실패 처리
+     */
+    public Order failByTimeout() {
+        this.status = ORDER_FAILED;
+        this.orderFailedReason = OrderFailedReason.create(TIMEOUT);
+        this.inventoryReservation = inventoryReservation.release();
+
+        this.domainEvent = OrderFailedEvent.builder()
+                .orderNumber(orderNumber)
+                .aggregateId(orderNumber)
+                .occurredOn(now())
+                .build();
         return this;
     }
 }
