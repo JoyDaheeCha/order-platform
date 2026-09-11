@@ -34,6 +34,7 @@ public class InventoryFacade {
     private final InventoryCommandHandler inventoryCommandHandler;
     private final ApplicationEventPublisher eventPublisher;
 
+    // TODO: stock으로 프로젝트 내에 네이밍 된 부분은 별도 PR에서 inventory 로 리네이밍
     /**
      * 재고 차감
      *

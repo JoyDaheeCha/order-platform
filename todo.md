@@ -123,6 +123,20 @@
   - [x] `OrderInventoryReservation` 에서 선점 해제(isReleased = true, reason = PAYMENT_FAILED) 처리  (기)
   - [x] `OrderFailed` 발행
 
+## 7. 재고:  원복 or 차감
+7.1 재고 차감  
+7.1.1 `OrderPaid` 컨슘  
+7.1.2 `inventory` 테이블에서  
+`reservation_count`(선점 재고 수량) 를 선점 했던 수량만큼 **차감**  
+`stock`(가용재고수량) 컬럼 수량 **감소**  
+7.1.3 `InventoryDeducted` 이벤트 발행
+
+7.2 재고 원복
+7.2.1 `OrderFailed` 컨슘  
+7.2.2 `inventory` 테이블에서
+- `reservation_count`(선점 재고 수량) 를 선점 했던 수량만큼 **차감**
+- `stock`(가용재고수량) 컬럼 수량 **증량**
+
 # backlog
 ## 카프카 메시지 재처리 로직 추가
 - [ ] 메시지 처리 실패시 별도 테이블에 적재후, 개발자가 수기처리하도록 로직 구성
