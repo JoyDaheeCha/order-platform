@@ -111,15 +111,15 @@
 
 ## 주문: 결제완료, 실패
 - [ ] 결제 완료처리  
-6.1.1 `PaymentCompleted` 컨슘  
-6.1.2 `PAID` 로 주문 상태 변경  
+6.1.1 `PaymentCompleted` 컨슘 (기)
+6.1.2 `PAID` 로 주문 상태 변경  (기)
 6.1.3 `OrderInventoryReservation` 에서 선점 해제(isReleased = true, reason = PAYMENT_COMPLETED) 처리  
-6.1.4 `OrderPaid` 발행
+6.1.4 `OrderPaid` 발행 (기)
 
-- [ ] 결제 실패처리  
-6.2.1 `PaymentFailed` 컨슘  
+- [ ] 결제 실패처리   (신)
+6.2.1 `PaymentFailed` 컨슘  (신)
 6.2.2 `ORDER_FAILED` 로 주문 상태 변경  
-6.2.3 `OrderInventoryReservation` 에서 선점 해제(isReleased = true, reason = PAYMENT_FAILED) 처리  
+6.2.3 `OrderInventoryReservation` 에서 선점 해제(isReleased = true, reason = PAYMENT_FAILED) 처리  (기)
 6.2.4 `OrderFailed` 발행
 
 # backlog

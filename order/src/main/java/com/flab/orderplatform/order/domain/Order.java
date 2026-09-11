@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.flab.orderplatform.order.domain.status.OrderFailedReasonType.INVENTORY_SHORTAGE;
+import static com.flab.orderplatform.order.domain.status.OrderInventoryReservationReleaseReason.PAYMENT_COMPLETED;
 import static com.flab.orderplatform.order.domain.status.OrderStatus.*;
 import static jakarta.persistence.CascadeType.*;
 import static jakarta.persistence.FetchType.LAZY;
@@ -151,6 +152,7 @@ public class Order extends BaseEntity {
             // TODO: 도메인 내 상태값이 유효하지 않아 예외 발생시, retryable 과 nonRetryable 로 분리후, 예외 재처리 자동화할것.
             throw new IllegalStateException("결제 대기 상태만 결제 완료 처리 가능합니다. (현재상태: %s)".formatted(status));
         }
+        this.inventoryReservation.release(PAYMENT_COMPLETED);
         this.status = PAID;
         this.domainEvent = OrderPaidEvent.builder()
                 .orderNumber(orderNumber)
