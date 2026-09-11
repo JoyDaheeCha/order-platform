@@ -48,17 +48,13 @@ public class InventoryFacade {
         if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber(), DECREASE)) {
             return List.of();
         }
-        // 재고 감소 요청된 모든 상품이 존재하는지 유효성 검증
+
+        // 상품 유효성 검증
         var productCodes = event.orderItems()
                 .stream()
                 .map(OrderPaidPayload.OrderItemDto::productCode)
-                .collect(Collectors.toSet()); // 주문 내에서 상품 번호는 유니크하므로 set으로 설정
-
-        // 재고 조정시 상품 정보를 중복하여 넣을 수 없다.
-        if (event.orderItems().size() != productCodes.size()) {
-            throw new DuplicatedProductException(productCodes);
-        }
-        validateIfAllProductsExisting(productCodes);
+                .collect(Collectors.toSet());
+        validateProductCodes(productCodes, event.orderItems().size());
 
         var orderNumber = event.orderNumber();
         var commands = event.orderItems().stream().map(item -> InventoryDecreaseCommand.builder()
@@ -81,6 +77,19 @@ public class InventoryFacade {
                 .build();
         eventPublisher.publishEvent(stockDeductedEvent);
         return result;
+    }
+
+    /**
+     * 재고 조정 요청된 상품의 유효성 검증
+     * @param productCodes 상품 코드 목록
+     * @param orderItemsSize 상품 총 개수
+     */
+    private void validateProductCodes(Set<String> productCodes, int orderItemsSize) {// 재고 조정시 상품 정보를 중복하여 넣을 수 없다.
+        if (orderItemsSize != productCodes.size()) {
+            throw new DuplicatedProductException(productCodes);
+        }
+        // 재고 감소 요청된 모든 상품이 존재하는지 유효성 검증
+        validateIfAllProductsExisting(productCodes);
     }
 
     /**
@@ -115,18 +124,12 @@ public class InventoryFacade {
             return List.of();
         }
 
-        // 재고 선점 요청된 모든 상품이 존재하는지 검증
+        // 상품 유효성 검증
         var productCodes = event.orderItems()
                 .stream()
                 .map(OrderCreatedPayload.OrderItem::productCode)
                 .collect(Collectors.toSet());
-
-        // 재고 조정시 상품 정보를 중복하여 넣을 수 없다.
-        if (event.orderItems().size() != productCodes.size()) {
-            throw new DuplicatedProductException(productCodes);
-        }
-        validateIfAllProductsExisting(productCodes);
-
+        validateProductCodes(productCodes, event.orderItems().size());
 
         var commands = event.orderItems().stream().map(item -> InventoryReserveCommand.builder()
                         .orderNumber(event.orderNumber())
@@ -169,19 +172,12 @@ public class InventoryFacade {
     public List<Inventory> restoreReservedInventory(OrderPaidPayload event) {
         // TODO 인박스 패턴이 있는데 멱등성 보장 로직이 필요할지 확인
 
-        // TODO 공통화
-        // 재고 선점 요청된 모든 상품이 존재하는지 검증
+        // 상품 유효성 검증
         var productCodes = event.orderItems()
                 .stream()
                 .map(OrderPaidPayload.OrderItemDto::productCode)
                 .collect(Collectors.toSet());
-
-        // 상품 정보 중복 불가
-        if (event.orderItems().size() != productCodes.size()) {
-            throw new DuplicatedProductException(productCodes);
-        }
-        validateIfAllProductsExisting(productCodes);
-
+        validateProductCodes(productCodes, event.orderItems().size());
 
         var commands = event.orderItems().stream().map(item -> InventoryReservedRestoreCommand.builder()
                         .orderNumber(event.orderNumber())
