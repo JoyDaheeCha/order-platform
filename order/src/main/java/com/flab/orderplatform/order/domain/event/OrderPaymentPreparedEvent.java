@@ -7,18 +7,23 @@ import java.time.LocalDateTime;
 
 import static com.flab.orderplatform.shared.event.EventConstants.*;
 
-// TODO 이벤트 완성하기. 결제 인박스 패턴 유지를 위해 미리 만들어둠.
 @Getter
 public class OrderPaymentPreparedEvent extends OrderOutboxEvent {
 
     private final String orderNumber;
+    private final Long buyerId;
+    private final Long amount;
 
     @Builder
     protected OrderPaymentPreparedEvent(String aggregateId,
                                         LocalDateTime occurredOn,
-                                        String orderNumber) {
+                                        String orderNumber,
+                                        Long buyerId,
+                                        Long amount) {
         super(aggregateId, occurredOn);
         this.orderNumber = orderNumber;
+        this.buyerId = buyerId;
+        this.amount = amount;
     }
 
 

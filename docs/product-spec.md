@@ -67,8 +67,8 @@
 4.3.2 재고 선점 시간으로부터 10분이 경과했으나, 결제가 이뤄지지 않은 경우, 선점 해제 선점 해제(isReleased = true, reason = TIMEOUT) 처리  
 4.3.3 `OrderFailed` 발행
 
-### 5. 결제  
-5.1 `InventoryReserved` 이벤트 컨슈밍  
+### 5. 결제 도메인
+5.1 `OrderPaymentPrepared` 이벤트 컨슈밍  
 5.2 결제시도  
 5.2.1 결제 상태 `IN_PROGRESS` 로 변경  
 5.2.2 PG사 mock API 호출  
