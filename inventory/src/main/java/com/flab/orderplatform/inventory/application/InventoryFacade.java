@@ -14,6 +14,7 @@ import com.flab.orderplatform.inventory.domain.event.InventoryReservationFailedE
 import com.flab.orderplatform.inventory.domain.event.InventoryReservedEvent;
 import com.flab.orderplatform.inventory.domain.event.StockDeductedEvent;
 import com.flab.orderplatform.shared.event.OrderCreatedPayload;
+import com.flab.orderplatform.shared.event.OrderFailedPayload;
 import com.flab.orderplatform.shared.event.OrderPaidPayload;
 import com.flab.orderplatform.shared.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
@@ -189,7 +190,7 @@ public class InventoryFacade {
      */
     @DistributedLock(prefix = "inventory", key = "#event.orderItems().![productCode]", fallback = "handleRestoreFallback")
     @InventoryTransactional
-    public List<Inventory> restoreReservedInventory(OrderPaidPayload event) {
+    public List<Inventory> restoreReservedInventory(OrderFailedPayload event) {
         // 이미 재고가 선점된 주문으로 처리하지 않는다.
         if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber(), RESTORE_RESERVATION)) {
             return List.of();
@@ -198,7 +199,7 @@ public class InventoryFacade {
         // 상품 유효성 검증
         var productCodes = event.orderItems()
                 .stream()
-                .map(OrderPaidPayload.OrderItemDto::productCode)
+                .map(OrderFailedPayload.OrderItemDto::productCode)
                 .collect(Collectors.toSet());
         validateProductCodes(productCodes, event.orderItems().size());
 

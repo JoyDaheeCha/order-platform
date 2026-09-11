@@ -40,7 +40,7 @@ public class InventoryHistory extends BaseTimeEntity {
     private Integer quantity;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "request_type", nullable = false, length = 10, columnDefinition = "VARCHAR(10) NOT NULL COMMENT '재고 변경 유형 RESERVE/DECREASE'")
+    @Column(name = "request_type", nullable = false, length = 30, columnDefinition = "VARCHAR(10) NOT NULL COMMENT '재고 변경 유형 RESERVE/DECREASE'")
     private InventoryUpdateRequestType requestType;
 
     @Builder
