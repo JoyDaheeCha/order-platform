@@ -125,11 +125,10 @@
 
 ## 7. 재고:  원복 or 차감
 7.1 재고 차감  
-7.1.1 `OrderPaid` 컨슘  
-7.1.2 `inventory` 테이블에서  
-`reservation_count`(선점 재고 수량) 를 선점 했던 수량만큼 **차감**  
-`stock`(가용재고수량) 컬럼 수량 **감소**  
-7.1.3 `InventoryDeducted` 이벤트 발행
+- 기존
+ - `OrderPaid` 컨슘
+ - `inventory` 테이블에서 `reservation_count`(선점 재고 수량) 를 선점 했던 수량만큼 **차감**
+ - `InventoryDeducted` 이벤트 발행
 
 7.2 재고 원복
 7.2.1 `OrderFailed` 컨슘  
