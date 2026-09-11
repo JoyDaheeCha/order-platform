@@ -7,7 +7,7 @@ import com.flab.orderplatform.shared.utils.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import static com.flab.orderplatform.shared.event.EventConstants.ORDER_PAID;
+import static com.flab.orderplatform.shared.event.EventConstants.ORDER_FAILED;
 
 @Component
 @RequiredArgsConstructor
@@ -17,7 +17,7 @@ public class OrderFailedEventProcessor implements InventoryInboxEventProcessor {
 
     @Override
     public String supportedEventType() {
-        return ORDER_PAID;
+        return ORDER_FAILED;
     }
 
     @Override
