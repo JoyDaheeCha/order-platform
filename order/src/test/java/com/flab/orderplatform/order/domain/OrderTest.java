@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.flab.orderplatform.order.domain.status.OrderInventoryReservationReleaseReason.PAYMENT_COMPLETED;
 import static com.flab.orderplatform.order.domain.status.OrderStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -98,7 +99,7 @@ class OrderTest {
         assertThat(order.getIdempotentKey()).isEqualTo(idempotentKey);
     }
 
-    @DisplayName("[성공] 결제대기 주문을 결제하면 결제완료로 전이되고 결제완료 이벤트가 등록된다.")
+    @DisplayName("[성공] 주문을 결제하면 (1) 결제완료로 변경, (2) 선점된 재고가 해제, (3) 결제완료 이벤트가 등록된다.")
     @Test
     void payTransitionsToPaidAndRegistersEvent() {
         // given: 생성 시점의 OrderCreatedEvent 는 이미 발행되었다고 보고 비워둔다.
@@ -120,6 +121,8 @@ class OrderTest {
         assertSoftly(softly -> {
             softly.assertThat(result).isSameAs(order);
             softly.assertThat(order.getStatus()).isEqualTo(PAID);
+            softly.assertThat(order.getInventoryReservation().getIsReleased()).isTrue();
+            softly.assertThat(order.getInventoryReservation().getReleaseReason()).isEqualTo(PAYMENT_COMPLETED);
             softly.assertThat(event.getOrderNumber()).isEqualTo("20260730-5T1QWE9BXK");
             softly.assertThat(event.getAggregateId()).isEqualTo("20260730-5T1QWE9BXK");
             // 재고 차감은 productId 가 아니라 productCode 로 이뤄지므로, 여기서 코드로 치환된다.

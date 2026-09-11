@@ -107,7 +107,21 @@
 
 - [x] 결제 실패  
   - 결제 상태 `FAILED`로 변경  
-  - `PaymentFailed` 발행  
+  - `PaymentFailed` 발행
+
+## 주문: 결제완료, 실패
+- [x] 결제 완료처리  
+ - 기존 로직 
+ - `PaymentCompleted` 컨슘 
+ - `PAID` 로 주문 상태 변경 
+ - `OrderPaid` 발행 
+ - [x] `OrderInventoryReservation` 에서 선점 해제(isReleased = true, reason = PAYMENT_COMPLETED) 처리
+
+- [x] 결제 실패처리   
+  - [x] `PaymentFailed` 컨슘 
+  - [x] `ORDER_FAILED` 로 주문 상태 변경  
+  - [x] `OrderInventoryReservation` 에서 선점 해제(isReleased = true, reason = PAYMENT_FAILED) 처리  (기)
+  - [x] `OrderFailed` 발행
 
 # backlog
 ## 카프카 메시지 재처리 로직 추가

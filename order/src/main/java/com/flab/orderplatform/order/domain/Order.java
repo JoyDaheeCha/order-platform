@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.flab.orderplatform.order.domain.status.OrderFailedReasonType.INVENTORY_SHORTAGE;
+import static com.flab.orderplatform.order.domain.status.OrderInventoryReservationReleaseReason.PAYMENT_COMPLETED;
 import static com.flab.orderplatform.order.domain.status.OrderStatus.*;
 import static jakarta.persistence.CascadeType.*;
 import static jakarta.persistence.FetchType.LAZY;
@@ -151,6 +152,7 @@ public class Order extends BaseEntity {
             // TODO: 도메인 내 상태값이 유효하지 않아 예외 발생시, retryable 과 nonRetryable 로 분리후, 예외 재처리 자동화할것.
             throw new IllegalStateException("결제 대기 상태만 결제 완료 처리 가능합니다. (현재상태: %s)".formatted(status));
         }
+        this.inventoryReservation.release(PAYMENT_COMPLETED);
         this.status = PAID;
         this.domainEvent = OrderPaidEvent.builder()
                 .orderNumber(orderNumber)
@@ -224,11 +226,36 @@ public class Order extends BaseEntity {
         // 이미 결제 완료/실패한 주문은 무시
         if (this.status != PENDING_PAYMENT) {
             throw new IllegalStateException("결제 타임 아웃으로 인한 주문 실패 처리는 %s 상태에서만 가능합니다. (현재 주문 상태: %s)"
-                    .formatted(RESERVING_INVENTORY.getDescription(), this.status.getDescription()));
+                    .formatted(PENDING_PAYMENT.getDescription(), this.status.getDescription()));
         }
         this.status = ORDER_FAILED;
         this.reason = OrderFailedReasonType.TIMEOUT;
-        this.inventoryReservation = inventoryReservation.release(OrderInventoryReservationReleaseReason.TIMEOUT);
+        this.inventoryReservation.release(OrderInventoryReservationReleaseReason.TIMEOUT);
+
+        this.domainEvent = OrderFailedEvent.builder()
+                .orderNumber(orderNumber)
+                .aggregateId(orderNumber)
+                .occurredOn(now())
+                .orderItems(orderItems)
+                .build();
+        return this;
+    }
+
+    /**
+     * 결제 실패로 인해 주문 실패처리한다.
+     */
+    public Order failByPaymentFail() {
+        // 이미 실패한 주문은 무시
+        if (this.status == ORDER_FAILED) {
+            return this;
+        }
+        if (this.status != PENDING_PAYMENT) {
+            throw new IllegalStateException("결제 실패로 인한 주문 실패 처리는 %s 상태에서만 가능합니다. (현재 주문 상태: %s)"
+                    .formatted(PENDING_PAYMENT.getDescription(), this.status.getDescription()));
+        }
+        this.status = ORDER_FAILED;
+        this.reason = OrderFailedReasonType.PAYMENT_FAILED;
+        this.inventoryReservation.release(OrderInventoryReservationReleaseReason.PAYMENT_FAILED);
 
         this.domainEvent = OrderFailedEvent.builder()
                 .orderNumber(orderNumber)
