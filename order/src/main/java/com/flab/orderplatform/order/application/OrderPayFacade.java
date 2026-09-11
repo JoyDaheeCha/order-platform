@@ -1,9 +1,6 @@
 package com.flab.orderplatform.order.application;
 
-import com.flab.orderplatform.order.application.command.OrderFailByInventoryShortageCommand;
-import com.flab.orderplatform.order.application.command.OrderFailByPaymentTimeoutCommand;
-import com.flab.orderplatform.order.application.command.OrderPayCommand;
-import com.flab.orderplatform.order.application.command.OrderPreparePaymentCommand;
+import com.flab.orderplatform.order.application.command.*;
 import com.flab.orderplatform.order.application.exception.OrderNotFoundException;
 import com.flab.orderplatform.order.application.port.out.OrderRepository;
 import com.flab.orderplatform.order.application.port.out.ProductRepository;
@@ -90,5 +87,14 @@ public class OrderPayFacade {
 
         orderNumbers
                 .forEach(orderNumber -> orderCommandHandler.handle(new OrderFailByPaymentTimeoutCommand(orderNumber)));
+    }
+
+    /**
+     * 결제 실패로 인한 주문 실패 처리
+     *
+     * @param orderNumber 주문 번호
+     */
+    public Order failOrderByFailedPayment(String orderNumber) {
+        return orderCommandHandler.handle(new OrderFailByPaymentFailCommand(orderNumber));
     }
 }

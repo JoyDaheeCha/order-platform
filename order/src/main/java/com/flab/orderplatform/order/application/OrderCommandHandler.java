@@ -131,4 +131,16 @@ public class OrderCommandHandler {
         return orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new OrderNotFoundException(orderNumber));
     }
+
+    /**
+     * 결제 실패로 인한 주문 실패
+     */
+    @OrderTransactional
+    public Order handle(OrderFailByPaymentFailCommand command) {
+        var order = getOrderByOrderNumber(command.orderNumber());
+        var result = command.fail(order);
+        result.pullDomainEventIfPresent()
+                .ifPresent(eventPublisher::publishEvent);
+        return orderRepository.save(result);
+    }
 }

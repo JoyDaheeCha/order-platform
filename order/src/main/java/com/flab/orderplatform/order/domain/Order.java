@@ -226,11 +226,33 @@ public class Order extends BaseEntity {
         // 이미 결제 완료/실패한 주문은 무시
         if (this.status != PENDING_PAYMENT) {
             throw new IllegalStateException("결제 타임 아웃으로 인한 주문 실패 처리는 %s 상태에서만 가능합니다. (현재 주문 상태: %s)"
-                    .formatted(RESERVING_INVENTORY.getDescription(), this.status.getDescription()));
+                    .formatted(PENDING_PAYMENT.getDescription(), this.status.getDescription()));
         }
         this.status = ORDER_FAILED;
         this.reason = OrderFailedReasonType.TIMEOUT;
         this.inventoryReservation = inventoryReservation.release(OrderInventoryReservationReleaseReason.TIMEOUT);
+
+        this.domainEvent = OrderFailedEvent.builder()
+                .orderNumber(orderNumber)
+                .aggregateId(orderNumber)
+                .occurredOn(now())
+                .orderItems(orderItems)
+                .build();
+        return this;
+    }
+
+    /**
+     * 결제 실패로 인해 주문 실패처리한다.
+     */
+    public Order failByPaymentFail() {
+        // 이미 결제 완료/실패한 주문은 무시
+        if (this.status != PENDING_PAYMENT) {
+            throw new IllegalStateException("결제 실패로 인한 주문 실패 처리는 %s 상태에서만 가능합니다. (현재 주문 상태: %s)"
+                    .formatted(PENDING_PAYMENT.getDescription(), this.status.getDescription()));
+        }
+        this.status = ORDER_FAILED;
+        this.reason = OrderFailedReasonType.PAYMENT_FAILED;
+        this.inventoryReservation = inventoryReservation.release(OrderInventoryReservationReleaseReason.PAYMENT_FAILED);
 
         this.domainEvent = OrderFailedEvent.builder()
                 .orderNumber(orderNumber)
