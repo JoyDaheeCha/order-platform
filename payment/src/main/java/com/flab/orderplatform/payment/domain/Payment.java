@@ -1,6 +1,7 @@
 package com.flab.orderplatform.payment.domain;
 
 import com.flab.orderplatform.payment.domain.event.PaymentCompletedEvent;
+import com.flab.orderplatform.payment.domain.event.PaymentFailedEvent;
 import com.flab.orderplatform.payment.domain.status.PaymentStatus;
 import com.flab.orderplatform.shared.domain.BaseTimeEntity;
 import com.flab.orderplatform.shared.domain.DomainEvent;
@@ -64,6 +65,14 @@ public class Payment extends BaseTimeEntity {
         this.failureReason = failureReason;
     }
 
+    /**
+     * 결제 신규 데이터 생성
+     *
+     * @param orderNumber 주문 번호
+     * @param buyerId     고객 id
+     * @param amount      결제액
+     * @return 결제 신규 데이터
+     */
     public static Payment create(String orderNumber,
                                  Long buyerId,
                                  Long amount) {
@@ -77,6 +86,14 @@ public class Payment extends BaseTimeEntity {
                 .build();
     }
 
+    /**
+     * 결제 완료
+     *
+     * @param isPaymentSucceed 결제 성공 여부
+     * @param failureReason    결제 실패 사유
+     * @param pgTid            pg사 데이터 PK
+     * @return 결제
+     */
     public Payment complete(Boolean isPaymentSucceed, String failureReason, String pgTid) {
         if (this.status != IN_PROGRESS) {
             throw new IllegalStateException("결제 처리중일때만 완료 처리 가능합니다. (현재 상태: %s)"
@@ -89,6 +106,7 @@ public class Payment extends BaseTimeEntity {
             registerPaymentCompletedEvent();
             return this;
         }
+        this.registerPaymentFailedEvent();
         this.status = FAILED;
         this.failureReason = failureReason;
         return this;
@@ -102,6 +120,20 @@ public class Payment extends BaseTimeEntity {
         return this.status == FAILED;
     }
 
+    /**
+     * 결제 실패 이벤트 등록
+     */
+    private void registerPaymentFailedEvent() {
+        this.domainEvent = PaymentFailedEvent.builder()
+                .orderNumber(orderNumber)
+                .aggregateId(String.valueOf(id))
+                .occurredOn(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * 결제 성공 이벤트 등록
+     */
     private void registerPaymentCompletedEvent() {
         this.domainEvent = PaymentCompletedEvent.builder()
                 .orderNumber(orderNumber)
@@ -112,6 +144,9 @@ public class Payment extends BaseTimeEntity {
                 .build();
     }
 
+    /**
+     * 결제 재시도
+     */
     public Payment retry() {
         if (this.status != FAILED) {
             throw new IllegalStateException("실패한 결제만 재시도 가능합니다. (현재상태: %s)".formatted(status.getDescription()));
@@ -127,6 +162,9 @@ public class Payment extends BaseTimeEntity {
         return event;
     }
 
+    /**
+     * PG 결제 연동 시작
+     */
     public Payment start() {
         if (status != REQUESTED) {
             throw new IllegalStateException("'결제대기' 상태만 '결제 처리중'으로 변경 가능합니다. (현재 상태 : %s)".formatted(status.getDescription()));

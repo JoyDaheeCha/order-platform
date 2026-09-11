@@ -71,12 +71,10 @@ public class PaymentCommandHandler {
         var finishedPayment = command.finish(requestedPayment);
 
         paymentRepository.save(finishedPayment);
-        // 결제 성공 상태일 경우 결제 완료 이벤트 발행
-        if (finishedPayment.isCompleted()) {
-            finishedPayment
-                    .pullDomainEventIfPresent()
-                    .ifPresent(eventPublisher::publishEvent);
-        }
+        // 결제 성공 이벤트 or 결제 실패 이벤트 발행
+        finishedPayment
+                .pullDomainEventIfPresent()
+                .ifPresent(eventPublisher::publishEvent);
         return finishedPayment;
     }
 }

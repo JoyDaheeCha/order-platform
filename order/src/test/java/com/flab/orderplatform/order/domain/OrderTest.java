@@ -105,7 +105,7 @@ class OrderTest {
         var  createdOrder  = Order.builder()
                 .customerId(100L)
                 .orderItems(List.of(orderItem()))
-                .status(PENDING_PAYMENT)
+                .status(RESERVING_INVENTORY)
                 .orderNumber("20260730-5T1QWE9BXK")
                 .idempotentKey("1111-2222-3333-4444")
                 .build();

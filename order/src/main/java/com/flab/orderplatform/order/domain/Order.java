@@ -195,6 +195,8 @@ public class Order extends BaseEntity {
         this.domainEvent = OrderPaymentPreparedEvent.builder()
                 .orderNumber(orderNumber)
                 .aggregateId(orderNumber)
+                .amount(totalAmount)
+                .buyerId(customerId)
                 .occurredOn(now())
                 .build();
         return this;

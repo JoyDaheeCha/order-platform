@@ -289,7 +289,7 @@ class OrderCommandHandlerTest {
                 .preparePayment(LocalDateTime.now());
 
         var command = new OrderFailByPaymentTimeoutCommand(ORDER_NUMBER);
-        given(orderRepository.findByOrderNumber(ORDER_NUMBER))
+        given(orderRepository.findWithOrderItemsByOrderNumber(ORDER_NUMBER))
                 .willReturn(Optional.of(order));
 
         // when
