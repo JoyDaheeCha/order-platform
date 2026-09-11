@@ -23,8 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.DECREASE;
-import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.RESERVE;
+import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.*;
 
 @Component
 @RequiredArgsConstructor
@@ -170,7 +169,10 @@ public class InventoryFacade {
      */
     @InventoryTransactional
     public List<Inventory> restoreReservedInventory(OrderPaidPayload event) {
-        // TODO 인박스 패턴이 있는데 멱등성 보장 로직이 필요할지 확인
+        // 이미 재고가 선점된 주문으로 처리하지 않는다.
+        if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber(), RESTORE_RESERVATION)) {
+            return List.of();
+        }
 
         // 상품 유효성 검증
         var productCodes = event.orderItems()
