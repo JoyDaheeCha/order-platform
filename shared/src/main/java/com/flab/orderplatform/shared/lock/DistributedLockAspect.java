@@ -31,8 +31,10 @@ public class DistributedLockAspect {
     private final ExpressionParser parser = new SpelExpressionParser();
     private final ParameterNameDiscoverer nameDiscoverer = new DefaultParameterNameDiscoverer();
 
-    @Around("@annotation(distributedLock)")
-    public Object applyDistributedLock(ProceedingJoinPoint joinPoint, DistributedLock distributedLock) throws Throwable {
+    @Around("@annotation(com.flab.orderplatform.shared.lock.DistributedLock)")
+    public Object applyDistributedLock(ProceedingJoinPoint joinPoint) throws Throwable {
+        var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
+        var distributedLock = method.getAnnotation(DistributedLock.class);
         var keys = convertToKey(joinPoint, distributedLock.key());
         var locks = keys.stream()
                 .sorted()
