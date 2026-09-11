@@ -191,7 +191,7 @@ public class InventoryFacade {
     @DistributedLock(prefix = "inventory", key = "#event.orderItems().![productCode]", fallback = "handleRestoreFallback")
     @InventoryTransactional
     public List<Inventory> restoreReservedInventory(OrderFailedPayload event) {
-        // 이미 재고가 선점된 주문으로 처리하지 않는다.
+        // 이미 재고선점 내역이 원복된 주문으로 처리하지 않는다.
         if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber(), RESTORE_RESERVATION)) {
             return List.of();
         }
