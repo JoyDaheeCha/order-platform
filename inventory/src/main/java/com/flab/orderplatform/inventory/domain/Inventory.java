@@ -101,4 +101,27 @@ public class Inventory extends BaseTimeEntity {
         return this;
     }
 
+    /**
+     * 선점된 재고 원복
+     *
+     * @param orderNumber 주문번호
+     * @param quantity 원복할 재고 수량
+     * @return 재고
+     */
+    public Inventory restoreReservedInventory(String orderNumber, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalStateException("선점 재고 원복시, 요청 수량은 양수만 가능합니다. (요청 수량: %d)".formatted(quantity));
+        }
+        if (quantity > reservedStock) {
+            throw new IllegalStateException("선점된 재고 수량이 원복 요청 수량보다 적어, 원복이 불가합니다. (선점된 재고수량: %d, 요청된 재고 수량 %d)".formatted(this.reservedStock, quantity));
+        }
+        this.reservedStock -= quantity;
+        this.stock += quantity;
+
+        var history = InventoryHistory.createRestoreReservationHistory(orderNumber, quantity);
+        history.setInventory(this);
+        this.inventoryHistories.add(history);
+
+        return this;
+    }
 }
