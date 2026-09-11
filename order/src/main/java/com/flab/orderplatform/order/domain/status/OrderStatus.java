@@ -1,5 +1,7 @@
 package com.flab.orderplatform.order.domain.status;
 
+import lombok.Getter;
+
 /**
  * 주문 상태
  */
@@ -11,6 +13,7 @@ public enum OrderStatus {
     CANCELLED("주문 취소"),
     ORDER_FAILED("주문 실패");
 
+    @Getter
     final String description;
 
     OrderStatus(String description) {

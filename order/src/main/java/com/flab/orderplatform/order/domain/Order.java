@@ -148,6 +148,7 @@ public class Order extends BaseEntity {
             return this;
         }
         if (this.status != PENDING_PAYMENT) {
+            // TODO: 도메인 내 상태값이 유효하지 않아 예외 발생시, retryable 과 nonRetryable 로 분리후, 예외 재처리 자동화할것.
             throw new IllegalStateException("결제 대기 상태만 결제 완료 처리 가능합니다. (현재상태: %s)".formatted(status));
         }
         this.status = PAID;
@@ -186,7 +187,8 @@ public class Order extends BaseEntity {
     public Order preparePayment(LocalDateTime reservedAt) {
         // 재고 선점중일때만 처리
         if (status != RESERVING_INVENTORY) {
-            return this;
+            throw new IllegalStateException("결제 대기 진입은 %s 상태에서만 가능합니다. (현재 주문 상태: %s)"
+                    .formatted(RESERVING_INVENTORY.getDescription(), this.status.getDescription()));
         }
         this.inventoryReservation = OrderInventoryReservation.create(reservedAt);
         this.status = PENDING_PAYMENT;
@@ -205,7 +207,8 @@ public class Order extends BaseEntity {
     public Order failByInventoryShortage() {
         // 재고 선점중일때만 처리
         if (this.status != RESERVING_INVENTORY) {
-            return this;
+            throw new IllegalStateException("재고부족으로 인한 주문 실패 처리는 %s 상태에서만 가능합니다. (현재 주문 상태: %s)"
+                    .formatted(RESERVING_INVENTORY.getDescription(), this.status.getDescription()));
         }
         this.status = ORDER_FAILED;
         this.reason = INVENTORY_SHORTAGE;
@@ -218,7 +221,8 @@ public class Order extends BaseEntity {
     public Order failByTimeout() {
         // 이미 결제 완료/실패한 주문은 무시
         if (this.status != PENDING_PAYMENT) {
-            return this;
+            throw new IllegalStateException("결제 타임 아웃으로 인한 주문 실패 처리는 %s 상태에서만 가능합니다. (현재 주문 상태: %s)"
+                    .formatted(RESERVING_INVENTORY.getDescription(), this.status.getDescription()));
         }
         this.status = ORDER_FAILED;
         this.reason = OrderFailedReasonType.TIMEOUT;
