@@ -8,8 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.DECREASE;
-import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.RESERVE;
+import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.*;
 import static jakarta.persistence.FetchType.LAZY;
 
 /***
@@ -63,7 +62,7 @@ public class InventoryHistory extends BaseTimeEntity {
      *
      * @param orderNumber 주문번호
      * @param quantity    실물 재고 차감 수량
-     * @return 재고
+     * @return 재고 변경 이력
      */
     public static InventoryHistory createDecreaseHistory(String orderNumber, int quantity) {
         return InventoryHistory.builder()
@@ -78,13 +77,28 @@ public class InventoryHistory extends BaseTimeEntity {
      *
      * @param orderNumber 주문 번호
      * @param quantity    재고 선점 수량
-     * @return 재고
+     * @return 재고 변경 이력
      */
     public static InventoryHistory createReserveHistory(String orderNumber, int quantity) {
         return InventoryHistory.builder()
                 .orderNumber(orderNumber)
                 .quantity(quantity)
                 .requestType(RESERVE)
+                .build();
+    }
+
+    /**
+     * 재고 선점 취소 이력
+     *
+     * @param orderNumber 주문 번호
+     * @param quantity    재고 선점 취소 수량
+     * @return 재고 변경 이력
+     */
+    public static InventoryHistory createRestoreReservationHistory(String orderNumber, int quantity) {
+        return InventoryHistory.builder()
+                .orderNumber(orderNumber)
+                .quantity(quantity)
+                .requestType(RESTORE_RESERVATION)
                 .build();
     }
 }

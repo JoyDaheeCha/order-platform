@@ -3,6 +3,7 @@ package com.flab.orderplatform.inventory.application;
 import com.flab.orderplatform.inventory.application.annotation.InventoryTransactional;
 import com.flab.orderplatform.inventory.application.command.InventoryDecreaseCommand;
 import com.flab.orderplatform.inventory.application.command.InventoryReserveCommand;
+import com.flab.orderplatform.inventory.application.command.InventoryReservedRestoreCommand;
 import com.flab.orderplatform.inventory.application.exception.DuplicatedProductException;
 import com.flab.orderplatform.inventory.application.exception.InventoryNotFoundException;
 import com.flab.orderplatform.inventory.application.port.out.InventoryHistoryRepository;
@@ -159,5 +160,42 @@ public class InventoryFacade {
                 .occurredOn(LocalDateTime.now())
                 .build();
         eventPublisher.publishEvent(inventoryReservationFailedEvent);
+    }
+
+    /**
+     * 선점되었던 재고를 원복한다.
+     */
+    @InventoryTransactional
+    public List<Inventory> restoreReservedInventory(OrderPaidPayload event) {
+        // TODO 인박스 패턴이 있는데 멱등성 보장 로직이 필요할지 확인
+
+        // TODO 공통화
+        // 재고 선점 요청된 모든 상품이 존재하는지 검증
+        var productCodes = event.orderItems()
+                .stream()
+                .map(OrderPaidPayload.OrderItemDto::productCode)
+                .collect(Collectors.toSet());
+
+        // 상품 정보 중복 불가
+        if (event.orderItems().size() != productCodes.size()) {
+            throw new DuplicatedProductException(productCodes);
+        }
+        validateIfAllProductsExisting(productCodes);
+
+
+        var commands = event.orderItems().stream().map(item -> InventoryReservedRestoreCommand.builder()
+                        .orderNumber(event.orderNumber())
+                        .product(
+                                InventoryReservedRestoreCommand.ProductDto
+                                        .builder()
+                                        .productCode(item.productCode())
+                                        .quantity(item.quantity())
+                                        .build())
+                        .build())
+                .toList();
+
+        return commands.stream()
+                .map(inventoryCommandHandler::handle)
+                .toList();
     }
 }
