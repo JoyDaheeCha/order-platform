@@ -6,6 +6,7 @@ import com.flab.orderplatform.inventory.application.command.InventoryReserveComm
 import com.flab.orderplatform.inventory.application.command.InventoryReservedRestoreCommand;
 import com.flab.orderplatform.inventory.application.exception.DuplicatedProductException;
 import com.flab.orderplatform.inventory.application.exception.InventoryNotFoundException;
+import com.flab.orderplatform.inventory.application.exception.InventoryUpdateFailureByConcurrencyException;
 import com.flab.orderplatform.inventory.application.port.out.InventoryHistoryRepository;
 import com.flab.orderplatform.inventory.application.port.out.InventoryRepository;
 import com.flab.orderplatform.inventory.domain.Inventory;
@@ -14,7 +15,9 @@ import com.flab.orderplatform.inventory.domain.event.InventoryReservedEvent;
 import com.flab.orderplatform.inventory.domain.event.StockDeductedEvent;
 import com.flab.orderplatform.shared.event.OrderCreatedPayload;
 import com.flab.orderplatform.shared.event.OrderPaidPayload;
+import com.flab.orderplatform.shared.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +28,7 @@ import java.util.stream.Collectors;
 
 import static com.flab.orderplatform.inventory.domain.type.InventoryUpdateRequestType.*;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class InventoryFacade {
@@ -41,6 +45,7 @@ public class InventoryFacade {
      * @param event 주문이 결제되었다 이벤트
      * @return 재고 목록
      */
+    @DistributedLock(prefix = "inventory", key = "#event.orderItems().![productCode]", fallback = "handleDecreaseFallback")
     @InventoryTransactional
     public List<Inventory> decreaseStock(OrderPaidPayload event) {
         // 이미 재고가 차감된 주문으로 처리하지 않는다.
@@ -76,6 +81,13 @@ public class InventoryFacade {
                 .build();
         eventPublisher.publishEvent(stockDeductedEvent);
         return result;
+    }
+
+    @SuppressWarnings("unused")
+    public List<Inventory> handleDecreaseFallback(OrderPaidPayload event) {
+        var orderNumber = event.orderNumber();
+        log.error("동시성 충돌로 인해 재고 수정에 실패했습니다. (주문번호:{})", orderNumber);
+        throw new InventoryUpdateFailureByConcurrencyException(orderNumber, DECREASE);
     }
 
     /**
@@ -116,6 +128,7 @@ public class InventoryFacade {
      * @param event 주문이 생성되었다 이벤트
      * @return 재고 리스트
      */
+    @DistributedLock(prefix = "inventory", key = "#event.orderItems().![productCode]", fallback = "handleReserveFallback")
     @InventoryTransactional
     public List<Inventory> reserveInventory(OrderCreatedPayload event) {
         // 이미 재고가 선점된 주문으로 처리하지 않는다.
@@ -155,6 +168,13 @@ public class InventoryFacade {
         return result;
     }
 
+    @SuppressWarnings("unused")
+    public List<Inventory> handleReserveFallback(OrderCreatedPayload event) {
+        var orderNumber = event.orderNumber();
+        log.error("동시성 충돌로 인해 재고 수정에 실패했습니다. (주문번호:{})", orderNumber);
+        throw new InventoryUpdateFailureByConcurrencyException(orderNumber, RESERVE);
+    }
+
     @InventoryTransactional
     public void publishReservationFailed(String orderNumber) {
         var inventoryReservationFailedEvent = InventoryReservationFailedEvent.builder()
@@ -167,6 +187,7 @@ public class InventoryFacade {
     /**
      * 선점되었던 재고를 원복한다.
      */
+    @DistributedLock(prefix = "inventory", key = "#event.orderItems().![productCode]", fallback = "handleRestoreFallback")
     @InventoryTransactional
     public List<Inventory> restoreReservedInventory(OrderPaidPayload event) {
         // 이미 재고가 선점된 주문으로 처리하지 않는다.
@@ -195,5 +216,12 @@ public class InventoryFacade {
         return commands.stream()
                 .map(inventoryCommandHandler::handle)
                 .toList();
+    }
+
+    @SuppressWarnings("unused")
+    public List<Inventory> handleRestoreFallback(OrderPaidPayload event) {
+        var orderNumber = event.orderNumber();
+        log.error("동시성 충돌로 인해 재고 수정에 실패했습니다. (주문번호:{})", orderNumber);
+        throw new InventoryUpdateFailureByConcurrencyException(orderNumber, RESTORE_RESERVATION);
     }
 }

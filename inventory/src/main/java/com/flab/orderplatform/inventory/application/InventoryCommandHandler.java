@@ -1,6 +1,5 @@
 package com.flab.orderplatform.inventory.application;
 
-import com.flab.orderplatform.inventory.application.annotation.InventoryTransactional;
 import com.flab.orderplatform.inventory.application.command.InventoryDecreaseCommand;
 import com.flab.orderplatform.inventory.application.command.InventoryReserveCommand;
 import com.flab.orderplatform.inventory.application.command.InventoryReservedRestoreCommand;
@@ -22,7 +21,6 @@ public class InventoryCommandHandler {
      * @param command 재고 감소 명령
      * @return 재고
      */
-    @InventoryTransactional
     public Inventory handle(InventoryDecreaseCommand command) {
         var productCode = command.product().productCode();
         var inventory = inventoryRepository.findByProductCode(productCode)
@@ -45,7 +43,6 @@ public class InventoryCommandHandler {
         return command.reserve(inventory);
     }
 
-    // TODO: 동시성 방어로직 추가
     /**
      * 재고 선점 원복하라
      *
@@ -58,5 +55,4 @@ public class InventoryCommandHandler {
                 .orElseThrow(() -> new InventoryNotFoundException(productCode));
         return command.restore(inventory);
     }
-
 }
