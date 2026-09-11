@@ -137,7 +137,7 @@ public class OrderCommandHandler {
      */
     @OrderTransactional
     public Order handle(OrderFailByPaymentFailCommand command) {
-        var order = getOrderByOrderNumber(command.orderNumber());
+        var order = getOrderWithOrderItems(command.orderNumber());
         var result = command.fail(order);
         result.pullDomainEventIfPresent()
                 .ifPresent(eventPublisher::publishEvent);
