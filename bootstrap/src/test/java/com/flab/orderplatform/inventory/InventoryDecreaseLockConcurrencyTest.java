@@ -51,6 +51,7 @@ class InventoryDecreaseLockConcurrencyTest {
         inventoryJpaRepository.save(Inventory.builder()
                 .productCode(InventoryDecreaseLockConcurrencyTest.PRODUCT_CODE)
                 .stock(InventoryDecreaseLockConcurrencyTest.INITIAL_STOCK)
+                .reservedStock(InventoryDecreaseLockConcurrencyTest.INITIAL_STOCK)
                 .inventoryHistories(new ArrayList<>())
                 .build());
     }
@@ -91,7 +92,8 @@ class InventoryDecreaseLockConcurrencyTest {
         var result = new ConcurrencyResult(completed, failures);
         assertThat(result.completedInTime()).as("전체 스레드가 제한시간 내 완료").isTrue();
         var inventory = inventoryJpaRepository.findByProductCode(PRODUCT_CODE).orElseThrow();
-        assertThat(inventory.getStock()).isEqualTo(INITIAL_STOCK - CONCURRENCY);
+        assertThat(inventory.getReservedStock()).isEqualTo(INITIAL_STOCK - CONCURRENCY);
+        assertThat(inventory.getStock()).isEqualTo(INITIAL_STOCK);
     }
 
     private record ConcurrencyResult(
