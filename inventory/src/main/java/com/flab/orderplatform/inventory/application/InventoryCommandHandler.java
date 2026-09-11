@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 public class InventoryCommandHandler {
     private final InventoryRepository inventoryRepository;
 
-    // TODO: 동시성 방어 로직 추가
     /**
      * 재고 감소 시켜라
      *
@@ -27,8 +26,6 @@ public class InventoryCommandHandler {
                 .orElseThrow(() -> new InventoryNotFoundException(productCode));
         return command.decreaseStock(inventory);
     }
-
-    // TODO: 동시성 방어로직 추가
 
     /**
      * 재고 선점하라
