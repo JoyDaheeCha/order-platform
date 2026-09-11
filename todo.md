@@ -96,16 +96,16 @@
 ** 기존 작업 내용을 아래와 같이 변경  
 결제도메인 
 
-- [ ] `OrderPaymentPrepared` 이벤트 컨슈밍  
-- [ ] 결제시도  
+- [x] `OrderPaymentPrepared` 이벤트 컨슈밍  
+- [x] 결제시도  (기존)
   - 결제 상태 `IN_PROGRESS` 로 변경  
   - PG사 mock API 호출
 
-- [ ] 결제 성공  
+- [x] 결제 성공  (기존)
   - 결제 상태 `COMPLETED`로 변경  
   - `PaymentCompleted` 발행
 
-- [ ] 결제 실패  
+- [x] 결제 실패  
   - 결제 상태 `FAILED`로 변경  
   - `PaymentFailed` 발행  
 
