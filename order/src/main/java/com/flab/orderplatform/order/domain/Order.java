@@ -34,7 +34,10 @@ import static java.time.LocalDateTime.now;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "orders")
+@Table(name = "orders",
+indexes = {
+        @Index(name = "idx_orders_order_number", columnList = "order_number")
+})
 public class Order extends BaseEntity {
 
     @Id
