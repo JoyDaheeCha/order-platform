@@ -41,7 +41,6 @@ public class InventoryFacade {
     private final InventoryCommandHandler inventoryCommandHandler;
     private final ApplicationEventPublisher eventPublisher;
 
-    // TODO: stock으로 프로젝트 내에 네이밍 된 부분은 별도 PR에서 inventory 로 리네이밍
     /**
      * 재고 차감
      *
@@ -50,7 +49,7 @@ public class InventoryFacade {
      */
     @DistributedLock(prefix = "inventory", key = "#event.orderItems().![productCode]", fallback = "handleDecreaseFallback")
     @InventoryTransactional
-    public List<Inventory> decreaseStock(OrderPaidPayload event) {
+    public List<Inventory> decreaseInventory(OrderPaidPayload event) {
         // 이미 재고가 차감된 주문으로 처리하지 않는다.
         if (inventoryHistoryRepository.existsByOrderNumber(event.orderNumber(), DECREASE)) {
             return List.of();
@@ -78,11 +77,11 @@ public class InventoryFacade {
                 .map(inventoryCommandHandler::handle)
                 .toList();
 
-        var stockDeductedEvent = InventoryDecreasedEvent.builder()
+        var inventoryDecreasedEvent = InventoryDecreasedEvent.builder()
                 .orderNumber(orderNumber)
                 .occurredOn(LocalDateTime.now())
                 .build();
-        eventPublisher.publishEvent(stockDeductedEvent);
+        eventPublisher.publishEvent(inventoryDecreasedEvent);
         return result;
     }
 

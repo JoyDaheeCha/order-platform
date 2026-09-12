@@ -23,6 +23,6 @@ public class OrderPaidEventProcessor implements InventoryInboxEventProcessor {
     @Override
     public void process(InboxEvent inboxEvent) {
         var event = JsonUtils.fromJson(inboxEvent.getPayload(), OrderPaidPayload.class);
-        inventoryFacade.decreaseStock(event);
+        inventoryFacade.decreaseInventory(event);
     }
 }

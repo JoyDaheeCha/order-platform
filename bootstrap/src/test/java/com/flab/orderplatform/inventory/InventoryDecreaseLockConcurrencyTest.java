@@ -71,7 +71,7 @@ class InventoryDecreaseLockConcurrencyTest {
             pool.submit(() -> {
                 try {
                     start.await();
-                    inventoryFacade.decreaseStock(
+                    inventoryFacade.decreaseInventory(
                             new OrderPaidPayload(orderNumber,
                                     List.of(new OrderPaidPayload.OrderItemDto(InventoryDecreaseLockConcurrencyTest.PRODUCT_CODE, 1))));
                 } catch (Throwable t) {
