@@ -3,7 +3,7 @@
 
 ## 프로젝트 내 기능
 - POST /orders 
-- GET /orders/{id} 
+- GET /orders/{orderNumber} 
 - POST /orders/{id}/cancel
 
 ## 목적
@@ -50,11 +50,6 @@
 ## 환경 설정 & 기타
 [x] flyway 추가
 [x] docs 하위 문서 사람에게 가독성있게 간략화 (ai 전용 문서는 ./claude 하위로 옮길것)
-
-## 주문 조회 api(GET /orders/{id}) 추가
-- [ ] **read model** `order_saga_progress` + `GET /orders/{id}` 폴링 조회 (ADR-0004, PC-4)
-- 
-## 주문 취소 api 추가
 
 ## 결재 완료 메시지 발행
 - [x] 결재 완료 메시지 발행
@@ -131,7 +126,7 @@
 - [x] 주문 상태 `CONFIRMED`로 전이
 
 ### 9. 구매자
-- [ ] 주문 상태 조회 api 호출시 `CONFIRMED` 상태의 주문 확인
+- [x] 주문 상태 조회 api 호출시 `CONFIRMED` 상태의 주문 확인
 
 # backlog
 ## 카프카 메시지 재처리 로직 추가
