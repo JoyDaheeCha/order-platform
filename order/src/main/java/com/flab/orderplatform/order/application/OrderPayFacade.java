@@ -97,4 +97,13 @@ public class OrderPayFacade {
     public Order failOrderByFailedPayment(String orderNumber) {
         return orderCommandHandler.handle(new OrderFailByPaymentFailCommand(orderNumber));
     }
+
+    /**
+     * 주문 완료
+     *
+     * @param orderNumber 주문번호
+     */
+    public Order confirmOrder(String orderNumber) {
+        return orderCommandHandler.handle(new OrderConfirmCommand(orderNumber));
+    }
 }

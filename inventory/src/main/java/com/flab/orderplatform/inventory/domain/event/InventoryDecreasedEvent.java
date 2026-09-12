@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 
 import static com.flab.orderplatform.shared.event.EventConstants.*;
 
+/**
+ * 재고가 감소되었다
+ */
 @Getter
 public class InventoryDecreasedEvent extends InventoryOutboxEvent {
     private final String orderNumber;

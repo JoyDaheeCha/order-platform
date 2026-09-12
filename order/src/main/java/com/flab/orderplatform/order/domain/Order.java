@@ -265,4 +265,20 @@ public class Order extends BaseEntity {
                 .build();
         return this;
     }
+
+    /**
+     * 주문 완료
+     */
+    public Order confirm() {
+        // 이미 완료된 주문은 무시
+        if (this.status == CONFIRMED) {
+            return this;
+        }
+        if (this.status != PAID) {
+            throw new IllegalStateException("주문 완료 처리는 %s 상태에서만 가능합니다. (현재 주문 상태: %s)"
+                    .formatted(PAID.getDescription(), this.status.getDescription()));
+        }
+        this.status = CONFIRMED;
+        return this;
+    }
 }
