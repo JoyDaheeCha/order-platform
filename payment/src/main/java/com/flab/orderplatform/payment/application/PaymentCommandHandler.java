@@ -1,9 +1,7 @@
 package com.flab.orderplatform.payment.application;
 
 import com.flab.orderplatform.payment.application.annotation.PaymentTransactional;
-import com.flab.orderplatform.payment.application.command.PaymentCreateCommand;
-import com.flab.orderplatform.payment.application.command.PaymentFinishCommand;
-import com.flab.orderplatform.payment.application.command.PaymentStartCommand;
+import com.flab.orderplatform.payment.application.command.*;
 import com.flab.orderplatform.payment.application.exception.PaymentNotFoundException;
 import com.flab.orderplatform.payment.application.port.out.PaymentRepository;
 import com.flab.orderplatform.payment.domain.Payment;
@@ -65,9 +63,7 @@ public class PaymentCommandHandler {
 
     @PaymentTransactional
     public Payment handle(PaymentFinishCommand command) {
-        var orderNumber = command.orderNumber();
-        var requestedPayment = paymentRepository.findByOrderNumberAndStatus(orderNumber, IN_PROGRESS)
-                .orElseThrow(() -> new PaymentNotFoundException(orderNumber));
+        var requestedPayment = findPayment(command.orderNumber());
         var finishedPayment = command.finish(requestedPayment);
 
         paymentRepository.save(finishedPayment);
@@ -76,5 +72,28 @@ public class PaymentCommandHandler {
                 .pullDomainEventIfPresent()
                 .ifPresent(eventPublisher::publishEvent);
         return finishedPayment;
+    }
+
+    private Payment findPayment(String orderNumber) {
+        return paymentRepository.findByOrderNumberAndStatus(orderNumber, IN_PROGRESS)
+                .orElseThrow(() -> new PaymentNotFoundException(orderNumber));
+    }
+
+    /**
+     * 환불 요청
+     */
+    @PaymentTransactional
+    public Payment handle(PaymentRequestRefundCommand command) {
+        var requestedPayment = findPayment(command.orderNumber());
+        return command.requestRefund(requestedPayment);
+    }
+
+    /**
+     * 환불 완료 처리
+     */
+    @PaymentTransactional
+    public Payment handle(PaymentCompleteRefundCommand command) {
+        var payment = findPayment(command.orderNumber());
+        return command.completeRefund(payment);
     }
 }

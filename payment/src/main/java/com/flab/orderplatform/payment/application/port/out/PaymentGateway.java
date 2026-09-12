@@ -8,4 +8,5 @@ package com.flab.orderplatform.payment.application.port.out;
 public interface PaymentGateway {
     PgApprovalResult approve(PgApprovalRequest request);
     PgSearchResult get(String orderNumber);
+    PgRefundResult refund(PgRefundRequest request);
 }

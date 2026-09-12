@@ -1,11 +1,10 @@
 package com.flab.orderplatform.payment.application;
 
-import com.flab.orderplatform.payment.application.command.PaymentCreateCommand;
-import com.flab.orderplatform.payment.application.command.PaymentFinishCommand;
-import com.flab.orderplatform.payment.application.command.PaymentStartCommand;
+import com.flab.orderplatform.payment.application.command.*;
 import com.flab.orderplatform.payment.application.port.out.*;
 import com.flab.orderplatform.payment.domain.Payment;
 import com.flab.orderplatform.payment.domain.status.PaymentStatus;
+import com.flab.orderplatform.shared.event.OrderCanceledPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -108,5 +107,47 @@ public class PaymentFacade {
         }
         // PG 사에서 결제 성공 기록이 없는 경우 -> 연동 재처리
         integratePgService(orderNumber, payment.getAmount());
+    }
+
+    /**
+     * 환불하라
+     */
+    public Payment refund(OrderCanceledPayload event) {
+        var pgExcludedPayment = paymentRepository.findByOrderNumberAndStatusIn(event.orderNumber(), List.of(COMPLETED));
+
+        // 결제 완료된 건이 없다면 무시
+        if (pgExcludedPayment.isEmpty()) {
+            return pgExcludedPayment.get();
+        }
+
+        // 환불 시작
+        var refundRequestCommand = PaymentRequestRefundCommand.builder()
+                .orderNumber(event.orderNumber())
+                .build();
+        var payment = paymentCommandHandler.handle(refundRequestCommand);
+
+
+        // PG 연동
+        PgRefundResult pgRefundResult;
+        try {
+            var request = PgRefundRequest
+                    .builder()
+                    .pgTid(payment.getId())
+                    .build();
+            pgRefundResult = paymentGateway.refund(request);
+        } catch (PaymentException e) {
+            log.error("주문번호 {} PG 연동 실패. 스케줄러로 원복 예정", payment.getOrderNumber());
+            throw e;
+        }
+        var completeCommand = PaymentCompleteRefundCommand
+                .builder()
+                .orderNumber(event.orderNumber())
+                .isRefundSucceed(pgRefundResult.isSucceed())
+                .cancelFailureReason(pgRefundResult.message())
+                .build();
+
+        // 결제 완료/실패 처리
+        return paymentCommandHandler.handle(completeCommand);
+
     }
 }

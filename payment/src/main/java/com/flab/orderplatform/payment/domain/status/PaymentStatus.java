@@ -16,11 +16,16 @@ public enum PaymentStatus {
      */
     REQUESTED("결제 대기"),
     /**
-     * PG 호출됨. 결과 미확정
+     * 결제 PG 호출됨. 결과 미확정
      */
     IN_PROGRESS("결제처리중"),
     COMPLETED("결제 완료"),
     FAILED("결제 실패"),
+
+    /**
+     * 환불 PG 호출됨. 결과 미확정
+     */
+    REFUND_IN_PROGRESS("환불처리중"),
     REFUNDED("환불 완료");
 
     private final String description;

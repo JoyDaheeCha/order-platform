@@ -53,6 +53,12 @@ public class Payment extends BaseTimeEntity {
     @Column(name = "pg_requested_at", columnDefinition = "DATETIME(6) COMMENT 'pg 결제 요청 시각'")
     private LocalDateTime pgRequestedAt;
 
+    @Column(name = "cancel_failure_reason", length = 50, columnDefinition = "VARCHAR(50) COMMENT '환불 실패 사유'")
+    private String cancelFailureReason;
+
+    @Column(name = "pg_canceled_at", columnDefinition = "DATETIME(6) COMMENT 'pg 환불 요청 시각'")
+    private LocalDateTime pgCanceledAt;
+
     @Transient
     private DomainEvent domainEvent;
 
@@ -112,10 +118,6 @@ public class Payment extends BaseTimeEntity {
         return this;
     }
 
-    public boolean isCompleted() {
-        return this.status == COMPLETED;
-    }
-
     public boolean isFailed() {
         return this.status == FAILED;
     }
@@ -171,6 +173,40 @@ public class Payment extends BaseTimeEntity {
         }
         status = IN_PROGRESS;
         pgRequestedAt = LocalDateTime.now();
+        return this;
+    }
+
+    /**
+     * 환불 요청
+     */
+    public Payment requestRefund() {
+        if (this.status != COMPLETED) {
+            throw new IllegalStateException("결제완료일때만 환불 요청 가능합니다. (현재 상태: %s)"
+                    .formatted(status.getDescription()));
+        }
+        this.status = REFUND_IN_PROGRESS;
+        return this;
+    }
+
+    /**
+     * PG 환불 요청 완료
+     *
+     * @param isRefundSucceed 환불 성공 여부
+     * @param cancelFailureReason    결제 실패 사유
+     */
+    public Payment completeRefund(Boolean isRefundSucceed, String cancelFailureReason) {
+        if (this.status != REFUND_IN_PROGRESS) {
+            throw new IllegalStateException("환불 요청중일때만 환불 완료 가능합니다. (현재 상태: %s)"
+                    .formatted(status.getDescription()));
+        }
+        if (isRefundSucceed) {
+            this.status = REFUNDED;
+            this.cancelFailureReason = null;
+            return this;
+        }
+        // TODO: 환불 실패시 exponential 하게 시도하고, 3회 이상 시도 실패시 failure log 적재 필요
+        this.status = FAILED;
+        this.failureReason = cancelFailureReason;
         return this;
     }
 }

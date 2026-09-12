@@ -11,7 +11,7 @@ import static com.flab.orderplatform.shared.event.EventConstants.ORDER_CANCELLED
 public record OrderCanceledPayload(
         String orderNumber,
         List<OrderItem> orderItems,
-        Long totalAmount
+        Long totalAmount // TODO AMOUNT 필요 x
 ) implements EventContract {
 
     @Override

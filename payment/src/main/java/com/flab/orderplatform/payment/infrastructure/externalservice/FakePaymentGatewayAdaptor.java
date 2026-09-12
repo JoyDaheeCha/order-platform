@@ -27,4 +27,17 @@ public class FakePaymentGatewayAdaptor implements PaymentGateway {
         }
         return new PgSearchResult("111-222-333-444", false); // 결제 실패 기록
     }
+
+    @Override
+    public PgRefundResult refund(PgRefundRequest request) {
+        long tail = request.pgTid() % 10;
+
+        if (tail == 1) {
+            return PgRefundResult.fail();
+        }
+        if (tail == 2) {
+            throw new PaymentException(request.pgTid(), new TimeoutException("PG 서비스 타임아웃으로 환불요청을 실패 하였습니다."));
+        }
+        return PgRefundResult.success();
+    }
 }
