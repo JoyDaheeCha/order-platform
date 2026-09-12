@@ -113,7 +113,7 @@ class InventoryTest {
 
         // when
         var decreaseQuantity = 20;
-        var updatedInventory = inventory.decreaseStock(ORDER_NUMBER, decreaseQuantity);
+        var updatedInventory = inventory.decreaseInventory(ORDER_NUMBER, decreaseQuantity);
 
         // then
         SoftAssertions.assertSoftly(softly -> {

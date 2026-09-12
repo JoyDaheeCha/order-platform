@@ -85,7 +85,7 @@ public class Inventory extends BaseTimeEntity {
      * @param quantityToDecrease 재고 감소 수량
      * @return 재고
      */
-    public Inventory decreaseStock(String orderNumber, int quantityToDecrease) {
+    public Inventory decreaseInventory(String orderNumber, int quantityToDecrease) {
         if (quantityToDecrease <= 0) {
             throw new InvalidInventoryChangeException("재고 할당시, 요청 수량은 양수만 가능합니다. (요청 수량: %d)".formatted(quantityToDecrease));
         }

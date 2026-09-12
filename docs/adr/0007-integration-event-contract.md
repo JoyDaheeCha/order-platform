@@ -20,19 +20,18 @@
 - `shared`는 통합 이벤트만 정의한다. 
 - 각 이벤트는 **Kafka 헤더+ payload**로 구성되며, 아래는 payload 비즈니스 필드
 
-| 발행 컨텍스트 | 이벤트 | payload 필드 |
-|---------------|--------|--------------|
-| **Order** | `OrderCreated` | `orderNumber`, `buyerId`, `orderItems:[{productId, quantity, unitPrice}]`, `totalAmount` |
-| |`OrderPaid` | `orderNumber`, `orderItems:[{productCode, quantity}]` |
-| | `OrderConfirmed` ||
+| 발행 컨텍스트 | 이벤트                          | payload 필드 |
+|---------------|------------------------------|--------------|
+| **Order** | `OrderCreated`               | `orderNumber`, `buyerId`, `orderItems:[{productId, quantity, unitPrice}]`, `totalAmount` |
+| | `OrderPaid`                  | `orderNumber`, `orderItems:[{productCode, quantity}]` |
+| | `OrderConfirmed`             ||
 | | `OrderCancellationRequested` | `reason`(USER_CANCEL \| TIMEOUT) |
-| | `OrderCancelled` | `reason` (terminal) |
-| **Payment** | `PaymentCompleted` | `paymentId`, `amount` |
-| | `PaymentFailed` | `reason` |
-| | `PaymentRefunded` | `paymentId`, `amount` |
-| **Inventory** | `StockDeducted` | `orderItems:[{productId, quantity}]` |
-| | `StockShortage` | `shortageProductIds:[]` |
-| | `StockRestored` | `orderItems:[{productId, quantity}]` |
+| | `OrderCancelled`             | `reason` (terminal) |
+| **Payment** | `PaymentCompleted`           | `paymentId`, `amount` |
+| | `PaymentFailed`              | `reason` |
+| | `PaymentRefunded`            | `paymentId`, `amount` |
+| **Inventory** | `InventoryDecreased`         | `orderItems:[{productId, quantity}]` |
+| | `InventoryRestored`          | `orderItems:[{productId, quantity}]` |
 
 ### 3.1 주문취소 case - Order에서 주문 취소를 한 경우 
 **Order가 먼저 취소를 선언하는** 아래 두 경로에 의해 발행된다.
@@ -80,19 +79,18 @@ public record OrderCreatedPayload(
 - 이벤트별 토픽
 - 토픽명: `MSG-<EVENT-NAME>`
 
-| 발행 컨텍스트 | 이벤트 | 토픽 |
-|---------------|--------|------|
-| **Order** | `OrderCreated` | `MSG-ORDER-CREATED` |
-| | `OrderPaid` | `MSG-ORDER-PAID` |
-| | `OrderConfirmed` | `MSG-ORDER-CONFIRMED` |
+| 발행 컨텍스트 | 이벤트                          | 토픽                                 |
+|---------------|------------------------------|------------------------------------|
+| **Order** | `OrderCreated`               | `MSG-ORDER-CREATED`                |
+| | `OrderPaid`                  | `MSG-ORDER-PAID`                   |
+| | `OrderConfirmed`             | `MSG-ORDER-CONFIRMED`              |
 | | `OrderCancellationRequested` | `MSG-ORDER-CANCELLATION-REQUESTED` |
-| | `OrderCancelled` | `MSG-ORDER-CANCELLED` |
-| **Payment** | `PaymentCompleted` | `MSG-PAYMENT-COMPLETED` |
-| | `PaymentFailed` | `MSG-PAYMENT-FAILED` |
-| | `PaymentRefunded` | `MSG-PAYMENT-REFUNDED` |
-| **Inventory** | `StockDeducted` | `MSG-STOCK-DEDUCTED` |
-| | `StockShortage` | `MSG-STOCK-SHORTAGE` |
-| | `StockRestored` | `MSG-STOCK-RESTORED` |
+| | `OrderCancelled`             | `MSG-ORDER-CANCELLED`              |
+| **Payment** | `PaymentCompleted`           | `MSG-PAYMENT-COMPLETED`            |
+| | `PaymentFailed`              | `MSG-PAYMENT-FAILED`               |
+| | `PaymentRefunded`            | `MSG-PAYMENT-REFUNDED`             |
+| **Inventory** | `InventoryDeducted`          | `MSG-INVENTORY-DECREASED`          |
+| | `InventoryRestored`          | `MSG-INVENTORY-RESTORED`           |
 
 ---
 

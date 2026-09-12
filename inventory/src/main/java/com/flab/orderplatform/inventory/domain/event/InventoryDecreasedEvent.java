@@ -8,23 +8,23 @@ import java.time.LocalDateTime;
 import static com.flab.orderplatform.shared.event.EventConstants.*;
 
 @Getter
-public class StockDeductedEvent extends InventoryOutboxEvent {
+public class InventoryDecreasedEvent extends InventoryOutboxEvent {
     private final String orderNumber;
 
     @Builder
-    protected StockDeductedEvent(String orderNumber, LocalDateTime occurredOn) {
+    protected InventoryDecreasedEvent(String orderNumber, LocalDateTime occurredOn) {
         super(orderNumber, occurredOn);
         this.orderNumber = orderNumber;
     }
 
     @Override
     public String getAction() {
-        return STOCK_DEDUCTED;
+        return INVENTORY_DECREASED;
     }
 
     @Override
     public String getTopic() {
-        return STOCK_DEDUCTED_TOPIC;
+        return INVENTORY_DECREASED_TOPIC;
     }
 
     @Override
