@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class QuerydslConfig {
 
-    @PersistenceContext
+    @PersistenceContext(unitName = "order")
     private EntityManager entityManager;
 
     @Bean
