@@ -6,6 +6,31 @@
 :toclevels: 2
 :sectlinks:
 
+[[order-create]]
+== 주문 생성
+
+신규 주문을 생성한다.
+
+=== Request
+
+include::{snippets}/order-create-success/http-request.adoc[]
+
+==== Request Headers
+
+include::{snippets}/order-create-success/request-headers.adoc[]
+
+==== Request Fields
+
+include::{snippets}/order-create-success/request-fields.adoc[]
+
+=== Response
+
+include::{snippets}/order-create-success/http-response.adoc[]
+
+==== Response Fields
+
+include::{snippets}/order-create-success/response-fields.adoc[]
+
 [[order-search]]
 == 주문 조회
 
