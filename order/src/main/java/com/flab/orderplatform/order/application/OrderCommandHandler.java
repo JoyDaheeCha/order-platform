@@ -153,4 +153,13 @@ public class OrderCommandHandler {
         var result = command.confirm(order);
         return orderRepository.save(result);
     }
+
+    // TODO: Redis, update 조합으로 따닥 요청 방지
+    @OrderTransactional
+    public Order cancelOrder(OrderCancelCommand command) {
+        var order = getOrderByOrderNumber(command.orderNumber());
+        var result = command.cancel(order);
+        // TODO 주문이 취소되었다 메시지 발행
+        return orderRepository.save(result);
+    }
 }

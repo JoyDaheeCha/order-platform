@@ -35,9 +35,9 @@ import static java.time.LocalDateTime.now;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "orders",
-indexes = {
-        @Index(name = "idx_orders_order_number", columnList = "order_number")
-})
+        indexes = {
+                @Index(name = "idx_orders_order_number", columnList = "order_number")
+        })
 public class Order extends BaseEntity {
 
     @Id
@@ -282,6 +282,14 @@ public class Order extends BaseEntity {
                     .formatted(PAID.getDescription(), this.status.getDescription()));
         }
         this.status = CONFIRMED;
+        return this;
+    }
+
+    /**
+     * 주문 취소
+     */
+    public Order cancel() {
+        this.status = CANCELLED;
         return this;
     }
 }
