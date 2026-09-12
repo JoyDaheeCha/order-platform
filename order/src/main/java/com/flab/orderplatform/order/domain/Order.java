@@ -1,9 +1,6 @@
 package com.flab.orderplatform.order.domain;
 
-import com.flab.orderplatform.order.domain.event.OrderCreatedEvent;
-import com.flab.orderplatform.order.domain.event.OrderFailedEvent;
-import com.flab.orderplatform.order.domain.event.OrderPaidEvent;
-import com.flab.orderplatform.order.domain.event.OrderPaymentPreparedEvent;
+import com.flab.orderplatform.order.domain.event.*;
 import com.flab.orderplatform.order.domain.status.OrderFailedReasonType;
 import com.flab.orderplatform.order.domain.status.OrderInventoryReservationReleaseReason;
 import com.flab.orderplatform.order.domain.status.OrderStatus;
@@ -290,6 +287,21 @@ public class Order extends BaseEntity {
      */
     public Order cancel() {
         this.status = CANCELLED;
+
+        var orderItemDtos = orderItems
+                .stream()
+                .map(item -> OrderCanceledEvent.OrderItemDto
+                        .builder()
+                        .productCode(item.getProductCode())
+                        .quantity(item.getQuantity())
+                        .build())
+                .toList();
+
+        this.domainEvent = OrderCanceledEvent.builder()
+                .orderNumber(orderNumber)
+                .orderItems(orderItemDtos)
+                .totalAmount(totalAmount)
+                .build();
         return this;
     }
 }

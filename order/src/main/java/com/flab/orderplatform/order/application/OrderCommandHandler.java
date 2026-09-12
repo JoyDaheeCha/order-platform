@@ -159,7 +159,8 @@ public class OrderCommandHandler {
     public Order cancelOrder(OrderCancelCommand command) {
         var order = getOrderByOrderNumber(command.orderNumber());
         var result = command.cancel(order);
-        // TODO 주문이 취소되었다 메시지 발행
+        result.pullDomainEventIfPresent()
+                .ifPresent(eventPublisher::publishEvent);
         return orderRepository.save(result);
     }
 }
