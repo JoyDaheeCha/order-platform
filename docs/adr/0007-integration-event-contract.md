@@ -88,7 +88,6 @@ public record OrderCreatedPayload(
 | | `OrderCancelled`             | `MSG-ORDER-CANCELLED`              |
 | **Payment** | `PaymentCompleted`           | `MSG-PAYMENT-COMPLETED`            |
 | | `PaymentFailed`              | `MSG-PAYMENT-FAILED`               |
-| | `PaymentRefunded`            | `MSG-PAYMENT-REFUNDED`             |
 | **Inventory** | `InventoryDeducted`          | `MSG-INVENTORY-DECREASED`          |
 | | `InventoryRestored`          | `MSG-INVENTORY-RESTORED`           |
 

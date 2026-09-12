@@ -17,10 +17,6 @@ public final class EventConstants {
     public static final String ORDER_PAYMENT_PREPARED_TOPIC = "MSG-ORDER-PAYMENT-PREPARED";
     public static final String ORDER_FAILED = "OrderFailed";
     public static final String ORDER_FAILED_TOPIC = "MSG-ORDER-FAILED";
-    public static final String ORDER_CONFIRMED = "OrderConfirmed";
-    public static final String ORDER_CONFIRMED_TOPIC = "MSG-ORDER-CONFIRMED";
-    public static final String ORDER_CANCELLATION_REQUESTED = "OrderCancellationRequested";
-    public static final String ORDER_CANCELLATION_REQUESTED_TOPIC = "MSG-ORDER-CANCELLATION-REQUESTED";
     public static final String ORDER_CANCELLED = "OrderCancelled";
     public static final String ORDER_CANCELLED_TOPIC = "MSG-ORDER-CANCELLED";
     // --- Payment ---
@@ -28,8 +24,6 @@ public final class EventConstants {
     public static final String PAYMENT_COMPLETED_TOPIC = "MSG-PAYMENT-COMPLETED";
     public static final String PAYMENT_FAILED = "PaymentFailed";
     public static final String PAYMENT_FAILED_TOPIC = "MSG-PAYMENT-FAILED";
-    public static final String PAYMENT_REFUNDED = "PaymentRefunded";
-    public static final String PAYMENT_REFUNDED_TOPIC = "MSG-PAYMENT-REFUNDED";
     // --- Inventory ---
     public static final String INVENTORY_RESERVED = "InventoryReserved";
     public static final String INVENTORY_RESERVED_TOPIC = "MSG-INVENTORY-RESERVED";
@@ -37,8 +31,6 @@ public final class EventConstants {
     public static final String INVENTORY_RESERVATION_FAILED_TOPIC = "MSG-INVENTORY-RESERVATION-FAILED";
     public static final String INVENTORY_DECREASED = "InventoryDecreased";
     public static final String INVENTORY_DECREASED_TOPIC = "MSG-INVENTORY-DECREASED";
-    public static final String INVENTORY_RESTORED = "StockRestored";
-    public static final String INVENTORY_RESTORED_TOPIC = "MSG-STOCK-RESTORED";
     private EventConstants() {
         throw new UnsupportedOperationException("상수 클래스는 인스턴스화할 수 없습니다.");
     }
