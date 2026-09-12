@@ -10,9 +10,9 @@ import com.flab.orderplatform.inventory.application.exception.InventoryUpdateFai
 import com.flab.orderplatform.inventory.application.port.out.InventoryHistoryRepository;
 import com.flab.orderplatform.inventory.application.port.out.InventoryRepository;
 import com.flab.orderplatform.inventory.domain.Inventory;
+import com.flab.orderplatform.inventory.domain.event.InventoryDecreasedEvent;
 import com.flab.orderplatform.inventory.domain.event.InventoryReservationFailedEvent;
 import com.flab.orderplatform.inventory.domain.event.InventoryReservedEvent;
-import com.flab.orderplatform.inventory.domain.event.StockDeductedEvent;
 import com.flab.orderplatform.shared.event.OrderCreatedPayload;
 import com.flab.orderplatform.shared.event.OrderFailedPayload;
 import com.flab.orderplatform.shared.event.OrderPaidPayload;
@@ -76,7 +76,7 @@ public class InventoryFacade {
                 .map(inventoryCommandHandler::handle)
                 .toList();
 
-        var stockDeductedEvent = StockDeductedEvent.builder()
+        var stockDeductedEvent = InventoryDecreasedEvent.builder()
                 .orderNumber(orderNumber)
                 .occurredOn(LocalDateTime.now())
                 .build();

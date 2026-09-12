@@ -3,7 +3,7 @@
 
 ## 프로젝트 내 기능
 - POST /orders 
-- GET /orders/{id} 
+- GET /orders/{orderNumber} 
 - POST /orders/{id}/cancel
 
 ## 목적
@@ -51,11 +51,6 @@
 [x] flyway 추가
 [x] docs 하위 문서 사람에게 가독성있게 간략화 (ai 전용 문서는 ./claude 하위로 옮길것)
 
-## 주문 조회 api(GET /orders/{id}) 추가
-- [ ] **read model** `order_saga_progress` + `GET /orders/{id}` 폴링 조회 (ADR-0004, PC-4)
-- 
-## 주문 취소 api 추가
-
 ## 결재 완료 메시지 발행
 - [x] 결재 완료 메시지 발행
 - [x] 주문 도메인에서 수신, 상태값 변경
@@ -63,17 +58,6 @@
 ## 주문 결제 완료 이벤트 발행 (OrderPaid)
 - [x] 주문 이벤트에서 발행 (결제에서 직접 발행하지 않는 이유: 결제에서는 상품 정보를 재고로 넘기지 않아야함)
 - [x] 결제 도메인에서 수신
-- [ ] 문서 수정
-
-# 재고에서 재고 차감 이벤트 발행
-- [ ] 재고 변경 메시지 발행
-  - [x] 재고 차감 성공시 StockDeducted(재고가 차감되었다) 발행
-  - [ ] 실패시 StockDeductionFailed(재고 차감이 실패하였다) 발행
-- [ ] 주문에서 이를 수신
-  - 주문 확정 처리
-  - 주문에서 OrderConfirmed(주문이 확정되었다) 발행
-  - order_saga_process 테이블 진행도 변경
-- [ ] GET 폴링으로 주문 확정여부 확인
 
 ## 리팩토링
 - [x] shared 로 기능 공통화
@@ -136,6 +120,13 @@
 - `stock`(가용재고수량) 컬럼 수량 **증량**
 
 동시성 처리: 분산락
+
+### 8. 주문 완료 처리
+- [x] `InventoryDecreased` 컨슘
+- [x] 주문 상태 `CONFIRMED`로 전이
+
+### 9. 구매자
+- [x] 주문 상태 조회 api 호출시 `CONFIRMED` 상태의 주문 확인
 
 # backlog
 ## 카프카 메시지 재처리 로직 추가

@@ -10,9 +10,13 @@ testcontainers = "1.21.4"
 redisson = "3.50.0"
 ## shedlock (스케줄러 중복 실행 방지)
 shedlock = "6.6.0"
+## RestDocs 문서 생성 플러그인
+asciidoctor = "4.0.4"
 
 [libraries]
 spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
+spring-restdocs-mockmvc = { module = "org.springframework.restdocs:spring-restdocs-mockmvc" }
+spring-restdocs-asciidoctor = { module = "org.springframework.restdocs:spring-restdocs-asciidoctor" }
 
 # --- 전 모듈 공통 ---
 lombok = { module = "org.projectlombok:lombok" }
@@ -55,3 +59,4 @@ testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", ve
 [plugins]
 # bootJar/실행은 bootstrap 모듈에만 적용한다(루트에서는 apply false). (architecture.md §7)
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+asciidoctor-convert = { id = "org.asciidoctor.jvm.convert", version.ref = "asciidoctor" }

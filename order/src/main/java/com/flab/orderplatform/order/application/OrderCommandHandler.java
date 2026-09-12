@@ -143,4 +143,14 @@ public class OrderCommandHandler {
                 .ifPresent(eventPublisher::publishEvent);
         return orderRepository.save(result);
     }
+
+    /**
+     * 주문 완료
+     */
+    @OrderTransactional
+    public Order handle(OrderConfirmCommand command) {
+        var order = getOrderByOrderNumber(command.orderNumber());
+        var result = command.confirm(order);
+        return orderRepository.save(result);
+    }
 }

@@ -24,7 +24,7 @@ public class InventoryCommandHandler {
         var productCode = command.product().productCode();
         var inventory = inventoryRepository.findByProductCode(productCode)
                 .orElseThrow(() -> new InventoryNotFoundException(productCode));
-        return command.decreaseStock(inventory);
+        return command.decreaseInventory(inventory);
     }
 
     /**
