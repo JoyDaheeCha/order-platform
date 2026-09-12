@@ -286,8 +286,15 @@ public class Order extends BaseEntity {
      * 주문 취소
      */
     public Order cancel() {
+        // 이미 취소된 주문은 무시
+        if (this.status == CANCELLED) {
+            return this;
+        }
+        if (this.status != CONFIRMED) {
+            throw new IllegalStateException("주문 취소는 %s 상태에서만 가능합니다. (현재 주문 상태: %s)"
+                    .formatted(CONFIRMED.getDescription(), this.status.getDescription()));
+        }
         this.status = CANCELLED;
-
         var orderItemDtos = orderItems
                 .stream()
                 .map(item -> OrderCanceledEvent.OrderItemDto
