@@ -65,11 +65,7 @@ public class InventoryHistory extends BaseTimeEntity {
      * @return 재고 변경 이력
      */
     public static InventoryHistory createDecreaseHistory(String orderNumber, int quantity) {
-        return InventoryHistory.builder()
-                .orderNumber(orderNumber)
-                .quantity(quantity)
-                .requestType(DECREASE)
-                .build();
+        return createInventoryHistory(orderNumber, quantity, DECREASE);
     }
 
     /**
@@ -80,10 +76,14 @@ public class InventoryHistory extends BaseTimeEntity {
      * @return 재고 변경 이력
      */
     public static InventoryHistory createReserveHistory(String orderNumber, int quantity) {
+        return createInventoryHistory(orderNumber, quantity, RESERVE);
+    }
+
+    private static InventoryHistory createInventoryHistory(String orderNumber, int quantity, InventoryUpdateRequestType requestType) {
         return InventoryHistory.builder()
                 .orderNumber(orderNumber)
                 .quantity(quantity)
-                .requestType(RESERVE)
+                .requestType(requestType)
                 .build();
     }
 
@@ -95,10 +95,17 @@ public class InventoryHistory extends BaseTimeEntity {
      * @return 재고 변경 이력
      */
     public static InventoryHistory createRestoreReservationHistory(String orderNumber, int quantity) {
-        return InventoryHistory.builder()
-                .orderNumber(orderNumber)
-                .quantity(quantity)
-                .requestType(RESTORE_RESERVATION)
-                .build();
+        return createInventoryHistory(orderNumber, quantity, RESTORE_RESERVATION);
+    }
+
+    /**
+     * 가용 재고 원복 이력
+     *
+     * @param orderNumber 주문 번호
+     * @param quantity    가용 재고 원복 수량
+     * @return 가용 재고 원복 이력
+     */
+    public static InventoryHistory createRestoreInventoryHistory(String orderNumber, int quantity) {
+        return createInventoryHistory(orderNumber, quantity, RESTORE_INVENTORY);
     }
 }

@@ -16,7 +16,8 @@ public class InventoryDomainEventListener {
     @KafkaListener(topics = {
             ORDER_CREATED_TOPIC,
             ORDER_PAID_TOPIC,
-            ORDER_FAILED_TOPIC
+            ORDER_FAILED_TOPIC,
+            ORDER_CANCELLED_TOPIC
     }, groupId = "inventory")
     public void handle(ConsumerRecord<String, String> payload) {
         log.debug("[{}] payload: {}", payload.topic(), payload.value());

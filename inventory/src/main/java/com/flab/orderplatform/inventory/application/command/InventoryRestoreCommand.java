@@ -4,15 +4,15 @@ import com.flab.orderplatform.inventory.domain.Inventory;
 import lombok.Builder;
 
 /**
- * 선점된 재고 원복 명령
+ * 가용 재고 원복 명령
  */
 @Builder
-public record InventoryReservedRestoreCommand(
+public record InventoryRestoreCommand(
         String orderNumber,
         ProductDto product
 ) {
     public Inventory restore(Inventory inventory) {
-        return inventory.restoreReservedInventory(orderNumber, product.quantity);
+        return inventory.restoreInventory(orderNumber, product.quantity);
     }
 
     @Builder

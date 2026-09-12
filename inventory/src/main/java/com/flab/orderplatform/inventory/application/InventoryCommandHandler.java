@@ -3,6 +3,7 @@ package com.flab.orderplatform.inventory.application;
 import com.flab.orderplatform.inventory.application.command.InventoryDecreaseCommand;
 import com.flab.orderplatform.inventory.application.command.InventoryReserveCommand;
 import com.flab.orderplatform.inventory.application.command.InventoryReservedRestoreCommand;
+import com.flab.orderplatform.inventory.application.command.InventoryRestoreCommand;
 import com.flab.orderplatform.inventory.application.exception.InventoryNotFoundException;
 import com.flab.orderplatform.inventory.application.port.out.InventoryRepository;
 import com.flab.orderplatform.inventory.domain.Inventory;
@@ -47,6 +48,20 @@ public class InventoryCommandHandler {
      * @return 재고
      */
     public Inventory handle(InventoryReservedRestoreCommand command) {
+        var productCode = command.product().productCode();
+        var inventory = inventoryRepository.findByProductCode(productCode)
+                .orElseThrow(() -> new InventoryNotFoundException(productCode));
+        return command.restore(inventory);
+    }
+
+
+    /**
+     * 가용 재고 원복하라
+     *
+     * @param command 재고 선점 명령
+     * @return 재고
+     */
+    public Inventory handle(InventoryRestoreCommand command) {
         var productCode = command.product().productCode();
         var inventory = inventoryRepository.findByProductCode(productCode)
                 .orElseThrow(() -> new InventoryNotFoundException(productCode));
