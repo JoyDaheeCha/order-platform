@@ -1,0 +1,28 @@
+= Order API 문서
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 2
+:sectlinks:
+
+[[order-search]]
+== 주문 조회
+
+주문번호로 단건 주문을 조회한다.
+
+=== Request
+
+include::{snippets}/order-search-success/http-request.adoc[]
+
+==== Path Parameters
+
+include::{snippets}/order-search-success/path-parameters.adoc[]
+
+=== Response
+
+include::{snippets}/order-search-success/http-response.adoc[]
+
+==== Response Fields
+
+include::{snippets}/order-search-success/response-fields.adoc[]

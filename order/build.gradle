@@ -1,3 +1,11 @@
+plugins {
+    alias(libs.plugins.asciidoctor.convert)
+}
+
+configurations {
+    asciidoctorExt
+}
+
 dependencies {
     // 컨텍스트 간 유일한 공유 = shared 통합 이벤트 계약(C-3). application 포트가 이를 발행 인자로 받는다.
     api project(":shared")
@@ -41,6 +49,10 @@ dependencies {
     testImplementation "org.awaitility:awaitility"
     // h2
     testRuntimeOnly "com.h2database:h2"
+    // restDocs
+    testImplementation libs.spring.restdocs.mockmvc
+    asciidoctorExt platform(libs.spring.boot.dependencies)
+    asciidoctorExt libs.spring.restdocs.asciidoctor
 }
 
 // QueryDSL QClass 생성 경로 설정 (build 디렉토리 내부로 지정하여 버전 관리에서 제외)
@@ -53,4 +65,20 @@ tasks.withType(JavaCompile).configureEach {
 // clean 태스크 실행 시 생성된 QClass 디렉토리도 함께 삭제하도록 설정
 clean {
     delete file(querydslDir)
+}
+
+// --- RestDocs → Asciidoctor 파이프라인 ---
+// @AutoConfigureRestDocs 기본 출력 경로(spring-restdocs-mockmvc 기본값)와 동일하게 맞춘다.
+def snippetsDir = layout.buildDirectory.dir("generated-snippets")
+
+tasks.named("test") {
+    outputs.dir snippetsDir
+}
+
+tasks.named("asciidoctor") {
+    dependsOn test
+    configurations "asciidoctorExt"
+    baseDirFollowsSourceFile()
+    inputs.dir snippetsDir
+    attributes(["snippets": snippetsDir.get().asFile])
 }
