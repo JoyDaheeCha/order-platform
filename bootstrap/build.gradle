@@ -42,3 +42,13 @@ dependencies {
 tasks.named("test") {
     systemProperty "mysql.init.dir", rootProject.file("docker/mysql/init").absolutePath
 }
+
+tasks.register("copyApiDocs", Copy) {
+    dependsOn(":order:asciidoctor")
+    from(project(":order").tasks.named("asciidoctor").get().outputDir)
+    into layout.buildDirectory.dir("resources/main/static/docs")
+}
+
+tasks.named("processResources") {
+    dependsOn "copyApiDocs"
+}

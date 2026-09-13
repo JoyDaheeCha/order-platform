@@ -1,10 +1,3 @@
-// inventory — Inventory 바운디드 컨텍스트(단일 모듈). 헥사고날 3계층을 *패키지*로 둔다.
-//   · com.flab.orderplatform.inventory.domain         — 순수 도메인
-//   · com.flab.orderplatform.inventory.application     — 유스케이스 + 포트
-//   · com.flab.orderplatform.inventory.infrastructure  — 어댑터 + 재고 동시성 제어
-//
-// 레이어 규칙은 ArchUnit(패키지 기준)이 강제하고, 컨텍스트 간 격리는 모듈 경계가 강제한다.
-
 dependencies {
     // 컨텍스트 간 유일한 공유 = shared 통합 이벤트 계약.
     api project(":shared")

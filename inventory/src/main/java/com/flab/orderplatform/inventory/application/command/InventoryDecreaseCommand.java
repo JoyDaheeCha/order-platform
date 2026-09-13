@@ -8,8 +8,8 @@ public record InventoryDecreaseCommand(
         String orderNumber,
         ProductDto product
 ) {
-    public Inventory decreaseStock(Inventory inventory) {
-        return inventory.decreaseStock(orderNumber, product.quantityToDecrease);
+    public Inventory decreaseInventory(Inventory inventory) {
+        return inventory.decreaseInventory(orderNumber, product.quantityToDecrease);
     }
 
     @Builder

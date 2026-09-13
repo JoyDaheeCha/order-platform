@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum BusinessErrorCode {
-    NOT_FOUND(HttpStatus.BAD_REQUEST, "요청한 값이 존재하지 않습니다."),
+    NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 값이 존재하지 않습니다."),
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "사용자 입력값이 올바르지 않습니다."),
     CONFLICT_REQUEST(HttpStatus.CONFLICT, "이미 처리중인 요청입니다.");
 

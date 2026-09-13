@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS orders
     DEFAULT CHARSET = utf8mb4
     COLLATE = utf8mb4_0900_ai_ci;
 
+create index idx_orders_order_number
+    on orders (order_number);
+
 CREATE TABLE IF NOT EXISTS product
 (
     id           BIGINT      NOT NULL AUTO_INCREMENT,

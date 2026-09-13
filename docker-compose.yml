@@ -135,9 +135,9 @@ services:
           MSG-PAYMENT-REFUNDED \
           MSG-INVENTORY-RESERVED \
           MSG-INVENTORY-RESERVATION-FAILED \
-          MSG-STOCK-DEDUCTED \
-          MSG-STOCK-SHORTAGE \
-          MSG-STOCK-RESTORED ; do
+          MSG-INVENTORY-DECREASED \
+          MSG-INVENTORY-SHORTAGE \
+          MSG-INVENTORY-RESTORED ; do
           /opt/kafka/bin/kafka-topics.sh \
             --bootstrap-server kafka:9092 \
             --create --if-not-exists \

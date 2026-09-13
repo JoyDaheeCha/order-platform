@@ -1,0 +1,19 @@
+{
+  "orderNumber": "20260721-7K3M9QX2WF",
+  "status": {
+    "code": "CONFIRMED",
+    "description": "주문 생성 완료"
+  },
+  "orderItems": [
+    {
+      "productName": "뽀로로 보리차",
+      "price": 1000,
+      "quantity": 1
+    },
+    {
+      "productName": "티니핑 브라우니",
+      "price": 3200,
+      "quantity": 2
+    }
+  ]
+}

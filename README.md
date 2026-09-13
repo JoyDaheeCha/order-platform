@@ -148,6 +148,9 @@ docker compose down      # 정지 (데이터 유지)
 docker compose down -v   # 정지 + 볼륨 삭제 (스키마 init SQL 을 다시 돌리고 싶을 때)
 ```
 
+### 6.5 API 규격 문서
+http://localhost:8080/docs/index.html
+
 ---
 
 ## 7. 참고 문서
