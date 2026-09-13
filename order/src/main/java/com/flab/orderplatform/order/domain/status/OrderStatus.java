@@ -1,11 +1,12 @@
 package com.flab.orderplatform.order.domain.status;
 
+import com.flab.orderplatform.shared.utils.displayableenum.DisplayableEnum;
 import lombok.Getter;
 
 /**
  * 주문 상태
  */
-public enum OrderStatus {
+public enum OrderStatus implements DisplayableEnum {
     RESERVING_INVENTORY("재고 선점 중"),
     PENDING_PAYMENT("결제 대기중"),
     PAID("결제 완료"),

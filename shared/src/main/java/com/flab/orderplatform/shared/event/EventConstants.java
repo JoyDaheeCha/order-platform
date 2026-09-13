@@ -35,12 +35,10 @@ public final class EventConstants {
     public static final String INVENTORY_RESERVED_TOPIC = "MSG-INVENTORY-RESERVED";
     public static final String INVENTORY_RESERVATION_FAILED = "InventoryReservationFailed";
     public static final String INVENTORY_RESERVATION_FAILED_TOPIC = "MSG-INVENTORY-RESERVATION-FAILED";
-    public static final String STOCK_DEDUCTED = "StockDeducted";
-    public static final String STOCK_DEDUCTED_TOPIC = "MSG-STOCK-DEDUCTED";
-    public static final String STOCK_SHORTAGE = "StockShortage";
-    public static final String STOCK_SHORTAGE_TOPIC = "MSG-STOCK-SHORTAGE";
-    public static final String STOCK_RESTORED = "StockRestored";
-    public static final String STOCK_RESTORED_TOPIC = "MSG-STOCK-RESTORED";
+    public static final String INVENTORY_DECREASED = "InventoryDecreased";
+    public static final String INVENTORY_DECREASED_TOPIC = "MSG-INVENTORY-DECREASED";
+    public static final String INVENTORY_RESTORED = "StockRestored";
+    public static final String INVENTORY_RESTORED_TOPIC = "MSG-STOCK-RESTORED";
     private EventConstants() {
         throw new UnsupportedOperationException("상수 클래스는 인스턴스화할 수 없습니다.");
     }

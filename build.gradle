@@ -29,6 +29,10 @@ subprojects {
         }
     }
 
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs << "-parameters"
+    }
+
     dependencies {
         compileOnly platform(libs.spring.boot.dependencies)
         compileOnly libs.lombok

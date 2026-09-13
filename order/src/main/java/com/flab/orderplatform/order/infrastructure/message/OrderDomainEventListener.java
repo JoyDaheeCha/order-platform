@@ -17,7 +17,8 @@ public class OrderDomainEventListener {
             INVENTORY_RESERVED_TOPIC,
             INVENTORY_RESERVATION_FAILED_TOPIC,
             PAYMENT_COMPLETED_TOPIC,
-            PAYMENT_FAILED_TOPIC
+            PAYMENT_FAILED_TOPIC,
+            INVENTORY_DECREASED_TOPIC
     }, groupId = "order")
     public void handle(ConsumerRecord<String, String> payload) {
         log.debug("[{}] payload: {}", payload.topic(), payload.value());

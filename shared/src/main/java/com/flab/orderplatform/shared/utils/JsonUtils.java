@@ -9,6 +9,7 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.ZonedDateTimeSerializer;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -42,6 +43,17 @@ public class JsonUtils {
             return MAPPER.writeValueAsString(object);
         } catch (IOException e) {
             throw new JsonEncodeException(e);
+        }
+    }
+
+    public static <T> T fromJsonFile(final String filePath, Class<T> valueType) {
+        try (var is = JsonUtils.class.getClassLoader().getResourceAsStream(filePath)) {
+            if (is == null) {
+                throw new JsonDecodeException(new FileNotFoundException(filePath));
+            }
+            return MAPPER.readValue(is, valueType);
+        } catch (IOException e) {
+            throw new JsonDecodeException(e);
         }
     }
 
