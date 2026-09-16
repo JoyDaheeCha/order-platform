@@ -1,81 +1,61 @@
 # ADR-0003: 주문 타임아웃 · 예외처리방법
 
-- **상태**: Accepted (2026-06-27)
+- **상태**: Accepted (2026-06-27, 2026-09-16 구현 반영 갱신)
+
 ---
 
-## 1. 맥락 
+## 1. 맥락
 
 - 코레오그래피에는 "결제 이벤트가 안 온다"를 지켜보는 중앙감시자가 없다.
+- 재고 선점(`RESERVING_INVENTORY` → `PENDING_PAYMENT`) 이후 결제가 끝나지 않으면, 선점된 재고를 무기한 점유하게 된다.
 
 ## 2. 요구사항과 구현법
 ### 2.1 요구사항
-- Saga 각 단계는 타임아웃을 가지며, 이를 넘으면 실패로 간주하고 보상 처리를 한다.
+- 재고 선점 후 일정 시간 내 결제가 완료되지 않으면 실패로 간주하고 선점을 해제한다.
 - 비즈니스 예외와 인프라 이슈로 인한 일시적 예외를 구분지어 처리해야한다 (예외 타입에 따라 보상 이벤트 발행할지, 아니면 재시도할지 결정필요)
-## 2.2 구현방법
+
+### 2.2 구현방법
 - 타임아웃
-  - order_saga_process에 데드라인 날짜를 둔다.
-  - 스케줄러로 폴링하며 타임아웃여부 체크 (주문 컨텍스트)
+  - `orders` 테이블에 재고 선점 정보(`reserved_at`·`is_released`·`reservation_release_reason`)를 둔다.
+  - 스케줄러로 폴링하며 타임아웃 여부 체크 (주문 컨텍스트)
 - 예외
-  - 인프라
-    - 재시도후, 지속적 실패시 메시지 컨슈밍 실패 로그로 저장
-    - 개발자가 수동 재시도
-  - 비즈니스
-    - 즉각적으로 보상 이벤트 발행
+  - 인프라: 인박스(Inbox) 이벤트 처리 중 예외가 나면 상태를 `FAILED`로 남기고, 다음 폴링 주기에 `CREATED`와 함께 재조회되어 재시도한다.
+  - 비즈니스: 예외를 던지지 않고, 실패를 나타내는 별도 이벤트를 발행해 즉시 보상(주문 실패) 처리로 이어간다.
 
 ---
 
 ## 3. 결정: 주문타임아웃 확인 로직
-### 3.1 타임아웃 기준  
-- "`PENDING`으로 들어온 주문이 N초 안에 종료상태(`CONFIRMED`/`CANCELLED`)에 도달"하지 않으면 타임아웃
+### 3.1 타임아웃 기준
+- `PENDING_PAYMENT`(결제 대기중) 상태로 재고를 선점한 주문이, 선점 시각(`reserved_at`)으로부터 **10분**이 지나도록 결제가 완료되지 않으면 타임아웃으로 간주한다.
 
-#### 3.2 타임아웃 구현 방법
-- `order_saga_progress`에 `deadline_at`, `version`추가
-- 스케줄러로 체크 
-
+### 3.2 타임아웃 구현 방법
+- `orders` 테이블 (`Order` 애그리거트 루트 + `OrderInventoryReservation` 임베디드 컬럼)
 ```
-order_saga_progress   -- order_schema 소유 (ADR-0004)
-  order_id          VARCHAR PK
-  status            VARCHAR   -- PENDING/PAID/CONFIRMED/CANCELLED
-  payment_completed DATETIME NULL
-  stock_deducted    DATETIME NULL
-  deadline_at       DATETIME      -- ★ 추가: OrderCreated 시 now()+ 타임아웃 시간
-  version           BIGINT        -- ★ 추가: 낙관적 락 (타임아웃과 정상로직 동시 접근시 사용. - 예. 타임아웃 시간 만료 시점에 PaymentCompleted 바로 도착)
-  updated_at        DATETIME
-```
-```java
-// infrastructure
-@Scheduled(fixedDelayString = "${order.saga.sweep-interval:5s}")
-void sweep() {
-    for (var id : repo.findExpired(PENDING, now()))   // status=PENDING AND deadline_at < now()
-        timeoutUseCase.handle(id);                    // 인바운드 포트
-}
-
-// application
-@Transactional
-void handle(orderId) {
-    var p = repo.find(orderId);
-    if (p.status != PENDING) return;        // ★ 멱등 가드 — 이미 종료/이전 스캔 처리분 no-op
-    p.markTimedOut();                        // PENDING → CANCELLING
-    repo.save(p);                            // 낙관적 락(version)으로 경합 시 한쪽만 성공
-    outbox.append(new OrderCancellationRequested(orderId, TIMEOUT)); // 보상-개시 이벤트(ADR-0007)
-}
+orders
+  order_number                VARCHAR(36)  -- PK(대외 노출용 비즈니스 키)
+  status                      VARCHAR(20)  -- RESERVING_INVENTORY/PENDING_PAYMENT/PAID/CONFIRMED/CANCELLED/ORDER_FAILED
+  reserved_at                 DATETIME(6)  -- 재고 선점 일시 (PENDING_PAYMENT 진입 시점)
+  is_released                 TINYINT(1)   -- 재고 선점 해제 여부
+  reservation_release_reason  VARCHAR(30)  -- TIMEOUT / PAYMENT_COMPLETED / PAYMENT_FAILED
+  order_failed_reason         VARCHAR(30)  -- INVENTORY_SHORTAGE / TIMEOUT / PAYMENT_FAILED
 ```
 
 ### 3.3 구현시 주의사항
 
 - **정상 이벤트와 타임아웃 동시발생 가능성**
-  - 스케줄러가 "만료"로 판단한 직후 `PaymentCompleted`가 도착할 수 있다
-  - 정상 진행과 타임아웃이 **같은 행을 두고 경쟁** → 낙관적 락(`version`) 사용
+  - 스케줄러가 릴리스 대상으로 조회한 직후 `PaymentCompleted`가 도착할 수 있다.
+  - `pay()`와 `failByTimeout()` 모두 `this.status`가 기대 상태가 아니면 예외를 던지는 상태 가드로 경합을 방지한다 (`pay()`는 이미 `PAID`인 경우 멱등하게 무시하고 그대로 반환).
+  - `ShedLock`(`@SchedulerLock`)으로 여러 인스턴스가 동시에 같은 스케줄러를 실행하는 것 자체를 막는다.
 
-### 3.4 타임아웃 발생시 정책: 주문 취소요청 실행
+### 3.4 타임아웃 발생시 정책: 주문 실패 처리
 
-`OrderCancellationRequested(reason=TIMEOUT)` 발행 
-
+`Order.failByTimeout()`이 한 트랜잭션 안에서 아래를 수행한다.
 ```
-OrderCancellationRequested(TIMEOUT) ─▶ [Payment] 결제됐으면 RefundPayment
-              ─▶ [Inventory] 차감됐으면 RestoreStock
-              ─▶ [Order] status = CANCELLED
+1. status = ORDER_FAILED, order_failed_reason = TIMEOUT
+2. 재고 선점 해제 (is_released = true, reservation_release_reason = TIMEOUT)
+3. OrderFailed 이벤트 발행 (Outbox, ADR-0007)
 ```
+> Inventory 컨텍스트의 `OrderFailedEventProcessor`가 `OrderFailed`를 컨슈밍해 `Inventory.restoreReservedInventory()`로 선점 수량(`reservedStock`)을 가용재고(`stock`)로 되돌린다 — 재고부족/결제실패로 인한 `OrderFailed`도 동일 컨슈머가 처리한다.
 
 ---
 
@@ -83,12 +63,7 @@ OrderCancellationRequested(TIMEOUT) ─▶ [Payment] 결제됐으면 RefundPayme
 
 ### 4.1 처리방법
 
-| 부류 | 예                     | 처리                                                     |
-|------|-----------------------|--------------------------------------------------------|
-| **비즈니스 실패** | 재고부족·결제거절 | 재시도 X → **즉시 실패 이벤트 발행 → 보상**                          |
-| **일시적 인프라 오류** | DB 순단, 네트워크 타임아웃      | 지수 백오프 재시도 → 한계 초과 시 Message_failure_log 로 저장(DLQ 사용x) |
-
-### 4.2 처리방법별 상세 설명
-- 비즈니스 실패는 **예외로 던지지 않고** 핸들러가 정상 리턴하며 실패 이벤트를 발행한다.
-- 인프라 오류만 예외로 터뜨려, 컨슈밍 실패 로그 (message_failure_log) 테이블에 저장한다.
-  - 예. 재고부족은 재시도해도 소용이 없으므로 비즈니스 실패로 보고 즉시 실패처리해야한다.
+| 부류 | 예 | 처리 |
+|------|-----|------|
+| **비즈니스 실패** | 재고부족·결제거절 | 재시도 X → 예외를 던지지 않고 실패 이벤트(`InventoryReservationFailed`/`PaymentFailed`)를 발행 → 보상 |
+| **일시적 인프라 오류** | DB 순단, 네트워크 타임아웃 | 인박스 이벤트 처리 실패시 `InboxEvent.status = FAILED`로 기록 → 1초 간격 폴링에서 `CREATED`와 함께 재조회되어 재시도 (DLQ·별도 실패 로그 테이블 없음) |

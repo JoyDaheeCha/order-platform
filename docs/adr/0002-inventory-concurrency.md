@@ -22,7 +22,7 @@
 
 ---
 
-## 3. 오벌셀 방지 구현 방법 4가지
+## 3. 오벌셀 방지 구현 방법 3가지
 
 ### 옵션 A — 비관적 락 (`SELECT … FOR UPDATE`)
 차감 전 재고 행을 잠가 트랜잭션을 직렬화한다.  
@@ -31,7 +31,7 @@ JPA `@Lock(PESSIMISTIC_WRITE)`.
 - 장점: 직관적, 강한 정합성
 - 단점: 락 경합 시 처리량↓
 
-### 옵션 D — 낙관적 락 (`@Version` + 재시도)
+### 옵션 B — 낙관적 락 (`@Version` + 재시도)
 버전 컬럼으로 충돌을 *감지*하고 재시도한다.
 ```sql
 UPDATE stocks SET qty=qty-:n, version=version+1 WHERE product_id=:id AND version=:read;
@@ -41,38 +41,18 @@ UPDATE stocks SET qty=qty-:n, version=version+1 WHERE product_id=:id AND version
 - 장점: 락 미점유로 경합 낮을 때 빠름. (비관락과 대조)
 - 단점: **재고처럼 핫 아이템 경합이 몰리면 재시도 폭주** → 오히려 느려짐
 
-### 옵션 B — 원자적 조건부 UPDATE (`WHERE qty >= n`) ✅ 운영 기본
-```sql
-UPDATE stocks SET qty = qty - :n WHERE product_id = :id AND qty >= :n;  -- affected rows=0 → 부족
-```
-- 방식: **검사와 차감이 한 원자 연산 → "충돌"이라는 개념 자체가 없음.**
-- 장점: 
-  - race 자체가 성립 안 함
-  - 데드락 위험 낮고 락 점유 짧음
-  - 단일 MySQL에 가장 자연스럽고 단순.
-- 단점: 여러개의 행을 업데이트할 경우 한 트랜잭션에서 진행한다. 이때 트랜잭션이 실패하여 롤백되면 구체적으로 어느 데이터에서 문제가 생겼는지 알 수 없다.
-
-### 옵션 C — Redis
-- 방식: Redis 에서 카운터를 줄이고, 이에 성공할경우 DB를 비동기적으로 업데이트 (방안 1. DECR, 방안2. Lua)
+### 옵션 C — Redis 카운터 + DB 비동기 업데이트
+- 방식: Redis 에서 카운터를 줄이고, 이에 성공할경우 DB를 비동기적으로 업데이트
 - 장점: 매우 높은 처리량, 핫 아이템·선착순에 강함
 - 단점: **Redis ↔ DB 이중 소스 정합성** 문제
+
+### 옵션 4 — 분산락
+- 방식: Redis에서 키를 획득한 스레드에서 락획득, 재고 증감 진행
+- 장점: 멀티 서버 내 race condition 없이 안정적으로 자원 제어 가능. 데이터 베이스 부하 감소
+- 단점: Redis 오류시 시스템 로직 영향가능
 
 ---
 
 ## 4. 결정 (Decision Outcome)
-
-**재고 차감을 아웃바운드 포트로 추상화하고, 네 기법을 어댑터로 구현해 비교한다.** 운영 기본은 **B**.
-
-### 4.1 포트 추상화 (헥사고날 활용)
-```
-application:   interface StockDeducer { DeductResult deduct(OrderId, List<Line>); }   ← 아웃바운드 포트
-                    ▲              ▲                 ▲                ▲
-infrastructure: Pessimistic…   Optimistic…   AtomicUpdate…(default)  Redis…           ← 어댑터 4개
-```
-`@Profile`/설정으로 어댑터를 갈아끼우며 **동일 시나리오** 테스트한다.
-
-## 5. 결과 / 영향
-**긍정**
-- 동시성 이슈 방지 방법을 4가지 방식 직접 체험해본다.
-- 포트 추상화로 도메인 무변경 + 어댑터 교체 가능 → 헥사고날 설계가 실제로 작동함을 확인.
----
+- 여러개의 서버가 운영되는 상황과, 
+재고가 자주 변경되는 상황을 고려했을때 데이터 베이스 부하 최소화를 위해 분산락을 적용한다.
