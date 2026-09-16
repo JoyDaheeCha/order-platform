@@ -45,7 +45,7 @@
 
 ### 3. 재고 : 재고 선점
 3.1 `OrderCreated` 구독  
-3.2 재고 선점 (Inventory 테이블에서 reservation_count 증가)  
+3.2 재고 선점 (`inventory` 테이블에서 `stock`(가용재고) 차감 + `reserved_stock`(선점재고) 증가)  
 3.3 선점 성공/실패 처리  
 3.3.1 선점 성공시 `InventoryReserved` 이벤트 발행   
 3.3.2 선점 실패시 `InventoryReservationFailed` 이벤트 발행  
@@ -98,13 +98,13 @@
 7.1 재고 차감  
 7.1.1 `OrderPaid` 컨슘  
 7.1.2 `inventory` 테이블에서  
-`reservation_count`(선점 재고 수량) 를 선점 했던 수량만큼 **차감**
-7.1.3 `InventoryDeducted` 이벤트 발행 
+`reserved_stock`(선점 재고 수량) 를 선점 했던 수량만큼 **차감** (`stock`(가용재고)은 선점 시점에 이미 차감되어 그대로 유지)
+7.1.3 `StockDeducted` 이벤트 발행 (구독 컨슈머 미구현)
 
 7.2 재고 원복
 7.2.1 `OrderFailed` 컨슘  
 7.2.2 `inventory` 테이블에서
-- `reservation_count`(선점 재고 수량) 를 선점 했던 수량만큼 **차감**
+- `reserved_stock`(선점 재고 수량) 를 선점 했던 수량만큼 **차감**
 - `stock`(가용재고수량) 컬럼 수량 **증량**
 
 ### 8. 주문 완료 처리
@@ -118,19 +118,18 @@
 
 ## 5. 주문(Order) 상태 정의
 ```
-                 결제실패 or 취소
-        ┌──────────────────────────────────┐
-        ▼                                   │
-  [PENDING] ──결제완료──> [PAID] ──재고차감──> [CONFIRMED]
-        │                   │
-        │                   └─재고부족─> [CANCELLED] (결제 환불 보상)
-        │
-        └─결제실패─────────────────────> [CANCELLED]
+                                재고부족 or 결제실패 or 선점 타임아웃(10분)
+        ┌───────────────────────────────────────────────────────────────────┐
+        ▼                                                                    │
+  [RESERVING_INVENTORY] ──재고선점──> [PENDING_PAYMENT] ──결제완료──> [PAID] ──재고차감──> [CONFIRMED]
+                                            │
+                                            └────────────────────────────────┘
 ```
 
 | 상태 | 의미 | 진입 이벤트 |
 |------|------|-------------|
-| `PENDING` | 주문 생성, 결제 대기 | `OrderCreated` |
+| `RESERVING_INVENTORY` | 주문 생성, 재고 선점 대기 | `OrderCreated` |
+| `PENDING_PAYMENT` | 재고 선점 완료, 결제 대기 | `InventoryReserved` |
 | `PAID` | 결제 완료, 재고 차감 대기 | `PaymentCompleted` |
-| `CONFIRMED` | 재고까지 확정, 주문 성립 | `OrderConfirmed` |
-| `CANCELLED` | 실패/취소로 종료 (보상 완료) | `OrderCancelled` |
+| `CONFIRMED` | 재고까지 확정, 주문 성립 | `StockDeducted` (컨슈밍 로직 미구현) |
+| `ORDER_FAILED` | 재고부족/결제실패/선점 타임아웃(10분)으로 종료 | `InventoryReservationFailed` \| `PaymentFailed` \| 재고 선점 타임아웃 |

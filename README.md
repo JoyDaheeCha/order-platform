@@ -28,7 +28,8 @@
      - outbox: 발행시 최소 1번은 발행되도록 보장한다
      - inbox: 컨슈머의 멱등성을 보장한다. 
    - 재고 동시성 제어
-     - 동시 주문 방지 — 비관/낙관/원자적 UPDATE/Redis 4가지 방법으로 구현
+     - 동시 주문 방지(오버셀 방지) — 재고 선점/차감/원복에 Redis 분산락(`@DistributedLock`, Redisson) 적용
+     - 비관적 락 / 낙관적 락 / Reids 카운터 / 분산락 4가지 방식 비교는 설계 단계 (참고: ADR-0002)
      - 참고) 상세 문서 - [ADR-0002](docs/adr/0002-inventory-concurrency.md)
 ---
 
@@ -86,22 +87,25 @@ order-platform/
 ## 5. 사용자 시나리오
 ### 5.1 `주문` 상태값 변경 순서도
 ```
-[PENDING] ──결제완료──> [PAID] ──재고차감──> [CONFIRMED]
-    │                     │
-    │                     └─ 재고부족(E2) ─> [CANCELLED] (결제 환불 보상)
-    └─ 결제실패(E1) / 사용자취소(E6) ───────> [CANCELLED]
+[RESERVING_INVENTORY] ──재고선점 성공──> [PENDING_PAYMENT] ──결제완료──> [PAID] ──재고차감──> [CONFIRMED]
+         │                                     │
+         │                                     └─ 결제실패 / 선점 타임아웃(10분) ─┐
+         └─ 재고부족 ─────────────────────────────────────────────────────────┴─> [ORDER_FAILED]
 ```
 ### 5.2 Happy case
 
 주문 생성(`OrderCreated`)   
 → api에서 즉시 `202 Accepted` 응답  
+→ 재고 선점(`InventoryReserved`)  
+→ 결제 준비 완료(`OrderPaymentPrepared`)  
 → 결제(`PaymentCompleted`)  
-→ 재고 차감(`StockDeducted`)   
-→ 주문 확정(`OrderConfirmed`)  
-구매자는 `GET /orders/{id}`로 상태를 폴링합니다. ([ADR-0006](docs/adr/0006-inbound-api-response-and-idempotency.md)).
+→ 결제 완료 처리(`OrderPaid`)  
+→ 재고 차감(`InventoryDecreased`)   
+→ 주문 확정 (`CONFIRMED`로 상태 전이, 별도 이벤트 미발행)  
+구매자는 `GET /order/{orderNumber}`로 상태를 폴링합니다. ([ADR-0006](docs/adr/0006-inbound-api-response-and-idempotency.md)).
 ### 5.3 상세설명
-- 스코프·페르소나·상태 정의 : [docs/product-spec.md](docs/product-spec.md)
-- 도메인 규칙·불변식 : [docs/policy.md](docs/policy.md)
+- 스코프·페르소나·유저플로우·상태 정의 : [docs/product-spec.md](docs/product-spec.md)
+- 도메인 규칙·설계 결정 히스토리 : [docs/adr/](docs/adr)
 
 ---
 
@@ -150,6 +154,20 @@ docker compose down -v   # 정지 + 볼륨 삭제 (스키마 init SQL 을 다시
 
 ### 6.5 API 규격 문서
 http://localhost:8080/docs/index.html
+
+### 6.6 부하 테스트 (k6)
+
+```bash
+# 시드 데이터 적재 (앱 실행 전, mysql 컨테이너가 healthy 여야 함)
+mysql -h 127.0.0.1 -P 13306 -uroot -p<비밀번호> order_schema     < performance-test/k6/seed-product.sql
+mysql -h 127.0.0.1 -P 13306 -uroot -p<비밀번호> inventory_schema < performance-test/k6/seed-inventory.sql
+
+# 주문 생성(POST /order) 시나리오 실행 (기본 대상: http://localhost:8080)
+k6 run performance-test/k6/order-create-scenario.js
+# 다른 서버를 대상으로 실행할 때
+BASE_URL=http://localhost:8080 k6 run performance-test/k6/order-create-scenario.js
+```
+결과 리포트는 `performance-test/k6/results/summary.html` · `summary.json`으로 저장
 
 ---
 
