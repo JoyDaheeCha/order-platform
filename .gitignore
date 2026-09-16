@@ -39,3 +39,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### k6 performance test results ###
+performance-test/k6/results/

@@ -1,6 +1,6 @@
 # ADR-0007: shared 이벤트 계약 — 이벤트 목록 · 이벤트 공통 규약 · 토픽 · 파티션
 
-- **상태**: Accepted (2026-06-27)
+- **상태**: Accepted (2026-06-27, 2026-09-16 구현 반영 갱신)
 ---
 
 ## 1. 맥락 (Context)
@@ -17,39 +17,34 @@
 
 ## 3. 결정: 이벤트 목록 · 필드
 
-- `shared`는 통합 이벤트만 정의한다. 
+- `shared`는 통합 이벤트만 정의한다.
 - 각 이벤트는 **Kafka 헤더+ payload**로 구성되며, 아래는 payload 비즈니스 필드
+- `구현` 열이 ⏳인 이벤트는 `EventConstants`에 이름·토픽만 정의되어 있고, 실제 발행/구독 코드는 아직 없다 (설계상 예약된 이벤트).
 
-| 발행 컨텍스트 | 이벤트                          | payload 필드 |
-|---------------|------------------------------|--------------|
-| **Order** | `OrderCreated`               | `orderNumber`, `buyerId`, `orderItems:[{productId, quantity, unitPrice}]`, `totalAmount` |
-| | `OrderPaid`                  | `orderNumber`, `orderItems:[{productCode, quantity}]` |
-| | `OrderConfirmed`             ||
-| | `OrderCancellationRequested` | `reason`(USER_CANCEL \| TIMEOUT) |
-| | `OrderCancelled`             | `reason` (terminal) |
-| **Payment** | `PaymentCompleted`           | `paymentId`, `amount` |
-| | `PaymentFailed`              | `reason` |
-| | `PaymentRefunded`            | `paymentId`, `amount` |
-| **Inventory** | `InventoryDecreased`         | `orderItems:[{productId, quantity}]` |
-| | `InventoryRestored`          | `orderItems:[{productId, quantity}]` |
+| 발행 컨텍스트 | 이벤트                          | payload 필드 | 구현 |
+|---------------|------------------------------|--------------|------|
+| **Order** | `OrderCreated`               | `orderNumber`, `orderItems:[{productCode, quantity}]` | ✅ |
+| | `OrderPaymentPrepared`       | `orderNumber`, `buyerId`, `amount` | ✅ |
+| | `OrderPaid`                  | `orderNumber`, `orderItems:[{productCode, quantity}]` | ✅ |
+| | `OrderFailed`                | `orderNumber`, `orderItems:[{productCode, quantity}]` | ✅ |
+| | `OrderCancellationRequested` | `reason`(USER_CANCEL \| TIMEOUT) | ⏳ |
+| **Payment** | `PaymentCompleted`           | `orderNumber`, `pgTid`, `amount` | ✅ |
+| | `PaymentFailed`              | `orderNumber` | ✅ |
+| **Inventory** | `InventoryReserved`          | `orderNumber`, `reservedAt` | ✅ |
+| | `InventoryReservationFailed` | `orderNumber` | ✅ |
+| | `IventoryDecreased`          | `orderNumber` | ✅  |
 
-### 3.1 주문취소 case - Order에서 주문 취소를 한 경우 
-**Order가 먼저 취소를 선언하는** 아래 두 경로에 의해 발행된다.
-
-- case 1. PAID 상태에서 구매자의 주문취소
-- case 2. 타임아웃(ADR-0003, 데드라인 초과)
-
-주의: `OrderCancelled`는 보상이 *끝난 뒤* 나오는 terminal 이벤트(PS-2)라 트리거로 쓸 수 없다.
-
-### 3.2 주문 취소 흐름 2가지
-
+### 3.1 현재 구현된 흐름 (happy path / 실패)
 ```
-[보상 이벤트로 인한 취소] PaymentFailed ─▶ Order ─▶ OrderCancelled           (E1, 보상 없음)
-            StockShortage ─▶ Payment(RefundPayment) ─▶ PaymentRefunded ─▶ Order ─▶ OrderCancelled  (E2)
-[Order 개시] OrderCancellationRequested(reason) ─▶ Payment·Inventory 진행분 보상 ─▶ PaymentRefunded/StockRestored ─▶ Order ─▶ OrderCancelled  (E6·타임아웃)
-```
+[정상] OrderCreated ─▶ Inventory(선점) ─▶ InventoryReserved ─▶ Order(결제요청) ─▶ OrderPaymentPrepared
+      ─▶ Payment(결제시도) ─▶ PaymentCompleted ─▶ Order(결제완료) ─▶ OrderPaid ─▶ Inventory(차감) ─▶ StockDeducted (컨슈머 미구현)
 
-> policy §1 이벤트 맵·보상 흐름을 이 결정에 맞춰 갱신한다(Order 이벤트에 `OrderCancellationRequested` 추가).
+[실패] InventoryReservationFailed ─▶ Order: status = ORDER_FAILED (재고부족)
+      PaymentFailed              ─▶ Order: status = ORDER_FAILED (결제실패)
+      재고 선점 후 10분 타임아웃    ─▶ Order: status = ORDER_FAILED (타임아웃, ADR-0003)
+```
+- 모든 실패 경로는 `Order`가 `OrderFailed`를 발행하는 것으로 끝난다. Inventory 컨텍스트의 `OrderFailedEventProcessor`가 이를 컨슈밍해 `Inventory.restoreReservedInventory()`로 선점 수량을 원복한다 (별도 `StockRestored` 이벤트 발행 없이 `OrderFailed`를 직접 구독).
+- 결제 환불(`PaymentRefunded`)은 아직 구현되어 있지 않다 — 현재 실패 경로는 모두 `PENDING_PAYMENT` 단계(재고선점 완료~결제 전/결제 실패)에서 끝나므로 결제가 완료된 뒤 취소하는 케이스(환불 대상)가 아직 없다.
 
 ---
 
@@ -63,15 +58,13 @@ body(JSON)  ──▶ shared 의 payload record 단독
 
 ```java
 public interface EventContract {   // shared/event/EventContract.java
-    String eventType();  // 'OrderCreated' 
-    String topic();      // 'MSG-ORDER-CREATED' 
+    String eventType();  // 'OrderCreated'
+    String topic();      // 'MSG-ORDER-CREATED'
 }
 
 public record OrderCreatedPayload(
     String orderNumber,
-    Long buyerId,
-    List<OrderItem> orderItems,
-    Long totalAmount
+    List<OrderItemDto> orderItems
 ) implements EventContract {}
 ```
 
@@ -79,18 +72,23 @@ public record OrderCreatedPayload(
 - 이벤트별 토픽
 - 토픽명: `MSG-<EVENT-NAME>`
 
-| 발행 컨텍스트 | 이벤트                          | 토픽                                 |
-|---------------|------------------------------|------------------------------------|
-| **Order** | `OrderCreated`               | `MSG-ORDER-CREATED`                |
-| | `OrderPaid`                  | `MSG-ORDER-PAID`                   |
-| | `OrderConfirmed`             | `MSG-ORDER-CONFIRMED`              |
-| | `OrderCancellationRequested` | `MSG-ORDER-CANCELLATION-REQUESTED` |
-| | `OrderCancelled`             | `MSG-ORDER-CANCELLED`              |
-| **Payment** | `PaymentCompleted`           | `MSG-PAYMENT-COMPLETED`            |
-| | `PaymentFailed`              | `MSG-PAYMENT-FAILED`               |
-| | `PaymentRefunded`            | `MSG-PAYMENT-REFUNDED`             |
-| **Inventory** | `InventoryDeducted`          | `MSG-INVENTORY-DECREASED`          |
-| | `InventoryRestored`          | `MSG-INVENTORY-RESTORED`           |
+| 발행 컨텍스트 | 이벤트 | 토픽 | 구현 |
+|---------------|--------|------|------|
+| **Order** | `OrderCreated` | `MSG-ORDER-CREATED` | ✅ |
+| | `OrderPaymentPrepared` | `MSG-ORDER-PAYMENT-PREPARED` | ✅ |
+| | `OrderPaid` | `MSG-ORDER-PAID` | ✅ |
+| | `OrderFailed` | `MSG-ORDER-FAILED` | ✅ |
+| | `OrderConfirmed` | `MSG-ORDER-CONFIRMED` | ⏳ |
+| | `OrderCancellationRequested` | `MSG-ORDER-CANCELLATION-REQUESTED` | ⏳ |
+| | `OrderCancelled` | `MSG-ORDER-CANCELLED` | ⏳ |
+| **Payment** | `PaymentCompleted` | `MSG-PAYMENT-COMPLETED` | ✅ |
+| | `PaymentFailed` | `MSG-PAYMENT-FAILED` | ✅ |
+| | `PaymentRefunded` | `MSG-PAYMENT-REFUNDED` | ⏳ |
+| **Inventory** | `InventoryReserved` | `MSG-INVENTORY-RESERVED` | ✅ |
+| | `InventoryReservationFailed` | `MSG-INVENTORY-RESERVATION-FAILED` | ✅ |
+| | `StockDeducted` | `MSG-STOCK-DEDUCTED` | ✅ (구독 컨슈머 없음) |
+| | `StockShortage` | `MSG-STOCK-SHORTAGE` | ⏳ |
+| | `StockRestored` | `MSG-STOCK-RESTORED` | ⏳ |
 
 ---
 
