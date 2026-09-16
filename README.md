@@ -1,7 +1,7 @@
 # order-platform
 
 ## 1. 프로젝트 소개
-- **B2C 주문 도메인**을 다루는 학습용 프로젝트
+- **B2C 주문 도메인**
   - 목표: 구매자가 상품을 주문, 취소할때 결제, 재고의 변경이 정합성이 맞아야합니다.
   - 구현방식
     - 분산 트랜잭션(Saga)
@@ -15,10 +15,10 @@
 
 ---
 
-## 2. 프로젝트의 학습 목표
+## 2. 프로젝트 주요 기술
 
-### 1.1 Kafka / EDA / DDD 이해
-### 2.2 분산 시스템 구현 방식 학습 
+### 1.1 Kafka / EDA / DDD
+### 2.2 분산 시스템 
    - Saga 보상 트랜잭션
      - 결제 성공 후 재고 부족 시 환불
      - 사용자 취소
@@ -29,8 +29,6 @@
      - inbox: 컨슈머의 멱등성을 보장한다. 
    - 재고 동시성 제어
      - 동시 주문 방지(오버셀 방지) — 재고 선점/차감/원복에 Redis 분산락(`@DistributedLock`, Redisson) 적용
-     - 비관적 락 / 낙관적 락 / Reids 카운터 / 분산락 4가지 방식 비교는 설계 단계 (참고: ADR-0002)
-     - 참고) 상세 문서 - [ADR-0002](docs/adr/0002-inventory-concurrency.md)
 ---
 
 ## 3. 기술 스택
@@ -101,8 +99,8 @@ order-platform/
 → 결제(`PaymentCompleted`)  
 → 결제 완료 처리(`OrderPaid`)  
 → 재고 차감(`InventoryDecreased`)   
-→ 주문 확정 (`CONFIRMED`로 상태 전이, 별도 이벤트 미발행)  
-구매자는 `GET /order/{orderNumber}`로 상태를 폴링합니다. ([ADR-0006](docs/adr/0006-inbound-api-response-and-idempotency.md)).
+→ 주문 확정 (`CONFIRMED`로 상태 전이)  
+구매자는 `GET /order/{orderNumber}`로 상태를 확인할 수 있습니다. ([ADR-0006](docs/adr/0006-inbound-api-response-and-idempotency.md)).
 ### 5.3 상세설명
 - 스코프·페르소나·유저플로우·상태 정의 : [docs/product-spec.md](docs/product-spec.md)
 - 도메인 규칙·설계 결정 히스토리 : [docs/adr/](docs/adr)
@@ -168,6 +166,9 @@ k6 run performance-test/k6/order-create-scenario.js
 BASE_URL=http://localhost:8080 k6 run performance-test/k6/order-create-scenario.js
 ```
 결과 리포트는 `performance-test/k6/results/summary.html` · `summary.json`으로 저장
+
+### 테스트 결과
+p95: 10.47ms / avg: 6.72ms
 
 ---
 

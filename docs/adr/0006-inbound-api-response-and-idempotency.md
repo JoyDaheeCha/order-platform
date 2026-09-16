@@ -14,7 +14,7 @@
 ### 2.1 인바운드 응답 모델
 - `POST /order` — 주문 생성 응답으로 생성된 주문의 내부 PK(`Long id`)를 즉시 반환한다.
   - 구현: `OrderCommandController.createOrder()`가 `Long`을 그대로 리턴 (별도 `ResponseEntity`/DTO 래핑·`202 Accepted` 상태코드 지정 없음 → 기본 `200 OK`).
-- 클라이언트는 **폴링**으로 최종 주문 상태 확인 (`GET /order/{orderNumber}` — `OrderQueryController.searchOrder()`)
+- 클라이언트는 별도 api 호출로 최종 주문 상태 확인 (`GET /order/{orderNumber}` — `OrderQueryController.searchOrder()`)
 
 ---
 
