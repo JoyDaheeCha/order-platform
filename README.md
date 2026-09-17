@@ -1,4 +1,6 @@
 # order-platform
+<img width="758" height="566" alt="스크린샷 2026-09-17 오후 5 21 38" src="https://github.com/user-attachments/assets/25f691ab-086d-4d18-8c34-9d7e542f31b1" />
+
 
 ## 1. 프로젝트 소개
 - **B2C 주문 도메인**
@@ -60,7 +62,7 @@ order-platform/
 └── inventory/      ← 재고 도메인 — 재고 동시성 제어
 ```
 
-각 컨텍스트 모듈 내부는 헥사고날 3계층을 **패키지**로 나눕니다.  
+각 컨텍스트 모듈 내부는 도메인/애플리케이션/인프라 3개의 **패키지**로 나눕니다.  
 (`com.flab.orderplatform.{context}.{layer}`):
 
 | 패키지 | 책임                                      | 프레임워크                       |
